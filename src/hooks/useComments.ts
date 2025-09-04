@@ -62,7 +62,16 @@ export const useComments = (postId: string) => {
   };
 
   const addComment = async (content: string, replyTo?: string) => {
-    if (!user || !content.trim()) return;
+    if (!user || !content.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "You must be logged in to comment"
+      });
+      return;
+    }
+
+    console.log('Adding comment:', { postId, userId: user.id, content, replyTo });
 
     try {
       const { data, error } = await supabase
@@ -84,15 +93,16 @@ export const useComments = (postId: string) => {
         .single();
 
       if (error) {
-        console.error('Error adding comment:', error);
+        console.error('Supabase comment error:', error);
         toast({
           variant: "destructive",
-          title: "Error",
-          description: "Failed to add comment"
+          title: "Database Error",
+          description: `Failed to add comment: ${error.message}`
         });
         return;
       }
 
+      console.log('Comment added successfully:', data);
       setComments(prev => [...prev, data]);
 
       // Create notification for post owner
@@ -123,8 +133,8 @@ export const useComments = (postId: string) => {
       console.error('Error in addComment:', error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to add comment"
+        title: "Network Error",
+        description: "Failed to add comment. Please check your connection."
       });
     }
   };

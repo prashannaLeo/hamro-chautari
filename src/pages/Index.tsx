@@ -7,10 +7,13 @@ import PostCard from '@/components/Feed/PostCard';
 import PostSuggestions from '@/components/AI/PostSuggestions';
 import MoodMatcher from '@/components/MoodMatching/MoodMatcher';
 import CallManager from '@/components/Calling/CallManager';
+import { useToast } from '@/hooks/use-toast';
+import { createSamplePosts, createUserProfile } from '@/utils/createSampleData';
+import { useEffect } from 'react';
 
 const mockPosts = [
   {
-    id: '1',
+    id: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
     user: {
       name: 'Priya Sharma',
       username: 'priya_sharma',
@@ -27,7 +30,7 @@ const mockPosts = [
     isLiked: false,
   },
   {
-    id: '2',
+    id: 'b2c3d4e5-f6g7-8901-2345-67890abcdef1',
     user: {
       name: 'Arjun Thapa',
       username: 'arjun_thapa',
@@ -43,7 +46,7 @@ const mockPosts = [
     isLiked: true,
   },
   {
-    id: '3',
+    id: 'c3d4e5f6-g7h8-9012-3456-7890abcdef12',
     user: {
       name: 'Sita Rai',
       username: 'sita_rai',
@@ -61,6 +64,29 @@ const mockPosts = [
 
 const Index = () => {
   const { user, loading } = useAuth();
+  const { toast } = useToast();
+
+  // Initialize sample data when user logs in
+  useEffect(() => {
+    if (user) {
+      const initializeData = async () => {
+        console.log('Initializing sample data for user:', user.email);
+        
+        // Create user profile
+        await createUserProfile(user.id, user.email || '');
+        
+        // Create sample posts
+        await createSamplePosts(user.id);
+        
+        toast({
+          title: "Welcome!",
+          description: "Sample posts created. You can now test commenting functionality!",
+        });
+      };
+
+      initializeData();
+    }
+  }, [user, toast]);
 
   if (loading) {
     return (
@@ -80,8 +106,8 @@ const Index = () => {
       <CallManager />
       
       <main className="max-w-6xl mx-auto px-4 py-8 pb-20 sm:pb-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Main Feed */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
+          {/* Main Feed - Takes 3 columns on large screens */}
           <div className="lg:col-span-3 space-y-6">
             <div className="animate-fade-in">
               <CreatePost />
@@ -97,15 +123,21 @@ const Index = () => {
                   <PostCard 
                     post={{
                       ...post,
-                      user_id: user?.id === post.user.username ? user.id : 'other-user-id'
+                      user_id: user?.email === 'priya.sharma@example.com' && post.user.username === 'priya_sharma' ? user.id : undefined
                     }}
                     onEdit={(postId) => {
                       console.log('Edit post:', postId);
-                      // TODO: Implement edit functionality
+                      toast({
+                        title: "Edit Feature",
+                        description: "Post editing will be available soon!"
+                      });
                     }}
                     onDelete={(postId) => {
                       console.log('Delete post:', postId);
-                      // TODO: Implement delete functionality
+                      toast({
+                        title: "Delete Feature", 
+                        description: "Post deletion will be available soon!"
+                      });
                     }}
                   />
                 </div>
@@ -113,8 +145,8 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
+          {/* Sidebar - Takes 1 column on large screens, full width on mobile */}
+          <div className="lg:col-span-1 space-y-6">
             <div className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
               <PostSuggestions />
             </div>

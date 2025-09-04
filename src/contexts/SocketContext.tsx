@@ -35,6 +35,8 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const newSocket = io(BACKEND_URL, {
         transports: ['websocket', 'polling'],
         upgrade: true,
+        reconnection: false, // Disable auto-reconnection to prevent spam
+        timeout: 3000, // Shorter timeout
       });
 
       newSocket.on('connect', () => {
@@ -48,8 +50,9 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       });
 
       newSocket.on('connect_error', (error) => {
-        console.error('Socket connection error:', error);
+        console.log('Backend server not available - running in offline mode');
         setIsConnected(false);
+        // Don't spam logs - backend might not be running during development
       });
 
       setSocket(newSocket);
