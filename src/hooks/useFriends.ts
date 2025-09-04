@@ -79,9 +79,9 @@ export const useFriends = () => {
 
       if (sentError) throw sentError;
 
-      setFriends(friendsData || []);
-      setFriendRequests(requestsData || []);
-      setSentRequests(sentData || []);
+      setFriends(friendsData as FriendWithProfile[] || []);
+      setFriendRequests(requestsData as FriendWithProfile[] || []);
+      setSentRequests(sentData as FriendWithProfile[] || []);
 
     } catch (err: any) {
       console.error('Error fetching connections:', err);

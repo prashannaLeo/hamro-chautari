@@ -98,13 +98,13 @@ export const usePostOperations = () => {
 
         if (deleteError) throw deleteError;
 
-        // Decrement likes count
-        const { error: updateError } = await supabase
-          .from('posts')
-          .update({ likes_count: supabase.rpc('increment', { x: -1 }) })
-          .eq('id', postId);
-
-        if (updateError) throw updateError;
+        // Decrement likes count using RPC function
+        const { error: decrementError } = await supabase.rpc('decrement_likes', { post_id: postId });
+        
+        if (decrementError) {
+          console.error('Error decrementing like count:', decrementError);
+          throw decrementError;
+        }
 
         return false; // unliked
       } else {
@@ -118,16 +118,12 @@ export const usePostOperations = () => {
 
         if (insertError) throw insertError;
 
-        // Increment likes count
-        const { error: updateError } = await supabase.rpc('increment_likes', { post_id: postId });
-        if (updateError) {
-          // Fallback to manual increment
-          const { error: manualUpdateError } = await supabase
-            .from('posts')
-            .update({ likes_count: supabase.rpc('increment', { x: 1 }) })
-            .eq('id', postId);
-          
-          if (manualUpdateError) throw manualUpdateError;
+        // Increment likes count using RPC function
+        const { error: incrementError } = await supabase.rpc('increment_likes', { post_id: postId });
+        
+        if (incrementError) {
+          console.error('Error incrementing like count:', incrementError);
+          throw incrementError;
         }
 
         return true; // liked

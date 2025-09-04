@@ -119,71 +119,76 @@ const Settings = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-accent/10 dark:from-background dark:to-muted/10">
       <Navbar />
       
       <main className="max-w-4xl mx-auto px-4 py-8 pb-20 sm:pb-8">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold mb-2">Settings</h1>
-          <p className="text-muted-foreground">Manage your account and preferences</p>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-foreground mb-2">Settings</h1>
+          <p className="text-muted-foreground text-lg">Manage your account and preferences</p>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-8">
           {/* Profile Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <User className="w-5 h-5" />
+          <Card className="border-border bg-card shadow-soft">
+            <CardHeader className="bg-gradient-to-r from-primary/5 to-secondary/5 rounded-t-lg">
+              <CardTitle className="flex items-center space-x-3 text-xl text-foreground">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <User className="w-5 h-5 text-primary" />
+                </div>
                 <span>Profile Settings</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="displayName">Display Name</Label>
+            <CardContent className="space-y-6 p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <Label htmlFor="displayName" className="text-sm font-medium text-foreground">Display Name</Label>
                   <Input
                     id="displayName"
                     value={profileData.displayName}
                     onChange={(e) => setProfileData(prev => ({ ...prev, displayName: e.target.value }))}
                     placeholder="Your display name"
+                    className="bg-background border-border focus:ring-primary"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
+                <div className="space-y-3">
+                  <Label htmlFor="username" className="text-sm font-medium text-foreground">Username</Label>
                   <Input
                     id="username"
                     value={profileData.username}
                     onChange={(e) => setProfileData(prev => ({ ...prev, username: e.target.value }))}
                     placeholder="your_username"
+                    className="bg-background border-border focus:ring-primary"
                   />
                 </div>
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="bio">Bio</Label>
+              <div className="space-y-3">
+                <Label htmlFor="bio" className="text-sm font-medium text-foreground">Bio</Label>
                 <Textarea
                   id="bio"
                   value={profileData.bio}
                   onChange={(e) => setProfileData(prev => ({ ...prev, bio: e.target.value }))}
                   placeholder="Tell people about yourself..."
-                  className="min-h-20"
+                  className="min-h-24 bg-background border-border focus:ring-primary resize-none"
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="location">Location</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <Label htmlFor="location" className="text-sm font-medium text-foreground">Location</Label>
                   <Input
                     id="location"
                     value={profileData.location}
                     onChange={(e) => setProfileData(prev => ({ ...prev, location: e.target.value }))}
                     placeholder="Kathmandu, Nepal"
+                    className="bg-background border-border focus:ring-primary"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="mood">Default Mood</Label>
+                <div className="space-y-3">
+                  <Label htmlFor="mood" className="text-sm font-medium text-foreground">Default Mood</Label>
                   <Select value={profileData.mood} onValueChange={(value) => setProfileData(prev => ({ ...prev, mood: value }))}>
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-background border-border focus:ring-primary">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -199,29 +204,35 @@ const Settings = () => {
                 </div>
               </div>
 
-              <Button onClick={handleSaveProfile}>Save Profile</Button>
+              <div className="pt-4">
+                <Button onClick={handleSaveProfile} className="bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-2 font-medium">
+                  Save Profile
+                </Button>
+              </div>
             </CardContent>
           </Card>
 
           {/* Privacy Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Shield className="w-5 h-5" />
+          <Card className="border-border bg-card shadow-soft">
+            <CardHeader className="bg-gradient-to-r from-secondary/5 to-accent/5 rounded-t-lg">
+              <CardTitle className="flex items-center space-x-3 text-xl text-foreground">
+                <div className="p-2 bg-secondary/10 rounded-lg">
+                  <Shield className="w-5 h-5 text-secondary" />
+                </div>
                 <span>Privacy & Security</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <Label>Profile Visibility</Label>
+            <CardContent className="space-y-6 p-6">
+              <div className="flex items-center justify-between py-4">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-foreground">Profile Visibility</Label>
                   <p className="text-sm text-muted-foreground">Who can see your profile</p>
                 </div>
                 <Select 
                   value={privacySettings.profileVisibility} 
                   onValueChange={(value) => setPrivacySettings(prev => ({ ...prev, profileVisibility: value }))}
                 >
-                  <SelectTrigger className="w-32">
+                  <SelectTrigger className="w-40 bg-background border-border focus:ring-primary">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -285,14 +296,16 @@ const Settings = () => {
           </Card>
 
           {/* Notification Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Bell className="w-5 h-5" />
+          <Card className="border-border bg-card shadow-soft">
+            <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5 rounded-t-lg">
+              <CardTitle className="flex items-center space-x-3 text-xl text-foreground">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <Bell className="w-5 h-5 text-primary" />
+                </div>
                 <span>Notifications</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6 p-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <Mail className="w-4 h-4" />
@@ -338,15 +351,17 @@ const Settings = () => {
           </Card>
 
           {/* Eco-Friendly Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Leaf className="w-5 h-5" />
+          <Card className="border-border bg-card shadow-soft">
+            <CardHeader className="bg-gradient-to-r from-green-500/5 to-emerald-500/5 rounded-t-lg">
+              <CardTitle className="flex items-center space-x-3 text-xl text-foreground">
+                <div className="p-2 bg-green-500/10 rounded-lg">
+                  <Leaf className="w-5 h-5 text-green-600" />
+                </div>
                 <span>Eco-Friendly Mode</span>
-                <Badge variant="secondary" className="text-xs">Unique Feature</Badge>
+                <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">Unique Feature</Badge>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6 p-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
                   <Label>Enable Eco Mode</Label>
@@ -390,15 +405,17 @@ const Settings = () => {
           </Card>
 
           {/* AI Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Brain className="w-5 h-5" />
+          <Card className="border-border bg-card shadow-soft">
+            <CardHeader className="bg-gradient-to-r from-purple-500/5 to-indigo-500/5 rounded-t-lg">
+              <CardTitle className="flex items-center space-x-3 text-xl text-foreground">
+                <div className="p-2 bg-purple-500/10 rounded-lg">
+                  <Brain className="w-5 h-5 text-purple-600" />
+                </div>
                 <span>AI Features</span>
-                <Badge variant="secondary" className="text-xs">Unique Feature</Badge>
+                <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">Unique Feature</Badge>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6 p-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
                   <Label>AI Content Suggestions</Label>
@@ -435,11 +452,16 @@ const Settings = () => {
           </Card>
 
           {/* Account Management */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-red-600">Account Management</CardTitle>
+          <Card className="border-border bg-card shadow-soft border-destructive/20">
+            <CardHeader className="bg-gradient-to-r from-destructive/5 to-red-500/5 rounded-t-lg">
+              <CardTitle className="flex items-center space-x-3 text-xl text-destructive">
+                <div className="p-2 bg-destructive/10 rounded-lg">
+                  <Lock className="w-5 h-5 text-destructive" />
+                </div>
+                <span>Account Management</span>
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6 p-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
                   <Label>Export Your Data</Label>
