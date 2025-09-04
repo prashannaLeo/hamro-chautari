@@ -20,8 +20,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import CommentSection from '@/components/Comments/CommentSection';
 import { useAuth } from '@/contexts/AuthContext';
+
+// Lazy load CommentSection to avoid circular dependencies
+const CommentSection = React.lazy(() => import('@/components/Comments/CommentSection'));
 
 interface PostCardProps {
   post: {
@@ -238,7 +240,9 @@ const PostCard: React.FC<PostCardProps> = ({ post, onEdit, onDelete }) => {
         </div>
 
         {/* Comments Section */}
-        <CommentSection postId={post.id} isVisible={showComments} />
+        <React.Suspense fallback={<div className="p-4 text-center text-gray-500">Loading comments...</div>}>
+          <CommentSection postId={post.id} isVisible={showComments} />
+        </React.Suspense>
       </CardContent>
     </Card>
   );
