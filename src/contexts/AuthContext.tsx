@@ -56,7 +56,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .from('profiles')
         .select('username')
         .eq('username', username.toLowerCase())
-        .single();
+        .maybeSingle();
 
       if (existingProfile) {
         return { 
@@ -66,9 +66,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
       }
 
-      // If no existing profile found (which is expected), proceed with signup
-      if (profileError && profileError.code !== 'PGRST116') {
-        // PGRST116 is "no rows returned" - this is what we want
+      // If there's an error other than no results, handle it
+      if (profileError) {
+        console.error('Username check error:', profileError);
         return { 
           error: { 
             message: 'Unable to verify username availability. Please try again.' 
