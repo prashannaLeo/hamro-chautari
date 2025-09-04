@@ -4,6 +4,8 @@ import { Navigate } from 'react-router-dom';
 import Navbar from '@/components/Layout/Navbar';
 import CreatePost from '@/components/Feed/CreatePost';
 import PostCard from '@/components/Feed/PostCard';
+import PostSuggestions from '@/components/AI/PostSuggestions';
+import MoodMatcher from '@/components/MoodMatching/MoodMatcher';
 
 const mockPosts = [
   {
@@ -75,13 +77,24 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       
-      <div className="max-w-2xl mx-auto px-4 py-6 pb-20 sm:pb-6">
-        <CreatePost />
-        
-        <div className="space-y-4">
-          {mockPosts.map((post) => (
-            <PostCard key={post.id} post={post} />
-          ))}
+      <div className="max-w-4xl mx-auto px-4 py-6 pb-20 sm:pb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Feed */}
+          <div className="lg:col-span-2 space-y-6">
+            <CreatePost />
+            
+            <div className="space-y-4">
+              {mockPosts.map((post) => (
+                <PostCard key={post.id} post={post} />
+              ))}
+            </div>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            <PostSuggestions />
+            <MoodMatcher />
+          </div>
         </div>
       </div>
     </div>
