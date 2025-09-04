@@ -130,13 +130,13 @@ const Messages = () => {
   );
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
       <Navbar />
       
-      <div className="max-w-7xl mx-auto px-4 py-6 pb-20 sm:pb-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-8rem)]">
+      <main className="max-w-7xl mx-auto px-4 py-8 pb-20 sm:pb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[calc(100vh-10rem)]">
           {/* Chat List */}
-          <Card className="lg:col-span-1">
+          <Card className="lg:col-span-1 shadow-lg bg-white/90 backdrop-blur-sm border-0">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold">Messages</h2>
@@ -205,7 +205,7 @@ const Messages = () => {
           </Card>
 
           {/* Chat Area */}
-          <Card className="lg:col-span-2 flex flex-col">
+          <Card className="lg:col-span-2 flex flex-col shadow-lg bg-white/90 backdrop-blur-sm border-0">
             {selectedChat ? (
               <>
                 {/* Chat Header */}
@@ -323,7 +323,7 @@ const Messages = () => {
             )}
           </Card>
         </div>
-      </div>
+      </main>
     </div>
   );
 };

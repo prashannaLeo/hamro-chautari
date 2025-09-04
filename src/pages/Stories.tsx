@@ -126,22 +126,22 @@ const Stories = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
       <Navbar />
       
-      <div className="max-w-6xl mx-auto px-4 py-6 pb-20 sm:pb-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold mb-2">Stories</h1>
-          <p className="text-muted-foreground">Share moments that disappear in 24 hours</p>
+      <main className="max-w-6xl mx-auto px-4 py-8 pb-20 sm:pb-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-3 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Stories</h1>
+          <p className="text-gray-600 text-lg">Share moments that disappear in 24 hours</p>
         </div>
 
         {/* Stories Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 mb-10">
           {mockStories.map((story) => (
             <Dialog key={story.id}>
               <DialogTrigger asChild>
                 <Card 
-                  className="relative aspect-[3/4] overflow-hidden cursor-pointer group hover:scale-105 transition-transform"
+                  className="relative aspect-[3/4] overflow-hidden cursor-pointer group hover:scale-105 transition-all duration-300 shadow-lg bg-white/90 backdrop-blur-sm border-0"
                   onClick={() => setSelectedStory(story)}
                 >
                   <CardContent className="p-0 h-full">
@@ -289,11 +289,11 @@ const Stories = () => {
         </div>
 
         {/* Discover Stories */}
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold mb-4">Discover</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold mb-6 text-gray-800">Discover</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
             {mockStories.slice(1).map((story) => (
-              <Card key={`discover-${story.id}`} className="aspect-square overflow-hidden cursor-pointer hover:scale-105 transition-transform">
+              <Card key={`discover-${story.id}`} className="aspect-square overflow-hidden cursor-pointer hover:scale-105 transition-all duration-300 shadow-lg bg-white/90 backdrop-blur-sm border-0">
                 <CardContent className="p-0 h-full relative">
                   <img 
                     src={story.mediaUrl} 
@@ -315,7 +315,7 @@ const Stories = () => {
             ))}
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 };

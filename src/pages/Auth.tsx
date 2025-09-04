@@ -61,25 +61,28 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4 transition-colors duration-200">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-primary">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md shadow-xl bg-white/90 backdrop-blur-sm border-0">
+        <CardHeader className="text-center pb-6">
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+            <span className="text-white font-bold text-2xl">HC</span>
+          </div>
+          <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             Hamro Chautari
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-gray-600 text-lg mt-2">
             Connect with friends and share your moments
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-8">
           <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Sign In</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 bg-gray-100 p-1 rounded-xl">
+              <TabsTrigger value="signin" className="rounded-lg font-medium">Sign In</TabsTrigger>
+              <TabsTrigger value="signup" className="rounded-lg font-medium">Sign Up</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="signin">
-              <form onSubmit={handleSignIn} className="space-y-4">
+            <TabsContent value="signin" className="mt-6">
+              <form onSubmit={handleSignIn} className="space-y-5">
                 <div className="space-y-2">
                   <Input
                     type="email"
@@ -98,14 +101,14 @@ const Auth = () => {
                     required
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button type="submit" className="w-full h-12 text-lg font-semibold rounded-xl" disabled={loading}>
                   {loading ? "Signing in..." : "Sign In"}
                 </Button>
               </form>
             </TabsContent>
             
-            <TabsContent value="signup">
-              <form onSubmit={handleSignUp} className="space-y-4">
+            <TabsContent value="signup" className="mt-6">
+              <form onSubmit={handleSignUp} className="space-y-5">
                 <div className="space-y-2">
                   <Input
                     type="text"
@@ -134,7 +137,7 @@ const Auth = () => {
                     minLength={6}
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button type="submit" className="w-full h-12 text-lg font-semibold rounded-xl" disabled={loading}>
                   {loading ? "Creating account..." : "Sign Up"}
                 </Button>
               </form>

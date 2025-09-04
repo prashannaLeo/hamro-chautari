@@ -38,10 +38,10 @@ const Navbar = () => {
         <div className="flex justify-between items-center h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3 group">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
-              <span className="text-white font-bold text-lg">HC</span>
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+              <span className="text-white font-bold text-xl">HC</span>
             </div>
-            <span className="font-bold text-2xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <span className="font-bold text-2xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent hidden sm:block">
               Hamro Chautari
             </span>
           </Link>
@@ -59,13 +59,13 @@ const Navbar = () => {
           </div>
 
           {/* Navigation items */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-3">
             {navItems.map((item) => (
-              <Link key={item.path} to={item.path}>
+              <Link key={item.path} to={item.path} className="hidden sm:block">
                 <Button
-                  variant={location.pathname === item.path ? "default" : "ghost"}
+                  variant="ghost"
                   size="sm"
-                  className={`hidden sm:flex items-center space-x-2 px-4 py-2 rounded-xl font-medium transition-all duration-200 ${
+                  className={`flex items-center space-x-2 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
                     location.pathname === item.path 
                       ? 'bg-blue-600 text-white shadow-lg hover:shadow-xl hover:bg-blue-700' 
                       : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
@@ -129,17 +129,21 @@ const Navbar = () => {
       </div>
 
       {/* Mobile navigation */}
-      <div className="sm:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border">
-        <div className="flex justify-around items-center py-2">
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-gray-200 shadow-lg z-50">
+        <div className="flex justify-around items-center py-3">
           {navItems.map((item) => (
             <Link key={item.path} to={item.path}>
               <Button
-                variant={location.pathname === item.path ? "default" : "ghost"}
+                variant="ghost"
                 size="sm"
-                className="flex flex-col items-center space-y-1 h-auto py-2"
+                className={`flex flex-col items-center space-y-1 h-auto py-2 px-3 rounded-xl transition-all duration-200 ${
+                  location.pathname === item.path 
+                    ? 'bg-blue-600 text-white' 
+                    : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
+                }`}
               >
-                <item.icon className="w-4 h-4" />
-                <span className="text-xs">{item.label}</span>
+                <item.icon className="w-5 h-5" />
+                <span className="text-xs font-medium">{item.label}</span>
               </Button>
             </Link>
           ))}

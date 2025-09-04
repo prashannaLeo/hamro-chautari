@@ -175,13 +175,13 @@ const Friends = () => {
   );
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
       <Navbar />
       
-      <div className="max-w-6xl mx-auto px-4 py-6 pb-20 sm:pb-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold mb-2">Friends</h1>
-          <p className="text-muted-foreground">Connect with people in your community</p>
+      <main className="max-w-6xl mx-auto px-4 py-8 pb-20 sm:pb-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-3 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Friends</h1>
+          <p className="text-gray-600 text-lg">Connect with people in your community</p>
         </div>
 
         <Tabs defaultValue="friends" className="w-full">
@@ -213,9 +213,9 @@ const Friends = () => {
             </div>
 
             {/* Friends Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredFriends.map((friend) => (
-                <Card key={friend.id} className="hover:shadow-md transition-shadow">
+                <Card key={friend.id} className="hover:shadow-xl transition-all duration-300 bg-white/90 backdrop-blur-sm border-0 shadow-lg">
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center space-x-3">
@@ -395,7 +395,7 @@ const Friends = () => {
             </div>
           </TabsContent>
         </Tabs>
-      </div>
+      </main>
     </div>
   );
 };
