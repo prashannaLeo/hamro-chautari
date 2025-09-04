@@ -14,84 +14,25 @@ import {
   MessageCircle,
   Share,
   MoreHorizontal,
-  Clock
+  Clock,
+  Trash2
 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
   DialogTrigger,
 } from '@/components/ui/dialog';
-
-const mockStories = [
-  {
-    id: '1',
-    user: {
-      name: 'Your Story',
-      username: 'you',
-      avatar: '',
-      isOwn: true,
-    },
-    mediaUrl: '',
-    mediaType: 'image',
-    caption: '',
-    timestamp: new Date().toISOString(),
-    views: 0,
-    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-    isEmpty: true,
-  },
-  {
-    id: '2',
-    user: {
-      name: 'Priya Sharma',
-      username: 'priya_sharma',
-      avatar: '',
-      isOwn: false,
-    },
-    mediaUrl: '/api/placeholder/400/600',
-    mediaType: 'image',
-    caption: 'Beautiful morning in Kathmandu! ☀️',
-    timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-    views: 24,
-    expiresAt: new Date(Date.now() + 23.5 * 60 * 60 * 1000).toISOString(),
-    filter: 'vintage',
-  },
-  {
-    id: '3',
-    user: {
-      name: 'Arjun Thapa',
-      username: 'arjun_thapa',
-      avatar: '',
-      isOwn: false,
-    },
-    mediaUrl: '/api/placeholder/400/600',
-    mediaType: 'video',
-    caption: 'Trek life! 🏔️',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-    views: 45,
-    expiresAt: new Date(Date.now() + 22 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: '4',
-    user: {
-      name: 'Sita Rai',
-      username: 'sita_rai',
-      avatar: '',
-      isOwn: false,
-    },
-    mediaUrl: '/api/placeholder/400/600',
-    mediaType: 'image',
-    caption: 'Traditional dance practice 💃',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
-    views: 18,
-    expiresAt: new Date(Date.now() + 19 * 60 * 60 * 1000).toISOString(),
-  },
-];
+import { useStories } from '@/hooks/useStories';
+import CreateStoryDialog from '@/components/Stories/CreateStoryDialog';
+import { toast } from 'sonner';
 
 const Stories = () => {
   const { user, loading } = useAuth();
   const [selectedStory, setSelectedStory] = useState<any>(null);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const { stories, loading: storiesLoading, deleteStory, incrementViews } = useStories();
 
-  if (loading) {
+  if (loading || storiesLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -125,6 +66,86 @@ const Stories = () => {
     return `${minutes}m left`;
   };
 
+  interface CreateStoryPlaceholder {
+    id: string;
+    isEmpty: true;
+    user: {
+      name: string;
+      username: string;
+      avatar: string;
+      isOwn: boolean;
+    };
+  }
+
+  interface StoryWithUser extends Story {
+    isEmpty?: false;
+    user: {
+      name: string;
+      username: string;
+      avatar: string;
+      isOwn: boolean;
+    };
+  }
+
+  type DisplayStory = CreateStoryPlaceholder | StoryWithUser;
+
+  const handleStoryClick = (story: DisplayStory) => {
+    if (story.isEmpty) return;
+    
+    setSelectedStory(story);
+    if (story.user_id !== user?.id) {
+      incrementViews(story.id);
+    }
+  };
+
+  const handleDeleteStory = async (storyId: string) => {
+    const result = await deleteStory(storyId);
+    if (result.error) {
+      toast.error(result.error);
+    } else {
+      toast.success('Story deleted successfully');
+      setSelectedStory(null);
+    }
+  };
+
+  // Create a "your story" placeholder and combine with existing stories
+  const myStories = stories.filter(story => story.user_id === user?.id);
+  const otherStories = stories.filter(story => story.user_id !== user?.id);
+  
+  const displayStories: DisplayStory[] = [
+    // Add story placeholder
+    {
+      id: 'create',
+      isEmpty: true,
+      user: {
+        name: 'Your Story',
+        username: 'you',
+        avatar: '',
+        isOwn: true,
+      },
+    } as CreateStoryPlaceholder,
+    ...myStories.map(story => ({
+      ...story,
+      isEmpty: false,
+      user: {
+        name: story.profiles?.display_name || story.profiles?.username || 'You',
+        username: story.profiles?.username || 'you',
+        avatar: story.profiles?.avatar_url || '',
+        isOwn: true,
+      },
+    } as StoryWithUser)),
+    ...otherStories.map(story => ({
+      ...story,
+      isEmpty: false,
+      user: {
+        name: story.profiles?.display_name || story.profiles?.username || 'User',
+        username: story.profiles?.username || 'user',
+        avatar: story.profiles?.avatar_url || '',
+        isOwn: false,
+      },
+    } as StoryWithUser))
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
       <Navbar />
@@ -137,26 +158,33 @@ const Stories = () => {
 
         {/* Stories Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 mb-10">
-          {mockStories.map((story) => (
-            <Dialog key={story.id}>
-              <DialogTrigger asChild>
+          {displayStories.map((story) => (
+            <div key={story.id}>
+              {story.isEmpty ? (
                 <Card 
                   className="relative aspect-[3/4] overflow-hidden cursor-pointer group hover:scale-105 transition-all duration-300 shadow-lg bg-white/90 backdrop-blur-sm border-0"
-                  onClick={() => setSelectedStory(story)}
+                  onClick={() => setCreateDialogOpen(true)}
                 >
                   <CardContent className="p-0 h-full">
-                    {story.isEmpty ? (
-                      <div className="h-full bg-gradient-to-br from-primary/20 to-primary/10 flex flex-col items-center justify-center">
-                        <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center mb-2">
-                          <Plus className="w-6 h-6 text-primary-foreground" />
-                        </div>
-                        <span className="text-sm font-medium">Add Story</span>
+                    <div className="h-full bg-gradient-to-br from-primary/20 to-primary/10 flex flex-col items-center justify-center">
+                      <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center mb-2">
+                        <Plus className="w-6 h-6 text-primary-foreground" />
                       </div>
-                    ) : (
-                      <>
-                        {story.mediaType === 'image' ? (
+                      <span className="text-sm font-medium">Add Story</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Card 
+                      className="relative aspect-[3/4] overflow-hidden cursor-pointer group hover:scale-105 transition-all duration-300 shadow-lg bg-white/90 backdrop-blur-sm border-0"
+                      onClick={() => handleStoryClick(story)}
+                    >
+                      <CardContent className="p-0 h-full">
+                        {story.media_type === 'image' ? (
                           <img 
-                            src={story.mediaUrl} 
+                            src={story.media_url} 
                             alt="Story"
                             className="w-full h-full object-cover"
                           />
@@ -185,7 +213,7 @@ const Stories = () => {
                             {story.user.name}
                           </p>
                           <p className="text-white/80 text-xs">
-                            {formatTime(story.timestamp)}
+                            {formatTime(story.created_at)}
                           </p>
                         </div>
 
@@ -194,127 +222,144 @@ const Stories = () => {
                           <div className="absolute top-3 right-3">
                             <Badge variant="secondary" className="text-xs">
                               <Eye className="w-3 h-3 mr-1" />
-                              {story.views}
+                              {story.views_count}
                             </Badge>
                           </div>
                         )}
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
-              </DialogTrigger>
+                      </CardContent>
+                    </Card>
+                  </DialogTrigger>
 
-              {!story.isEmpty && (
-                <DialogContent className="max-w-md p-0 bg-black">
-                  <div className="relative aspect-[3/4]">
-                    {/* Progress bar */}
-                    <div className="absolute top-4 left-4 right-4 z-10">
-                      <div className="h-1 bg-white/30 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-white rounded-full transition-all duration-300"
-                          style={{ width: '30%' }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* User info */}
-                    <div className="absolute top-8 left-4 right-4 z-10 flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={story.user.avatar} alt={story.user.name} />
-                          <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                            {story.user.name.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="text-white text-sm font-medium">{story.user.name}</p>
-                          <p className="text-white/80 text-xs">{formatTime(story.timestamp)}</p>
+                  <DialogContent className="max-w-md p-0 bg-black">
+                    <div className="relative aspect-[3/4]">
+                      {/* Progress bar */}
+                      <div className="absolute top-4 left-4 right-4 z-10">
+                        <div className="h-1 bg-white/30 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-white rounded-full transition-all duration-300"
+                            style={{ width: '30%' }}
+                          />
                         </div>
                       </div>
-                      <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </Button>
+
+                      {/* User info */}
+                      <div className="absolute top-8 left-4 right-4 z-10 flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={story.user.avatar} alt={story.user.name} />
+                            <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                              {story.user.name.charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="text-white text-sm font-medium">{story.user.name}</p>
+                            <p className="text-white/80 text-xs">{formatTime(story.created_at || '')}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          {story.user.isOwn && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-white hover:bg-white/20"
+                              onClick={() => handleDeleteStory(story.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
+                          <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Media */}
+                      {story.media_type === 'image' ? (
+                        <img 
+                          src={story.media_url || ''} 
+                          alt="Story"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-black flex items-center justify-center">
+                          <video 
+                            className="w-full h-full object-cover" 
+                            autoPlay 
+                            muted 
+                            loop
+                          >
+                            <source src={story.media_url || ''} type="video/mp4" />
+                          </video>
+                        </div>
+                      )}
+
+                      {/* Caption */}
+                      {story.caption && (
+                        <div className="absolute bottom-20 left-4 right-4">
+                          <p className="text-white text-sm">{story.caption}</p>
+                        </div>
+                      )}
+
+                      {/* Actions */}
+                      <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
+                            <Heart className="w-5 h-5" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
+                            <MessageCircle className="w-5 h-5" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
+                            <Share className="w-5 h-5" />
+                          </Button>
+                        </div>
+                        <div className="flex items-center space-x-1 text-white/80 text-xs">
+                          <Clock className="w-3 h-3" />
+                          <span>{getTimeRemaining(story.expires_at || '')}</span>
+                        </div>
+                      </div>
                     </div>
-
-                    {/* Media */}
-                    {story.mediaType === 'image' ? (
-                      <img 
-                        src={story.mediaUrl} 
-                        alt="Story"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-black flex items-center justify-center">
-                        <video 
-                          className="w-full h-full object-cover" 
-                          autoPlay 
-                          muted 
-                          loop
-                        >
-                          <source src={story.mediaUrl} type="video/mp4" />
-                        </video>
-                      </div>
-                    )}
-
-                    {/* Caption */}
-                    {story.caption && (
-                      <div className="absolute bottom-20 left-4 right-4">
-                        <p className="text-white text-sm">{story.caption}</p>
-                      </div>
-                    )}
-
-                    {/* Actions */}
-                    <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
-                          <Heart className="w-5 h-5" />
-                        </Button>
-                        <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
-                          <MessageCircle className="w-5 h-5" />
-                        </Button>
-                        <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
-                          <Share className="w-5 h-5" />
-                        </Button>
-                      </div>
-                      <div className="flex items-center space-x-1 text-white/80 text-xs">
-                        <Clock className="w-3 h-3" />
-                        <span>{getTimeRemaining(story.expiresAt)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </DialogContent>
+                  </DialogContent>
+                </Dialog>
               )}
-            </Dialog>
+            </div>
           ))}
         </div>
 
         {/* Discover Stories */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-6 text-gray-800">Discover</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-            {mockStories.slice(1).map((story) => (
-              <Card key={`discover-${story.id}`} className="aspect-square overflow-hidden cursor-pointer hover:scale-105 transition-all duration-300 shadow-lg bg-white/90 backdrop-blur-sm border-0">
-                <CardContent className="p-0 h-full relative">
-                  <img 
-                    src={story.mediaUrl} 
-                    alt="Discover story"
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                  <div className="absolute bottom-2 left-2 right-2">
-                    <p className="text-white text-xs font-medium truncate">
-                      {story.user.name}
-                    </p>
-                    <div className="flex items-center space-x-1 text-white/80 text-xs">
-                      <Eye className="w-3 h-3" />
-                      <span>{story.views}</span>
+        {otherStories.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold mb-6 text-gray-800">Discover</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
+              {otherStories.slice(0, 12).map((story) => (
+                <Card key={`discover-${story.id}`} className="aspect-square overflow-hidden cursor-pointer hover:scale-105 transition-all duration-300 shadow-lg bg-white/90 backdrop-blur-sm border-0">
+                  <CardContent className="p-0 h-full relative">
+                    <img 
+                      src={story.media_url} 
+                      alt="Discover story"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                    <div className="absolute bottom-2 left-2 right-2">
+                      <p className="text-white text-xs font-medium truncate">
+                        {story.profiles?.display_name || story.profiles?.username}
+                      </p>
+                      <div className="flex items-center space-x-1 text-white/80 text-xs">
+                        <Eye className="w-3 h-3" />
+                        <span>{story.views_count}</span>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
+
+        <CreateStoryDialog 
+          open={createDialogOpen} 
+          onOpenChange={setCreateDialogOpen} 
+        />
       </main>
     </div>
   );
