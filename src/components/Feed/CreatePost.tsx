@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { usePostOperations } from '@/hooks/usePostOperations';
 import { 
   Image, 
   Video, 
@@ -21,13 +22,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { toast } from '@/hooks/use-toast';
 
 const CreatePost = () => {
   const { user } = useAuth();
+  const { createPost, loading } = usePostOperations();
   const [content, setContent] = useState('');
   const [visibility, setVisibility] = useState('public');
   const [mood, setMood] = useState('none');
-  const [loading, setLoading] = useState(false);
 
   const moods = [
     { value: 'happy', emoji: '😊', label: 'Happy' },
@@ -48,14 +50,24 @@ const CreatePost = () => {
     e.preventDefault();
     if (!content.trim()) return;
 
-    setLoading(true);
-    // TODO: Implement post creation
-    console.log('Creating post:', { content, visibility, mood });
-    
-    // Reset form
-    setContent('');
-    setMood('none');
-    setLoading(false);
+    try {
+      await createPost({
+        content,
+        visibility,
+        mood: mood === 'none' ? undefined : mood,
+      });
+      
+      // Reset form on success
+      setContent('');
+      setMood('none');
+      
+      toast({
+        title: "Success",
+        description: "Post created successfully!"
+      });
+    } catch (error) {
+      console.error('Error creating post:', error);
+    }
   };
 
   return (

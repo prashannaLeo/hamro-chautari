@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { useMessages } from '@/hooks/useMessages';
 import { 
   Search, 
   MoreVertical, 
@@ -99,11 +100,19 @@ const mockMessages = [
 
 const Messages = () => {
   const { user, loading } = useAuth();
-  const [selectedChat, setSelectedChat] = useState(mockChats[0]);
+  const { 
+    chats, 
+    messages, 
+    loading: messagesLoading,
+    sendMessage,
+    fetchMessages,
+    sendingMessage 
+  } = useMessages();
+  const [selectedChat, setSelectedChat] = useState<any>(null);
   const [newMessage, setNewMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
-  if (loading) {
+  if (loading || messagesLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -115,19 +124,34 @@ const Messages = () => {
     return <Navigate to="/auth" replace />;
   }
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !selectedChat) return;
     
-    // TODO: Implement send message functionality
-    console.log('Sending message:', newMessage);
-    setNewMessage('');
+    try {
+      await sendMessage(selectedChat.id, newMessage);
+      setNewMessage('');
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
   };
 
-  const filteredChats = mockChats.filter(chat =>
-    chat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    chat.username.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const handleSelectChat = (chat: any) => {
+    setSelectedChat(chat);
+    fetchMessages(chat.id);
+  };
+
+  const filteredChats = chats.filter(chat => {
+    const chatName = chat.name || 
+      chat.chat_participants
+        ?.filter(p => p.user_id !== user.id)
+        ?.map(p => p.profiles?.display_name || p.profiles?.username)
+        ?.join(', ') || 'Unknown';
+    
+    return chatName.toLowerCase().includes(searchQuery.toLowerCase());
+  });
+
+  const currentMessages = selectedChat ? messages[selectedChat.id] || [] : [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
@@ -156,50 +180,57 @@ const Messages = () => {
             </CardHeader>
             <CardContent className="p-0">
               <div className="space-y-1">
-                {filteredChats.map((chat) => (
-                  <div
-                    key={chat.id}
-                    onClick={() => setSelectedChat(chat)}
-                    className={`flex items-center space-x-3 p-3 hover:bg-muted cursor-pointer transition-colors ${
-                      selectedChat?.id === chat.id ? 'bg-muted' : ''
-                    }`}
-                  >
-                    <div className="relative">
-                      <Avatar className="h-12 w-12">
-                        <AvatarImage src={chat.avatar} alt={chat.name} />
-                        <AvatarFallback className="bg-primary text-primary-foreground">
-                          {chat.name.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      {chat.isOnline && chat.type === 'direct' && (
-                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-background rounded-full"></div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-medium truncate">
-                          {chat.name}
-                          {chat.type === 'group' && (
-                            <span className="text-xs text-muted-foreground ml-1">
-                              ({chat.memberCount})
-                            </span>
-                          )}
-                        </h3>
-                        <span className="text-xs text-muted-foreground">{chat.timestamp}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs text-muted-foreground truncate">
-                          {chat.lastMessage}
-                        </p>
-                        {chat.unreadCount > 0 && (
-                          <Badge variant="destructive" className="h-5 w-5 text-xs p-0 flex items-center justify-center">
-                            {chat.unreadCount}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
+                {filteredChats.length === 0 ? (
+                  <div className="p-4 text-center text-gray-500">
+                    No conversations found
                   </div>
-                ))}
+                ) : (
+                  filteredChats.map((chat) => {
+                    const chatName = chat.name || 
+                      chat.chat_participants
+                        ?.filter(p => p.user_id !== user.id)
+                        ?.map(p => p.profiles?.display_name || p.profiles?.username)
+                        ?.join(', ') || 'Unknown';
+                    
+                    const otherParticipant = chat.chat_participants?.find(p => p.user_id !== user.id);
+                    const avatar = otherParticipant?.profiles?.avatar_url;
+                    
+                    return (
+                      <div
+                        key={chat.id}
+                        onClick={() => handleSelectChat(chat)}
+                        className={`flex items-center space-x-3 p-3 hover:bg-muted cursor-pointer transition-colors ${
+                          selectedChat?.id === chat.id ? 'bg-muted' : ''
+                        }`}
+                      >
+                        <div className="relative">
+                          <Avatar className="h-12 w-12">
+                            <AvatarImage src={avatar || ''} alt={chatName} />
+                            <AvatarFallback className="bg-primary text-primary-foreground">
+                              {chatName.charAt(0)?.toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-sm font-medium truncate">
+                              {chatName}
+                            </h3>
+                            <span className="text-xs text-muted-foreground">
+                              {/* Time formatting would go here */}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs text-muted-foreground truncate">
+                              {/* Last message would go here */}
+                              Start a conversation
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </CardContent>
           </Card>
@@ -213,18 +244,20 @@ const Messages = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                       <Avatar className="h-10 w-10">
-                        <AvatarImage src={selectedChat.avatar} alt={selectedChat.name} />
                         <AvatarFallback className="bg-primary text-primary-foreground">
-                          {selectedChat.name.charAt(0)}
+                          {(selectedChat.name || 'U').charAt(0)}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <h3 className="font-medium">{selectedChat.name}</h3>
+                        <h3 className="font-medium">
+                          {selectedChat.name || 
+                            selectedChat.chat_participants
+                              ?.filter((p: any) => p.user_id !== user.id)
+                              ?.map((p: any) => p.profiles?.display_name || p.profiles?.username)
+                              ?.join(', ') || 'Unknown'}
+                        </h3>
                         <p className="text-xs text-muted-foreground">
-                          {selectedChat.type === 'direct' 
-                            ? selectedChat.isOnline ? 'Online' : 'Last seen recently'
-                            : `${selectedChat.memberCount} members`
-                          }
+                          {selectedChat.type === 'direct' ? 'Direct message' : 'Group chat'}
                         </p>
                       </div>
                     </div>
@@ -254,29 +287,38 @@ const Messages = () => {
                 {/* Messages */}
                 <CardContent className="flex-1 p-4 overflow-y-auto">
                   <div className="space-y-4">
-                    {mockMessages.map((message) => (
-                      <div
-                        key={message.id}
-                        className={`flex ${message.senderId === 'me' ? 'justify-end' : 'justify-start'}`}
-                      >
-                        <div
-                          className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                            message.senderId === 'me'
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-muted'
-                          }`}
-                        >
-                          <p className="text-sm">{message.content}</p>
-                          <p className={`text-xs mt-1 ${
-                            message.senderId === 'me' 
-                              ? 'text-primary-foreground/70' 
-                              : 'text-muted-foreground'
-                          }`}>
-                            {message.timestamp}
-                          </p>
-                        </div>
+                    {currentMessages.length === 0 ? (
+                      <div className="text-center text-gray-500 py-8">
+                        No messages yet. Start the conversation!
                       </div>
-                    ))}
+                    ) : (
+                      currentMessages.map((message) => (
+                        <div
+                          key={message.id}
+                          className={`flex ${message.sender_id === user.id ? 'justify-end' : 'justify-start'}`}
+                        >
+                          <div
+                            className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                              message.sender_id === user.id
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-muted'
+                            }`}
+                          >
+                            <p className="text-sm">{message.content}</p>
+                            <p className={`text-xs mt-1 ${
+                              message.sender_id === user.id 
+                                ? 'text-primary-foreground/70' 
+                                : 'text-muted-foreground'
+                            }`}>
+                              {new Date(message.created_at).toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </p>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </CardContent>
 
@@ -292,6 +334,7 @@ const Messages = () => {
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         className="pr-14 h-12 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                        disabled={sendingMessage}
                       />
                       <Button 
                         type="button" 
@@ -305,10 +348,14 @@ const Messages = () => {
                     <Button 
                       type="submit" 
                       size="sm" 
-                      disabled={!newMessage.trim()}
+                      disabled={!newMessage.trim() || sendingMessage}
                       className="px-6 py-3 rounded-xl font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
                     >
-                      <Send className="w-5 h-5" />
+                      {sendingMessage ? (
+                        <div className="w-5 h-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      ) : (
+                        <Send className="w-5 h-5" />
+                      )}
                     </Button>
                   </form>
                 </div>

@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 
+const BACKEND_URL = 'http://localhost:5000';
+
 export interface Post {
   id: string;
   user_id: string;
@@ -57,6 +59,29 @@ export const usePostOperations = () => {
         .single();
 
       if (error) throw error;
+
+      // Sync with Express backend
+      try {
+        await fetch(`${BACKEND_URL}/api/posts`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            supabasePostId: data.id,
+            userId: user.id,
+            content: postData.content,
+            visibility: postData.visibility,
+            mood: postData.mood === 'none' ? null : postData.mood,
+            location: postData.location,
+            mediaUrls: postData.media_urls || [],
+            postType: postData.media_urls?.length ? 'media' : 'text'
+          }),
+        });
+      } catch (backendError) {
+        console.error('Backend sync error:', backendError);
+        // Don't throw - Supabase creation was successful
+      }
 
       toast({
         title: "Success",
