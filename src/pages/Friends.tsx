@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useFriends } from '@/hooks/useFriends';
 import { useCalling } from '@/hooks/useCalling';
+import { useUserSearch } from '@/hooks/useUserSearch';
 import { toast } from '@/hooks/use-toast';
 import { 
   Search, 
@@ -31,105 +32,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-const mockFriends = [
-  {
-    id: '1',
-    name: 'Priya Sharma',
-    username: 'priya_sharma',
-    avatar: '',
-    bio: 'Adventure seeker and mountain lover from Kathmandu',
-    location: 'Kathmandu, Nepal',
-    mutualFriends: 5,
-    isOnline: true,
-    mood: 'happy',
-    status: 'friend'
-  },
-  {
-    id: '2',
-    name: 'Arjun Thapa',
-    username: 'arjun_thapa',
-    avatar: '',
-    bio: 'Professional trekker and photographer',
-    location: 'Pokhara, Nepal',
-    mutualFriends: 12,
-    isOnline: false,
-    mood: 'adventurous',
-    status: 'friend'
-  },
-  {
-    id: '3',
-    name: 'Sita Rai',
-    username: 'sita_rai',
-    avatar: '',
-    bio: 'Traditional dance instructor and cultural enthusiast',
-    location: 'Lalitpur, Nepal',
-    mutualFriends: 8,
-    isOnline: true,
-    mood: 'creative',
-    status: 'friend'
-  },
-];
-
-const mockRequests = [
-  {
-    id: '4',
-    name: 'Bikash Gurung',
-    username: 'bikash_gurung',
-    avatar: '',
-    bio: 'Travel blogger exploring Nepal',
-    location: 'Chitwan, Nepal',
-    mutualFriends: 3,
-    requestedAt: '2 days ago',
-    status: 'pending'
-  },
-  {
-    id: '5',
-    name: 'Nisha Shrestha',
-    username: 'nisha_shrestha',
-    avatar: '',
-    bio: 'Food lover and chef',
-    location: 'Bhaktapur, Nepal',
-    mutualFriends: 7,
-    requestedAt: '1 week ago',
-    status: 'pending'
-  },
-];
-
-const mockSuggestions = [
-  {
-    id: '6',
-    name: 'Ramesh Magar',
-    username: 'ramesh_magar',
-    avatar: '',
-    bio: 'Nature photographer',
-    location: 'Mustang, Nepal',
-    mutualFriends: 15,
-    reason: 'Works at Mountain Photography',
-    status: 'suggested'
-  },
-  {
-    id: '7',
-    name: 'Sunita Tamang',
-    username: 'sunita_tamang',
-    avatar: '',
-    bio: 'Yoga instructor and wellness coach',
-    location: 'Kathmandu, Nepal',
-    mutualFriends: 9,
-    reason: 'Friends with Priya Sharma',
-    status: 'suggested'
-  },
-  {
-    id: '8',
-    name: 'Dipak Thakuri',
-    username: 'dipak_thakuri',
-    avatar: '',
-    bio: 'Software engineer and tech enthusiast',
-    location: 'Kathmandu, Nepal',
-    mutualFriends: 4,
-    reason: 'From your contacts',
-    status: 'suggested'
-  },
-];
 
 const getMoodEmoji = (mood: string) => {
   const moodEmojis: { [key: string]: string } = {
@@ -146,6 +48,7 @@ const getMoodEmoji = (mood: string) => {
 const Friends = () => {
   const { user, loading } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
+  const [userSearchQuery, setUserSearchQuery] = useState('');
   const { 
     friends, 
     friendRequests, 
@@ -157,6 +60,7 @@ const Friends = () => {
     sendFriendRequest
   } = useFriends();
   const { initiateCall } = useCalling();
+  const { searchResults, loading: searchLoading, searchUsers } = useUserSearch();
 
   if (loading || friendsLoading) {
     return (
@@ -180,6 +84,20 @@ const Friends = () => {
 
   const handleSendRequest = async (userId: string) => {
     await sendFriendRequest(userId);
+    // Refresh search to remove the user from results
+    if (userSearchQuery.trim()) {
+      searchUsers(userSearchQuery);
+    }
+  };
+
+  const handleUserSearch = (query: string) => {
+    setUserSearchQuery(query);
+    if (query.trim()) {
+      searchUsers(query);
+    } else {
+      // Clear results when search is empty
+      searchUsers('');
+    }
   };
 
   const handleMessage = (friend: any) => {
@@ -228,7 +146,7 @@ const Friends = () => {
         </div>
 
         <Tabs defaultValue="friends" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-8 bg-gray-100 p-1 rounded-xl">
+          <TabsList className="grid w-full grid-cols-4 mb-8 bg-gray-100 p-1 rounded-xl">
             <TabsTrigger value="friends" className="rounded-lg font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm">
               <Users className="w-4 h-4 mr-2" />
               Friends ({friends.length})
@@ -237,9 +155,13 @@ const Friends = () => {
               <UserPlus className="w-4 h-4 mr-2" />
               Requests ({friendRequests.length})
             </TabsTrigger>
-            <TabsTrigger value="suggestions" className="rounded-lg font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            <TabsTrigger value="sent" className="rounded-lg font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm">
               <Heart className="w-4 h-4 mr-2" />
               Sent ({sentRequests.length})
+            </TabsTrigger>
+            <TabsTrigger value="discover" className="rounded-lg font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm">
+              <Search className="w-4 h-4 mr-2" />
+              Discover
             </TabsTrigger>
           </TabsList>
 
@@ -404,7 +326,7 @@ const Friends = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="suggestions" className="space-y-4">
+          <TabsContent value="sent" className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {sentRequests.length === 0 ? (
                 <div className="col-span-full text-center py-12">
@@ -438,6 +360,87 @@ const Friends = () => {
                       <div className="flex items-center justify-center py-4">
                         <Badge variant="outline">Request Sent</Badge>
                       </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="discover" className="space-y-4">
+            {/* User Search */}
+            <div className="relative mb-8">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Input
+                placeholder="Search for users to add as friends..."
+                value={userSearchQuery}
+                onChange={(e) => handleUserSearch(e.target.value)}
+                className="pl-12 h-12 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+              />
+            </div>
+
+            {/* Search Results */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {searchLoading ? (
+                <div className="col-span-full text-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                  <p className="text-muted-foreground mt-4">Searching...</p>
+                </div>
+              ) : searchResults.length === 0 && userSearchQuery.trim() ? (
+                <div className="col-span-full text-center py-12">
+                  <Search className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">No users found</h3>
+                  <p className="text-muted-foreground">Try searching with a different username or name</p>
+                </div>
+              ) : searchResults.length === 0 ? (
+                <div className="col-span-full text-center py-12">
+                  <UserPlus className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">Discover New Friends</h3>
+                  <p className="text-muted-foreground">Search for users by username or name to send friend requests</p>
+                </div>
+              ) : (
+                searchResults.map((user) => (
+                  <Card key={user.id} className="hover:shadow-xl transition-all duration-300 bg-white/90 backdrop-blur-sm border-0 shadow-lg">
+                    <CardContent className="p-4">
+                      <div className="flex items-center space-x-3 mb-3">
+                        <Avatar className="h-12 w-12">
+                          <AvatarImage src={user.avatar_url || ''} alt={user.display_name || user.username} />
+                          <AvatarFallback className="bg-primary text-primary-foreground">
+                            {(user.display_name || user.username)?.charAt(0)?.toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium truncate">{user.display_name || user.username}</h3>
+                          <p className="text-sm text-muted-foreground">@{user.username}</p>
+                        </div>
+                      </div>
+
+                      {user.mood && (
+                        <Badge variant="outline" className="mb-2">
+                          {getMoodEmoji(user.mood)} {user.mood}
+                        </Badge>
+                      )}
+
+                      {user.bio && (
+                        <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
+                          {user.bio}
+                        </p>
+                      )}
+
+                      {user.location && (
+                        <div className="flex items-center text-sm text-muted-foreground mb-4">
+                          <MapPin className="w-4 h-4 mr-1" />
+                          {user.location}
+                        </div>
+                      )}
+
+                      <Button 
+                        className="w-full"
+                        onClick={() => handleSendRequest(user.user_id)}
+                      >
+                        <UserPlus className="w-4 h-4 mr-2" />
+                        Send Friend Request
+                      </Button>
                     </CardContent>
                   </Card>
                 ))
