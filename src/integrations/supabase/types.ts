@@ -486,7 +486,15 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      decrement_comments: {
+        Args: { post_id: string }
+        Returns: undefined
+      }
       decrement_likes: {
+        Args: { post_id: string }
+        Returns: undefined
+      }
+      increment_comments: {
         Args: { post_id: string }
         Returns: undefined
       }

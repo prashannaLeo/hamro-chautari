@@ -105,6 +105,12 @@ export const useComments = (postId: string) => {
       console.log('Comment added successfully:', data);
       setComments(prev => [...prev, data]);
 
+      // Increment comment count in posts table
+      const { error: incrementError } = await supabase.rpc('increment_comments', { post_id: postId });
+      if (incrementError) {
+        console.error('Error incrementing comment count:', incrementError);
+      }
+
       // Create notification for post owner
       const { data: postData } = await supabase
         .from('posts')
@@ -160,6 +166,13 @@ export const useComments = (postId: string) => {
       }
 
       setComments(prev => prev.filter(comment => comment.id !== commentId));
+      
+      // Decrement comment count in posts table
+      const { error: decrementError } = await supabase.rpc('decrement_comments', { post_id: postId });
+      if (decrementError) {
+        console.error('Error decrementing comment count:', decrementError);
+      }
+      
       toast({
         variant: "success",
         title: "Success",

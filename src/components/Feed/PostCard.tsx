@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -21,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePostOperations } from '@/hooks/usePostOperations';
 
 // Lazy load CommentSection to avoid circular dependencies
 const CommentSection = React.lazy(() => import('@/components/Comments/CommentSection'));
@@ -47,21 +48,93 @@ interface PostCardProps {
   };
   onEdit?: (postId: string) => void;
   onDelete?: (postId: string) => void;
+  onPostUpdate?: (postId: string, updates: { likes: number; comments: number }) => void;
 }
 
-const PostCard: React.FC<PostCardProps> = ({ post, onEdit, onDelete }) => {
+const PostCard: React.FC<PostCardProps> = ({ post, onEdit, onDelete, onPostUpdate }) => {
   const [isLiked, setIsLiked] = useState(post.isLiked || false);
   const [likesCount, setLikesCount] = useState(post.likes);
+  const [commentsCount, setCommentsCount] = useState(post.comments);
   const [showComments, setShowComments] = useState(false);
   const { user } = useAuth();
+  const { likePost, loading } = usePostOperations();
 
   const isOwner = user?.id === post.user_id;
 
-  const handleLike = () => {
-    setIsLiked(!isLiked);
-    setLikesCount(prev => isLiked ? prev - 1 : prev + 1);
-    // TODO: Implement like functionality
+  // Check if user has liked this post on component mount
+  useEffect(() => {
+    const checkIfLiked = async () => {
+      if (!user || !post.id) return;
+      
+      try {
+        const { supabase } = await import('@/integrations/supabase/client');
+        const { data } = await supabase
+          .from('likes')
+          .select('id')
+          .eq('post_id', post.id)
+          .eq('user_id', user.id)
+          .single();
+        
+        setIsLiked(!!data);
+      } catch (error) {
+        // User hasn't liked this post
+        setIsLiked(false);
+      }
+    };
+
+    checkIfLiked();
+  }, [post.id, user]);
+
+  const handleLike = async () => {
+    if (!user || loading) return;
+    
+    try {
+      const wasLiked = await likePost(post.id);
+      setIsLiked(wasLiked ?? false);
+      
+      // Update likes count optimistically
+      const newLikesCount = wasLiked ? likesCount + 1 : likesCount - 1;
+      setLikesCount(newLikesCount);
+      
+      // Notify parent component of the update
+      onPostUpdate?.(post.id, { likes: newLikesCount, comments: commentsCount });
+    } catch (error) {
+      console.error('Error handling like:', error);
+    }
   };
+
+  // Subscribe to comment count changes
+  useEffect(() => {
+    const { supabase } = require('@/integrations/supabase/client');
+    
+    const subscription = supabase
+      .channel(`post-updates:${post.id}`)
+      .on('postgres_changes', 
+        { 
+          event: 'UPDATE', 
+          schema: 'public', 
+          table: 'posts',
+          filter: `id=eq.${post.id}`
+        }, 
+        (payload: any) => {
+          if (payload.new.comments_count !== undefined) {
+            setCommentsCount(payload.new.comments_count);
+            onPostUpdate?.(post.id, { 
+              likes: payload.new.likes_count || likesCount, 
+              comments: payload.new.comments_count 
+            });
+          }
+          if (payload.new.likes_count !== undefined) {
+            setLikesCount(payload.new.likes_count);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [post.id, likesCount, commentsCount, onPostUpdate]);
 
   const formatTime = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -229,7 +302,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onEdit, onDelete }) => {
               }`}
             >
               <MessageCircle className="w-5 h-5" />
-              <span className="font-semibold">{post.comments}</span>
+              <span className="font-semibold">{commentsCount}</span>
             </Button>
             
             <Button variant="ghost" size="sm" className="space-x-2 text-gray-600 hover:text-green-600 hover:bg-green-50 transition-colors">
