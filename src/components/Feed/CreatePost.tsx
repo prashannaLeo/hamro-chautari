@@ -59,29 +59,29 @@ const CreatePost = () => {
   };
 
   return (
-    <Card className="mb-6">
-      <CardContent className="p-4">
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <Card className="shadow-lg bg-white/90 backdrop-blur-sm border-0 hover:shadow-xl transition-all duration-300">
+      <CardContent className="p-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
           {/* User info */}
-          <div className="flex items-center space-x-3">
-            <Avatar className="h-10 w-10">
+          <div className="flex items-center space-x-4">
+            <Avatar className="h-12 w-12 ring-2 ring-white shadow-md">
               <AvatarImage src="" alt="User" />
-              <AvatarFallback className="bg-primary text-primary-foreground">
+              <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white font-semibold">
                 {user?.email?.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">
-              <p className="font-medium text-sm">{user?.email}</p>
-              <div className="flex items-center space-x-2 mt-1">
+              <p className="font-semibold text-gray-800">{user?.email}</p>
+              <div className="flex items-center space-x-3 mt-1">
                 <Select value={visibility} onValueChange={setVisibility}>
-                  <SelectTrigger className="w-auto h-6 text-xs">
+                  <SelectTrigger className="w-auto h-7 text-sm bg-gray-100 border-gray-200 rounded-lg">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white/95 backdrop-blur-sm">
                     {visibilityOptions.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         <div className="flex items-center space-x-2">
-                          <option.icon className="w-3 h-3" />
+                          <option.icon className="w-4 h-4" />
                           <span>{option.label}</span>
                         </div>
                       </SelectItem>
@@ -89,7 +89,7 @@ const CreatePost = () => {
                   </SelectContent>
                 </Select>
                 {mood && mood !== 'none' && (
-                  <Badge variant="secondary" className="text-xs">
+                  <Badge variant="outline" className="bg-gradient-to-r from-purple-100 to-pink-100 border-purple-200 text-purple-800 font-medium">
                     {moods.find(m => m.value === mood)?.emoji} {moods.find(m => m.value === mood)?.label}
                   </Badge>
                 )}
@@ -102,34 +102,34 @@ const CreatePost = () => {
             placeholder="What's on your mind? Share your thoughts with Hamro Chautari..."
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="min-h-20 resize-none border-none p-0 text-base focus-visible:ring-0"
+            className="min-h-24 resize-none border-0 bg-gray-50 rounded-xl p-4 text-base focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:bg-white transition-all"
           />
 
           {/* Actions */}
-          <div className="flex items-center justify-between pt-2 border-t border-border">
-            <div className="flex items-center space-x-2">
-              <Button type="button" variant="ghost" size="sm">
-                <Image className="w-4 h-4 mr-1" />
-                <span className="hidden sm:inline">Photo</span>
+          <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+            <div className="flex items-center space-x-3">
+              <Button type="button" variant="ghost" size="sm" className="text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl">
+                <Image className="w-5 h-5 mr-2" />
+                <span className="hidden sm:inline font-medium">Photo</span>
               </Button>
-              <Button type="button" variant="ghost" size="sm">
-                <Video className="w-4 h-4 mr-1" />
-                <span className="hidden sm:inline">Video</span>
+              <Button type="button" variant="ghost" size="sm" className="text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-xl">
+                <Video className="w-5 h-5 mr-2" />
+                <span className="hidden sm:inline font-medium">Video</span>
               </Button>
-              <Button type="button" variant="ghost" size="sm">
-                <MapPin className="w-4 h-4 mr-1" />
-                <span className="hidden sm:inline">Location</span>
+              <Button type="button" variant="ghost" size="sm" className="text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-xl">
+                <MapPin className="w-5 h-5 mr-2" />
+                <span className="hidden sm:inline font-medium">Location</span>
               </Button>
               
               {/* Mood selector */}
               <Select value={mood} onValueChange={setMood}>
-                <SelectTrigger className="w-auto h-8 border-none">
+                <SelectTrigger className="w-auto h-9 border-0 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">
                   <div className="flex items-center">
-                    <Smile className="w-4 h-4 mr-1" />
-                    <span className="hidden sm:inline">Mood</span>
+                    <Smile className="w-5 h-5 mr-2 text-orange-500" />
+                    <span className="hidden sm:inline font-medium text-gray-700">Mood</span>
                   </div>
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white/95 backdrop-blur-sm">
                   <SelectItem value="none">
                     <span>No mood</span>
                   </SelectItem>
@@ -148,7 +148,7 @@ const CreatePost = () => {
             <Button 
               type="submit" 
               disabled={!content.trim() || loading}
-              size="sm"
+              className="px-6 py-2 rounded-xl font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
             >
               {loading ? 'Posting...' : 'Post'}
             </Button>

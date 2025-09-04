@@ -145,12 +145,12 @@ const Messages = () => {
                 </Button>
               </div>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <Input
                   placeholder="Search conversations..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
+                  className="pl-12 h-12 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
                 />
               </div>
             </CardHeader>
@@ -281,29 +281,34 @@ const Messages = () => {
                 </CardContent>
 
                 {/* Message Input */}
-                <div className="p-4 border-t border-border">
-                  <form onSubmit={handleSendMessage} className="flex items-center space-x-2">
-                    <Button type="button" variant="ghost" size="sm">
-                      <Paperclip className="w-4 h-4" />
+                <div className="p-6 border-t border-gray-100">
+                  <form onSubmit={handleSendMessage} className="flex items-center space-x-3">
+                    <Button type="button" variant="ghost" size="sm" className="p-3 rounded-xl hover:bg-blue-50">
+                      <Paperclip className="w-5 h-5 text-gray-600" />
                     </Button>
                     <div className="flex-1 relative">
                       <Input
                         placeholder="Type a message..."
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
-                        className="pr-12"
+                        className="pr-14 h-12 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
                       />
                       <Button 
                         type="button" 
                         variant="ghost" 
                         size="sm" 
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 rounded-xl hover:bg-gray-100"
                       >
-                        <Smile className="w-4 h-4" />
+                        <Smile className="w-5 h-5 text-gray-600" />
                       </Button>
                     </div>
-                    <Button type="submit" size="sm" disabled={!newMessage.trim()}>
-                      <Send className="w-4 h-4" />
+                    <Button 
+                      type="submit" 
+                      size="sm" 
+                      disabled={!newMessage.trim()}
+                      className="px-6 py-3 rounded-xl font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+                    >
+                      <Send className="w-5 h-5" />
                     </Button>
                   </form>
                 </div>

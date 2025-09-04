@@ -103,38 +103,41 @@ const PostSuggestions = () => {
   };
 
   return (
-    <Card className="mb-6">
-      <CardHeader className="pb-3">
+    <Card className="shadow-lg bg-white/90 backdrop-blur-sm border-0">
+      <CardHeader className="pb-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-t-xl">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center space-x-2 text-lg">
-            <Brain className="w-5 h-5" />
-            <span>AI Post Suggestions</span>
-            <Badge variant="secondary" className="text-xs">Beta</Badge>
+          <CardTitle className="flex items-center space-x-3 text-xl">
+            <Brain className="w-6 h-6 text-blue-600" />
+            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent font-bold">AI Post Suggestions</span>
+            <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-200">Beta</Badge>
           </CardTitle>
           <Button 
             variant="outline" 
             size="sm" 
             onClick={refreshSuggestions}
             disabled={loading}
+            className="rounded-xl hover:bg-blue-50 border-blue-200"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
         </div>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-gray-600 mt-2">
           AI-powered content ideas based on your interests and current trends
         </p>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-4 p-6">
         {suggestions.slice(0, 2).map((suggestion) => (
           <div 
             key={suggestion.id}
-            className="p-3 border border-border rounded-lg hover:bg-muted/50 transition-colors"
+            className="p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl hover:from-blue-50 hover:to-purple-50 transition-all duration-300 border border-gray-100 hover:border-blue-200 hover:shadow-md"
           >
-            <div className="flex items-start justify-between mb-2">
-              <div className="flex items-center space-x-2">
-                {getTypeIcon(suggestion.type)}
-                <span className="font-medium text-sm">{suggestion.title}</span>
-                <Badge variant="outline" className="text-xs">
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-white rounded-lg shadow-sm">
+                  {getTypeIcon(suggestion.type)}
+                </div>
+                <span className="font-semibold text-gray-800">{suggestion.title}</span>
+                <Badge variant="outline" className="bg-gradient-to-r from-purple-100 to-pink-100 border-purple-200 text-purple-800">
                   {getMoodEmoji(suggestion.mood)} {suggestion.mood}
                 </Badge>
               </div>
@@ -142,24 +145,25 @@ const PostSuggestions = () => {
                 size="sm" 
                 variant="ghost"
                 onClick={() => useSuggestion(suggestion)}
+                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-xl"
               >
                 <Plus className="w-4 h-4" />
               </Button>
             </div>
             
-            <p className="text-sm text-muted-foreground mb-2 leading-relaxed">
+            <p className="text-sm text-gray-700 mb-3 leading-relaxed">
               {suggestion.content}
             </p>
             
             <div className="flex items-center justify-between">
-              <div className="flex flex-wrap gap-1">
+              <div className="flex flex-wrap gap-2">
                 {suggestion.tags.map((tag) => (
-                  <Badge key={tag} variant="secondary" className="text-xs">
+                  <Badge key={tag} variant="secondary" className="text-xs bg-white/80 text-gray-600 border-gray-200">
                     #{tag}
                   </Badge>
                 ))}
               </div>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-gray-500 italic">
                 {suggestion.reason}
               </span>
             </div>
@@ -169,7 +173,7 @@ const PostSuggestions = () => {
         <Button 
           variant="outline" 
           size="sm" 
-          className="w-full"
+          className="w-full rounded-xl bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200 hover:from-blue-100 hover:to-purple-100 text-blue-700 font-medium"
           onClick={refreshSuggestions}
           disabled={loading}
         >

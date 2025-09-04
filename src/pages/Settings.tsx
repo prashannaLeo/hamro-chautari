@@ -119,10 +119,10 @@ const Settings = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
       <Navbar />
       
-      <div className="max-w-4xl mx-auto px-4 py-6 pb-20 sm:pb-6">
+      <main className="max-w-4xl mx-auto px-4 py-8 pb-20 sm:pb-8">
         <div className="mb-6">
           <h1 className="text-2xl font-bold mb-2">Settings</h1>
           <p className="text-muted-foreground">Manage your account and preferences</p>
@@ -464,7 +464,7 @@ const Settings = () => {
             </CardContent>
           </Card>
         </div>
-      </div>
+      </main>
     </div>
   );
 };

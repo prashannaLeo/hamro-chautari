@@ -185,16 +185,16 @@ const Friends = () => {
         </div>
 
         <Tabs defaultValue="friends" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
-            <TabsTrigger value="friends">
+          <TabsList className="grid w-full grid-cols-3 mb-8 bg-gray-100 p-1 rounded-xl">
+            <TabsTrigger value="friends" className="rounded-lg font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm">
               <Users className="w-4 h-4 mr-2" />
               Friends ({mockFriends.length})
             </TabsTrigger>
-            <TabsTrigger value="requests">
+            <TabsTrigger value="requests" className="rounded-lg font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm">
               <UserPlus className="w-4 h-4 mr-2" />
               Requests ({mockRequests.length})
             </TabsTrigger>
-            <TabsTrigger value="suggestions">
+            <TabsTrigger value="suggestions" className="rounded-lg font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm">
               <Heart className="w-4 h-4 mr-2" />
               Suggestions
             </TabsTrigger>
@@ -202,13 +202,13 @@ const Friends = () => {
 
           <TabsContent value="friends" className="space-y-4">
             {/* Search */}
-            <div className="relative mb-6">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <div className="relative mb-8">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <Input
                 placeholder="Search friends..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="pl-12 h-12 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
               />
             </div>
 

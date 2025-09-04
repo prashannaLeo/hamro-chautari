@@ -78,12 +78,49 @@ const Navbar = () => {
             ))}
 
             {/* Notifications */}
-            <Button variant="ghost" className="relative p-3 rounded-xl hover:bg-blue-50 transition-colors">
-              <Bell className="w-6 h-6 text-gray-600" />
-              <Badge className="absolute -top-1 -right-1 w-6 h-6 text-xs p-0 flex items-center justify-center bg-red-500 hover:bg-red-500">
-                3
-              </Badge>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative p-3 rounded-xl hover:bg-blue-50 transition-colors">
+                  <Bell className="w-6 h-6 text-gray-600" />
+                  <Badge className="absolute -top-1 -right-1 w-6 h-6 text-xs p-0 flex items-center justify-center bg-red-500 hover:bg-red-500">
+                    3
+                  </Badge>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-80 bg-white/95 backdrop-blur-sm border shadow-xl">
+                <div className="p-4 border-b">
+                  <h3 className="font-semibold text-gray-800">Notifications</h3>
+                </div>
+                <div className="max-h-96 overflow-y-auto">
+                  <DropdownMenuItem className="p-4 hover:bg-blue-50 flex items-start space-x-3 border-b">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                    <div>
+                      <p className="text-sm font-medium">Priya Sharma liked your post</p>
+                      <p className="text-xs text-gray-500">2 minutes ago</p>
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="p-4 hover:bg-blue-50 flex items-start space-x-3 border-b">
+                    <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
+                    <div>
+                      <p className="text-sm font-medium">New friend request from Arjun Thapa</p>
+                      <p className="text-xs text-gray-500">5 minutes ago</p>
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="p-4 hover:bg-blue-50 flex items-start space-x-3">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>
+                    <div>
+                      <p className="text-sm font-medium">Sita Rai commented on your photo</p>
+                      <p className="text-xs text-gray-500">10 minutes ago</p>
+                    </div>
+                  </DropdownMenuItem>
+                </div>
+                <div className="p-3 border-t">
+                  <Button variant="ghost" className="w-full text-sm text-blue-600 hover:bg-blue-50">
+                    View all notifications
+                  </Button>
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             {/* User menu */}
             <DropdownMenu>

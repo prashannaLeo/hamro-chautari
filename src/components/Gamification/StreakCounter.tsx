@@ -82,7 +82,7 @@ const StreakCounter: React.FC<StreakCounterProps> = ({
     if (streakData.currentStreak >= 30) return 'text-purple-500';
     if (streakData.currentStreak >= 14) return 'text-blue-500';
     if (streakData.currentStreak >= 7) return 'text-green-500';
-    if (streakData.currentStreak >= 3) return 'text-yellow-500';
+    if (streakData.currentStreak >= 3) return 'text-orange-500';
     return 'text-orange-500';
   };
 
@@ -161,7 +161,7 @@ const StreakCounter: React.FC<StreakCounterProps> = ({
                   exit={{ scale: 0, opacity: 0 }}
                   className="absolute -top-2 -right-8"
                 >
-                  <Badge variant="secondary" className="text-xs bg-yellow-100 text-yellow-800">
+                  <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-800 border-orange-200">
                     <Trophy className="w-3 h-3 mr-1" />
                     New Record!
                   </Badge>

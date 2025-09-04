@@ -13,12 +13,12 @@ import {
 } from 'lucide-react';
 
 const moodOptions = [
-  { value: 'happy', emoji: '😊', label: 'Happy', color: 'bg-yellow-100 text-yellow-800' },
-  { value: 'excited', emoji: '🎉', label: 'Excited', color: 'bg-orange-100 text-orange-800' },
-  { value: 'grateful', emoji: '🙏', label: 'Grateful', color: 'bg-green-100 text-green-800' },
-  { value: 'adventurous', emoji: '🏔️', label: 'Adventurous', color: 'bg-blue-100 text-blue-800' },
-  { value: 'peaceful', emoji: '🧘', label: 'Peaceful', color: 'bg-purple-100 text-purple-800' },
-  { value: 'creative', emoji: '🎨', label: 'Creative', color: 'bg-pink-100 text-pink-800' },
+  { value: 'happy', emoji: '😊', label: 'Happy', color: 'bg-orange-50 text-orange-700 border-orange-200' },
+  { value: 'excited', emoji: '🎉', label: 'Excited', color: 'bg-orange-50 text-orange-700 border-orange-200' },
+  { value: 'grateful', emoji: '🙏', label: 'Grateful', color: 'bg-green-50 text-green-700 border-green-200' },
+  { value: 'adventurous', emoji: '🏔️', label: 'Adventurous', color: 'bg-blue-50 text-blue-700 border-blue-200' },
+  { value: 'peaceful', emoji: '🧘', label: 'Peaceful', color: 'bg-purple-50 text-purple-700 border-purple-200' },
+  { value: 'creative', emoji: '🎨', label: 'Creative', color: 'bg-pink-50 text-pink-700 border-pink-200' },
 ];
 
 const mockMatches = [
@@ -94,33 +94,37 @@ const MoodMatcher = () => {
   };
 
   return (
-    <Card className="mb-6">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center space-x-2">
-          <Heart className="w-5 h-5" />
-          <span>Mood-based Matching</span>
-          <Badge variant="secondary" className="text-xs">Unique Feature</Badge>
+    <Card className="shadow-lg bg-white/90 backdrop-blur-sm border-0">
+      <CardHeader className="pb-4 bg-gradient-to-r from-pink-50 to-red-50 rounded-t-xl">
+        <CardTitle className="flex items-center space-x-3">
+          <Heart className="w-6 h-6 text-red-500" />
+          <span className="text-xl font-bold bg-gradient-to-r from-red-600 to-pink-600 bg-clip-text text-transparent">Mood-based Matching</span>
+          <Badge variant="secondary" className="bg-red-100 text-red-700 border-red-200">Unique Feature</Badge>
         </CardTitle>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-gray-600 mt-2">
           Find people who share your current mood and vibe
         </p>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6 p-6">
         {/* Mood Selection */}
         <div>
-          <p className="text-sm font-medium mb-3">What's your current mood?</p>
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+          <p className="text-sm font-semibold mb-4 text-gray-800">What's your current mood?</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {moodOptions.map((mood) => (
               <Button
                 key={mood.value}
                 variant={selectedMood === mood.value ? "default" : "outline"}
                 size="sm"
-                className="flex flex-col items-center space-y-1 h-auto py-2"
+                className={`flex flex-col items-center space-y-2 h-auto py-3 px-4 rounded-xl transition-all duration-200 ${
+                  selectedMood === mood.value 
+                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg' 
+                    : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+                }`}
                 onClick={() => findMatches(mood.value)}
                 disabled={loading}
               >
-                <span className="text-lg">{mood.emoji}</span>
-                <span className="text-xs">{mood.label}</span>
+                <span className="text-2xl">{mood.emoji}</span>
+                <span className="text-sm font-medium">{mood.label}</span>
               </Button>
             ))}
           </div>
@@ -129,10 +133,10 @@ const MoodMatcher = () => {
         {/* Matches */}
         {selectedMood && (
           <div>
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center space-x-2">
-                <Users className="w-4 h-4" />
-                <span className="text-sm font-medium">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-3">
+                <Users className="w-5 h-5 text-blue-600" />
+                <span className="font-semibold text-gray-800">
                   People feeling {getMoodData(selectedMood).emoji} {getMoodData(selectedMood).label}
                 </span>
               </div>
@@ -141,54 +145,55 @@ const MoodMatcher = () => {
                 size="sm"
                 onClick={() => findMatches(selectedMood)}
                 disabled={loading}
+                className="rounded-xl hover:bg-blue-50"
               >
                 <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               </Button>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
               {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 </div>
               ) : (
                 matches.map((match) => (
                   <div 
                     key={match.id}
-                    className="p-3 border border-border rounded-lg hover:bg-muted/50 transition-colors"
+                    className="p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl hover:from-blue-50 hover:to-purple-50 transition-all duration-300 border border-gray-100 hover:border-blue-200 hover:shadow-md"
                   >
-                    <div className="flex items-start space-x-3">
-                      <Avatar className="h-12 w-12">
+                    <div className="flex items-start space-x-4">
+                      <Avatar className="h-14 w-14 ring-2 ring-white shadow-md">
                         <AvatarImage src={match.avatar} alt={match.name} />
-                        <AvatarFallback className="bg-primary text-primary-foreground">
+                        <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white font-semibold">
                           {match.name.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
                       
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <h4 className="font-medium text-sm">{match.name}</h4>
+                        <div className="flex items-center space-x-3 mb-2">
+                          <h4 className="font-semibold text-gray-800">{match.name}</h4>
                           <Badge variant="outline" className={getMoodData(match.mood).color}>
                             {getMoodData(match.mood).emoji} {getMoodData(match.mood).label}
                           </Badge>
                           <div className="flex items-center space-x-1">
-                            <Sparkles className="w-3 h-3 text-primary" />
-                            <span className="text-xs text-primary font-medium">
+                            <Sparkles className="w-4 h-4 text-blue-600" />
+                            <span className="text-sm text-blue-600 font-semibold">
                               {match.matchScore}% match
                             </span>
                           </div>
                         </div>
                         
-                        <p className="text-xs text-muted-foreground mb-1">
+                        <p className="text-sm text-gray-600 mb-1">
                           @{match.username} • {match.location}
                         </p>
                         
-                        <p className="text-sm mb-2">"{match.recentActivity}"</p>
+                        <p className="text-sm mb-3 text-gray-700 italic">"{match.recentActivity}"</p>
                         
                         <div className="flex items-center justify-between">
-                          <div className="flex flex-wrap gap-1">
+                          <div className="flex flex-wrap gap-2">
                             {match.mutualInterests.slice(0, 3).map((interest) => (
-                              <Badge key={interest} variant="secondary" className="text-xs">
+                              <Badge key={interest} variant="secondary" className="text-xs bg-white/80 text-gray-600 border-gray-200">
                                 {interest}
                               </Badge>
                             ))}
@@ -199,15 +204,17 @@ const MoodMatcher = () => {
                               size="sm" 
                               variant="outline"
                               onClick={() => connectWithUser(match.id)}
+                              className="rounded-xl hover:bg-blue-50 border-blue-200 text-blue-600"
                             >
-                              <UserPlus className="w-3 h-3 mr-1" />
+                              <UserPlus className="w-4 h-4 mr-1" />
                               Connect
                             </Button>
                             <Button 
                               size="sm"
                               onClick={() => startChat(match.id)}
+                              className="rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
                             >
-                              <MessageCircle className="w-3 h-3 mr-1" />
+                              <MessageCircle className="w-4 h-4 mr-1" />
                               Chat
                             </Button>
                           </div>

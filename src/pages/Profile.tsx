@@ -112,10 +112,10 @@ const Profile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
       <Navbar />
       
-      <div className="max-w-4xl mx-auto px-4 py-6 pb-20 sm:pb-6">
+      <main className="max-w-4xl mx-auto px-4 py-8 pb-20 sm:pb-8">
         {/* Cover Photo */}
         <Card className="mb-6 overflow-hidden">
           <div className="h-48 bg-gradient-to-r from-primary/20 to-primary/10 relative">
@@ -245,20 +245,20 @@ const Profile = () => {
 
         {/* Content Tabs */}
         <Tabs defaultValue="posts" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="posts">
+          <TabsList className="grid w-full grid-cols-4 bg-gray-100 p-1 rounded-xl mb-8">
+            <TabsTrigger value="posts" className="rounded-lg font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm">
               <Grid3X3 className="w-4 h-4 mr-2" />
               Posts
             </TabsTrigger>
-            <TabsTrigger value="media">
+            <TabsTrigger value="media" className="rounded-lg font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm">
               <Camera className="w-4 h-4 mr-2" />
               Media
             </TabsTrigger>
-            <TabsTrigger value="friends">
+            <TabsTrigger value="friends" className="rounded-lg font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm">
               <Users className="w-4 h-4 mr-2" />
               Friends
             </TabsTrigger>
-            <TabsTrigger value="saved">
+            <TabsTrigger value="saved" className="rounded-lg font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm">
               <Bookmark className="w-4 h-4 mr-2" />
               Saved
             </TabsTrigger>
@@ -310,7 +310,7 @@ const Profile = () => {
             </div>
           </TabsContent>
         </Tabs>
-      </div>
+      </main>
     </div>
   );
 };
