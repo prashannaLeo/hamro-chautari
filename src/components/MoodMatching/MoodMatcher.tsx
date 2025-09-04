@@ -108,23 +108,23 @@ const MoodMatcher = () => {
       <CardContent className="space-y-6 p-6">
         {/* Mood Selection */}
         <div>
-          <p className="text-sm font-semibold mb-4 text-gray-800">What's your current mood?</p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <p className="text-base font-semibold mb-4 text-gray-900">What's your current mood?</p>
+          <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4">
             {moodOptions.map((mood) => (
               <Button
                 key={mood.value}
                 variant={selectedMood === mood.value ? "default" : "outline"}
                 size="sm"
-                className={`flex flex-col items-center space-y-2 h-auto py-3 px-4 rounded-xl transition-all duration-200 ${
+                className={`flex flex-col items-center justify-center space-y-1.5 h-auto py-3 px-2 sm:px-4 rounded-xl transition-all duration-200 ${
                   selectedMood === mood.value 
-                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg' 
-                    : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg scale-105' 
+                    : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50 hover:scale-102'
                 }`}
                 onClick={() => findMatches(mood.value)}
                 disabled={loading}
               >
-                <span className="text-2xl">{mood.emoji}</span>
-                <span className="text-sm font-medium">{mood.label}</span>
+                <span className="text-xl sm:text-2xl">{mood.emoji}</span>
+                <span className="text-xs sm:text-sm font-medium text-center leading-tight">{mood.label}</span>
               </Button>
             ))}
           </div>
@@ -134,18 +134,24 @@ const MoodMatcher = () => {
         {selectedMood && (
           <div>
             <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-3">
-                <Users className="w-5 h-5 text-blue-600" />
-                <span className="font-semibold text-gray-800">
-                  People feeling {getMoodData(selectedMood).emoji} {getMoodData(selectedMood).label}
+              <div className="flex items-center space-x-2 flex-1 min-w-0">
+                <Users className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                <span className="font-semibold text-gray-900 text-sm sm:text-base truncate">
+                  People feeling
                 </span>
+                <div className="flex items-center space-x-1 flex-shrink-0">
+                  <span className="text-lg">{getMoodData(selectedMood).emoji}</span>
+                  <span className="hidden sm:inline font-semibold text-gray-900 text-sm">
+                    {getMoodData(selectedMood).label}
+                  </span>
+                </div>
               </div>
               <Button 
                 variant="ghost" 
                 size="sm"
                 onClick={() => findMatches(selectedMood)}
                 disabled={loading}
-                className="rounded-xl hover:bg-blue-50"
+                className="rounded-xl hover:bg-blue-50 h-8 w-8 p-0 flex-shrink-0"
               >
                 <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               </Button>
@@ -160,61 +166,79 @@ const MoodMatcher = () => {
                 matches.map((match) => (
                   <div 
                     key={match.id}
-                    className="p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl hover:from-blue-50 hover:to-purple-50 transition-all duration-300 border border-gray-100 hover:border-blue-200 hover:shadow-md"
+                    className="p-3 sm:p-4 bg-gradient-to-r from-white to-blue-50/50 rounded-xl hover:from-blue-50/70 hover:to-purple-50/50 transition-all duration-300 border border-gray-100 hover:border-blue-200 hover:shadow-lg"
                   >
-                    <div className="flex items-start space-x-4">
-                      <Avatar className="h-14 w-14 ring-2 ring-white shadow-md">
+                    <div className="flex items-start space-x-3 sm:space-x-4">
+                      <Avatar className="h-12 w-12 sm:h-14 sm:w-14 ring-2 ring-white shadow-md flex-shrink-0">
                         <AvatarImage src={match.avatar} alt={match.name} />
-                        <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white font-semibold">
+                        <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white font-semibold text-sm sm:text-base">
                           {match.name.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
                       
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <h4 className="font-semibold text-gray-800">{match.name}</h4>
-                          <Badge variant="outline" className={getMoodData(match.mood).color}>
-                            {getMoodData(match.mood).emoji} {getMoodData(match.mood).label}
-                          </Badge>
-                          <div className="flex items-center space-x-1">
-                            <Sparkles className="w-4 h-4 text-blue-600" />
-                            <span className="text-sm text-blue-600 font-semibold">
-                              {match.matchScore}% match
-                            </span>
+                      <div className="flex-1 min-w-0 space-y-2 sm:space-y-3">
+                        {/* Header with name, mood, and match score */}
+                        <div className="space-y-2">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                                <h4 className="font-semibold text-gray-900 text-sm sm:text-base truncate">{match.name}</h4>
+                                <Badge variant="outline" className={`${getMoodData(match.mood).color} text-xs flex-shrink-0 w-fit`}>
+                                  {getMoodData(match.mood).emoji} <span className="hidden sm:inline ml-1">{getMoodData(match.mood).label}</span>
+                                </Badge>
+                              </div>
+                              <p className="text-xs sm:text-sm text-gray-600 mt-1">
+                                @{match.username} • {match.location}
+                              </p>
+                            </div>
+                            <div className="flex items-center space-x-1 flex-shrink-0">
+                              <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" />
+                              <span className="text-xs sm:text-sm text-blue-600 font-bold">
+                                {match.matchScore}%
+                              </span>
+                              <span className="hidden sm:inline text-xs text-blue-600 font-medium">match</span>
+                            </div>
                           </div>
                         </div>
                         
-                        <p className="text-sm text-gray-600 mb-1">
-                          @{match.username} • {match.location}
+                        {/* Activity */}
+                        <p className="text-xs sm:text-sm text-gray-700 italic leading-relaxed">
+                          "{match.recentActivity}"
                         </p>
                         
-                        <p className="text-sm mb-3 text-gray-700 italic">"{match.recentActivity}"</p>
-                        
-                        <div className="flex items-center justify-between">
-                          <div className="flex flex-wrap gap-2">
+                        {/* Interests and Actions */}
+                        <div className="space-y-3">
+                          {/* Interests */}
+                          <div className="flex flex-wrap gap-1 sm:gap-2">
                             {match.mutualInterests.slice(0, 3).map((interest) => (
-                              <Badge key={interest} variant="secondary" className="text-xs bg-white/80 text-gray-600 border-gray-200">
+                              <Badge key={interest} variant="secondary" className="text-xs bg-white/80 text-gray-600 border-gray-200 px-2 py-0.5">
                                 {interest}
                               </Badge>
                             ))}
+                            {match.mutualInterests.length > 3 && (
+                              <Badge variant="secondary" className="text-xs bg-gray-100 text-gray-500 border-gray-200 px-2 py-0.5">
+                                +{match.mutualInterests.length - 3}
+                              </Badge>
+                            )}
                           </div>
                           
-                          <div className="flex space-x-2">
+                          {/* Action Buttons */}
+                          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                             <Button 
                               size="sm" 
                               variant="outline"
                               onClick={() => connectWithUser(match.id)}
-                              className="rounded-xl hover:bg-blue-50 border-blue-200 text-blue-600"
+                              className="flex-1 sm:flex-none rounded-xl hover:bg-blue-50 border-blue-200 text-blue-600 h-8 sm:h-9 text-xs sm:text-sm"
                             >
-                              <UserPlus className="w-4 h-4 mr-1" />
+                              <UserPlus className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                               Connect
                             </Button>
                             <Button 
                               size="sm"
                               onClick={() => startChat(match.id)}
-                              className="rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
+                              className="flex-1 sm:flex-none rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 h-8 sm:h-9 text-xs sm:text-sm"
                             >
-                              <MessageCircle className="w-4 h-4 mr-1" />
+                              <MessageCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                               Chat
                             </Button>
                           </div>
