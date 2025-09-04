@@ -40,6 +40,26 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate username format
+    if (username.length < 3) {
+      toast({
+        title: "Invalid Username",
+        description: "Username must be at least 3 characters long",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!/^[a-z0-9_]+$/.test(username)) {
+      toast({
+        title: "Invalid Username",
+        description: "Username can only contain lowercase letters, numbers, and underscores",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setLoading(true);
     
     const { error } = await signUp(email, password, username);
@@ -53,8 +73,13 @@ const Auth = () => {
     } else {
       toast({
         title: "Account created!",
-        description: "Please check your email to verify your account"
+        description: "Please check your email to verify your account",
+        duration: 6000
       });
+      // Clear form after successful signup
+      setEmail('');
+      setPassword('');
+      setUsername('');
     }
     
     setLoading(false);
@@ -114,9 +139,14 @@ const Auth = () => {
                     type="text"
                     placeholder="Username"
                     value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
                     required
+                    minLength={3}
+                    maxLength={20}
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Username must be 3-20 characters, lowercase letters, numbers, and underscores only
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Input
