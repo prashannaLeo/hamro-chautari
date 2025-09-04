@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Users, ArrowLeft } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const Auth = () => {
   const [email, setEmail] = useState('');
@@ -14,6 +15,8 @@ const Auth = () => {
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
 
@@ -87,36 +90,113 @@ const Auth = () => {
     setLoading(false);
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+      redirectTo: `${window.location.origin}/auth`
+    });
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
+    } else {
+      toast({
+        title: "Reset link sent!",
+        description: "Check your email for the password reset link",
+        duration: 6000
+      });
+      setShowForgotPassword(false);
+      setResetEmail('');
+    }
+
+    setLoading(false);
+  };
+
+  if (showForgotPassword) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted flex items-center justify-center p-4">
+        <Card className="w-full max-w-md shadow-2xl border border-border/50 bg-card/95 backdrop-blur-sm">
+          <CardHeader className="text-center pb-6">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowForgotPassword(false)}
+              className="absolute left-4 top-4 h-8 w-8 p-0"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-primary/20">
+              <Users className="w-8 h-8 text-primary" />
+            </div>
+            <CardTitle className="text-2xl font-bold text-foreground">
+              Reset Password
+            </CardTitle>
+            <CardDescription className="text-muted-foreground">
+              Enter your email to receive a reset link
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="px-8 pb-8">
+            <form onSubmit={handleForgotPassword} className="space-y-6">
+              <div className="space-y-2">
+                <Input
+                  type="email"
+                  placeholder="Enter your email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  required
+                  className="h-12 rounded-xl border-border/50 focus:border-primary/50 focus:ring-primary/20"
+                />
+              </div>
+              <Button 
+                type="submit" 
+                className="w-full h-12 text-base font-medium rounded-xl bg-primary hover:bg-primary/90 transition-all duration-200" 
+                disabled={loading}
+              >
+                {loading ? "Sending..." : "Send Reset Link"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md shadow-xl bg-white/90 backdrop-blur-sm border-0">
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted flex items-center justify-center p-4">
+      <Card className="w-full max-w-md shadow-2xl border border-border/50 bg-card/95 backdrop-blur-sm">
         <CardHeader className="text-center pb-6">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <span className="text-white font-bold text-2xl">HC</span>
+          <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-primary/20">
+            <Users className="w-8 h-8 text-primary" />
           </div>
-          <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <CardTitle className="text-3xl font-bold text-foreground">
             Hamro Chautari
           </CardTitle>
-          <CardDescription className="text-gray-600 text-lg mt-2">
+          <CardDescription className="text-muted-foreground text-base mt-2">
             Connect with friends and share your moments
           </CardDescription>
         </CardHeader>
-        <CardContent className="p-8">
+        <CardContent className="px-8 pb-8">
           <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 bg-gray-100 p-1 rounded-xl">
-              <TabsTrigger value="signin" className="rounded-lg font-medium">Sign In</TabsTrigger>
-              <TabsTrigger value="signup" className="rounded-lg font-medium">Sign Up</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 bg-muted/50 p-1 rounded-xl h-12">
+              <TabsTrigger value="signin" className="rounded-lg font-medium h-10 text-sm">Sign In</TabsTrigger>
+              <TabsTrigger value="signup" className="rounded-lg font-medium h-10 text-sm">Sign Up</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="signin" className="mt-6">
-              <form onSubmit={handleSignIn} className="space-y-5">
+            <TabsContent value="signin" className="mt-8">
+              <form onSubmit={handleSignIn} className="space-y-6">
                 <div className="space-y-2">
                   <Input
                     type="email"
-                    placeholder="Email"
+                    placeholder="Email address"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    className="h-12 rounded-xl border-border/50 focus:border-primary/50 focus:ring-primary/20"
                   />
                 </div>
                 <div className="space-y-2">
@@ -127,25 +207,38 @@ const Auth = () => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
-                      className="pr-10"
+                      className="h-12 rounded-xl border-border/50 focus:border-primary/50 focus:ring-primary/20 pr-12"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
                 </div>
-                <Button type="submit" className="w-full h-12 text-lg font-semibold rounded-xl" disabled={loading}>
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotPassword(true)}
+                    className="text-sm text-primary hover:text-primary/80 transition-colors font-medium"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+                <Button 
+                  type="submit" 
+                  className="w-full h-12 text-base font-medium rounded-xl bg-primary hover:bg-primary/90 transition-all duration-200" 
+                  disabled={loading}
+                >
                   {loading ? "Signing in..." : "Sign In"}
                 </Button>
               </form>
             </TabsContent>
             
-            <TabsContent value="signup" className="mt-6">
-              <form onSubmit={handleSignUp} className="space-y-5">
+            <TabsContent value="signup" className="mt-8">
+              <form onSubmit={handleSignUp} className="space-y-6">
                 <div className="space-y-2">
                   <Input
                     type="text"
@@ -155,42 +248,51 @@ const Auth = () => {
                     required
                     minLength={3}
                     maxLength={20}
+                    className="h-12 rounded-xl border-border/50 focus:border-primary/50 focus:ring-primary/20"
                   />
-                  <p className="text-xs text-muted-foreground">
-                    Username must be 3-20 characters, lowercase letters, numbers, and underscores only
+                  <p className="text-xs text-muted-foreground px-1">
+                    3-20 characters: lowercase letters, numbers, and underscores only
                   </p>
                 </div>
                 <div className="space-y-2">
                   <Input
                     type="email"
-                    placeholder="Email"
+                    placeholder="Email address"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    className="h-12 rounded-xl border-border/50 focus:border-primary/50 focus:ring-primary/20"
                   />
                 </div>
                 <div className="space-y-2">
                   <div className="relative">
                     <Input
                       type={showPassword ? "text" : "password"}
-                      placeholder="Password"
+                      placeholder="Create password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
                       minLength={6}
-                      className="pr-10"
+                      className="h-12 rounded-xl border-border/50 focus:border-primary/50 focus:ring-primary/20 pr-12"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
+                  <p className="text-xs text-muted-foreground px-1">
+                    Minimum 6 characters required
+                  </p>
                 </div>
-                <Button type="submit" className="w-full h-12 text-lg font-semibold rounded-xl" disabled={loading}>
-                  {loading ? "Creating account..." : "Sign Up"}
+                <Button 
+                  type="submit" 
+                  className="w-full h-12 text-base font-medium rounded-xl bg-primary hover:bg-primary/90 transition-all duration-200" 
+                  disabled={loading}
+                >
+                  {loading ? "Creating account..." : "Create Account"}
                 </Button>
               </form>
             </TabsContent>
