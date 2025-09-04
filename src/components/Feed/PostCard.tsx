@@ -76,68 +76,71 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   };
 
   return (
-    <Card className="mb-4">
-      <CardContent className="p-4 space-y-4">
+    <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300 animate-scale-in">
+      <CardContent className="p-6 space-y-5">
         {/* Header */}
         <div className="flex items-start justify-between">
-          <div className="flex items-center space-x-3">
-            <Avatar className="h-10 w-10">
+          <div className="flex items-center space-x-4">
+            <Avatar className="h-12 w-12 ring-2 ring-white shadow-md">
               <AvatarImage src={post.user.avatar} alt={post.user.name} />
-              <AvatarFallback className="bg-primary text-primary-foreground">
+              <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-white font-semibold">
                 {post.user.name.charAt(0)}
               </AvatarFallback>
             </Avatar>
             <div>
               <div className="flex items-center space-x-2">
-                <h3 className="font-semibold text-sm">{post.user.name}</h3>
+                <h3 className="font-bold text-lg text-gray-900">{post.user.name}</h3>
                 {post.user.isVerified && (
-                  <Badge variant="secondary" className="h-4 px-1 text-xs">✓</Badge>
+                  <Badge variant="secondary" className="h-5 px-2 text-xs bg-blue-100 text-blue-800 border-blue-200">
+                    ✓ Verified
+                  </Badge>
                 )}
               </div>
-              <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                <span>@{post.user.username}</span>
+              <div className="flex items-center space-x-3 text-sm text-gray-600 mt-1">
+                <span className="font-medium">@{post.user.username}</span>
                 <span>•</span>
                 <div className="flex items-center space-x-1">
-                  <Clock className="w-3 h-3" />
+                  <Clock className="w-4 h-4" />
                   <span>{formatTime(post.timestamp)}</span>
                 </div>
                 {post.location && (
                   <>
                     <span>•</span>
                     <div className="flex items-center space-x-1">
-                      <MapPin className="w-3 h-3" />
-                      <span className="truncate max-w-20">{post.location}</span>
+                      <MapPin className="w-4 h-4 text-green-600" />
+                      <span className="truncate max-w-32 text-green-700 font-medium">{post.location}</span>
                     </div>
                   </>
                 )}
               </div>
             </div>
           </div>
-          
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm">
-                <MoreHorizontal className="w-4 h-4" />
+              <Button variant="ghost" size="sm" className="hover:bg-gray-100 rounded-full">
+                <MoreHorizontal className="w-5 h-5 text-gray-500" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>Save post</DropdownMenuItem>
-              <DropdownMenuItem>Hide post</DropdownMenuItem>
-              <DropdownMenuItem>Report post</DropdownMenuItem>
+            <DropdownMenuContent align="end" className="bg-white/95 backdrop-blur-sm border shadow-xl">
+              <DropdownMenuItem className="hover:bg-blue-50">Save post</DropdownMenuItem>
+              <DropdownMenuItem className="hover:bg-blue-50">Hide post</DropdownMenuItem>
+              <DropdownMenuItem className="hover:bg-red-50 text-red-600">Report post</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
 
         {/* Mood badge */}
         {post.mood && (
-          <Badge variant="outline" className="w-fit">
-            {getMoodEmoji(post.mood)} Feeling {post.mood}
-          </Badge>
+          <div className="flex justify-start">
+            <Badge variant="outline" className="bg-gradient-to-r from-purple-100 to-pink-100 border-purple-200 text-purple-800 font-medium px-3 py-1">
+              {getMoodEmoji(post.mood)} Feeling {post.mood}
+            </Badge>
+          </div>
         )}
 
         {/* Content */}
-        <div className="space-y-3">
-          <p className="text-sm leading-relaxed">{post.content}</p>
+        <div className="space-y-4">
+          <p className="text-gray-800 leading-relaxed text-base">{post.content}</p>
           
           {/* Images */}
           {post.images && post.images.length > 0 && (
@@ -168,26 +171,28 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         </div>
 
         {/* Actions */}
-        <div className="flex items-center justify-between pt-3 border-t border-border">
-          <div className="flex items-center space-x-6">
+        <div className="flex items-center justify-between pt-5 border-t border-gray-100">
+          <div className="flex items-center space-x-8">
             <Button 
               variant="ghost" 
               size="sm" 
               onClick={handleLike}
-              className={`space-x-2 ${isLiked ? 'text-red-500' : ''}`}
+              className={`space-x-2 hover:bg-red-50 transition-colors ${
+                isLiked ? 'text-red-600' : 'text-gray-600 hover:text-red-600'
+              }`}
             >
-              <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
-              <span className="text-xs">{likesCount}</span>
+              <Heart className={`w-5 h-5 transition-all ${isLiked ? 'fill-current scale-110' : ''}`} />
+              <span className="font-semibold">{likesCount}</span>
             </Button>
             
-            <Button variant="ghost" size="sm" className="space-x-2">
-              <MessageCircle className="w-4 h-4" />
-              <span className="text-xs">{post.comments}</span>
+            <Button variant="ghost" size="sm" className="space-x-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+              <MessageCircle className="w-5 h-5" />
+              <span className="font-semibold">{post.comments}</span>
             </Button>
             
-            <Button variant="ghost" size="sm" className="space-x-2">
-              <Share className="w-4 h-4" />
-              <span className="text-xs">{post.shares}</span>
+            <Button variant="ghost" size="sm" className="space-x-2 text-gray-600 hover:text-green-600 hover:bg-green-50 transition-colors">
+              <Share className="w-5 h-5" />
+              <span className="font-semibold">{post.shares}</span>
             </Button>
           </div>
         </div>

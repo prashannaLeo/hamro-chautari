@@ -74,29 +74,41 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
       <Navbar />
       
-      <div className="max-w-4xl mx-auto px-4 py-6 pb-20 sm:pb-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <main className="max-w-6xl mx-auto px-4 py-8 pb-20 sm:pb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Main Feed */}
-          <div className="lg:col-span-2 space-y-6">
-            <CreatePost />
+          <div className="lg:col-span-3 space-y-6">
+            <div className="animate-fade-in">
+              <CreatePost />
+            </div>
             
-            <div className="space-y-4">
-              {mockPosts.map((post) => (
-                <PostCard key={post.id} post={post} />
+            <div className="space-y-6">
+              {mockPosts.map((post, index) => (
+                <div 
+                  key={post.id} 
+                  className="animate-fade-in"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  <PostCard post={post} />
+                </div>
               ))}
             </div>
           </div>
 
           {/* Sidebar */}
           <div className="space-y-6">
-            <PostSuggestions />
-            <MoodMatcher />
+            <div className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
+              <PostSuggestions />
+            </div>
+            <div className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
+              <MoodMatcher />
+            </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 };
