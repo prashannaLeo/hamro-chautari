@@ -26,7 +26,7 @@ const CreatePost = () => {
   const { user } = useAuth();
   const [content, setContent] = useState('');
   const [visibility, setVisibility] = useState('public');
-  const [mood, setMood] = useState('');
+  const [mood, setMood] = useState('none');
   const [loading, setLoading] = useState(false);
 
   const moods = [
@@ -54,7 +54,7 @@ const CreatePost = () => {
     
     // Reset form
     setContent('');
-    setMood('');
+    setMood('none');
     setLoading(false);
   };
 
@@ -88,7 +88,7 @@ const CreatePost = () => {
                     ))}
                   </SelectContent>
                 </Select>
-                {mood && (
+                {mood && mood !== 'none' && (
                   <Badge variant="secondary" className="text-xs">
                     {moods.find(m => m.value === mood)?.emoji} {moods.find(m => m.value === mood)?.label}
                   </Badge>
@@ -130,7 +130,7 @@ const CreatePost = () => {
                   </div>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">
+                  <SelectItem value="none">
                     <span>No mood</span>
                   </SelectItem>
                   {moods.map((moodOption) => (
