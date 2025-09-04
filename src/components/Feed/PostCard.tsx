@@ -9,7 +9,10 @@ import {
   Share, 
   MoreHorizontal,
   MapPin,
-  Clock
+  Clock,
+  Edit,
+  Trash2,
+  Bookmark
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -17,10 +20,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import CommentSection from '@/components/Comments/CommentSection';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface PostCardProps {
   post: {
     id: string;
+    user_id?: string;
     user: {
       name: string;
       username: string;
@@ -37,11 +43,17 @@ interface PostCardProps {
     shares: number;
     isLiked?: boolean;
   };
+  onEdit?: (postId: string) => void;
+  onDelete?: (postId: string) => void;
 }
 
-const PostCard: React.FC<PostCardProps> = ({ post }) => {
+const PostCard: React.FC<PostCardProps> = ({ post, onEdit, onDelete }) => {
   const [isLiked, setIsLiked] = useState(post.isLiked || false);
   const [likesCount, setLikesCount] = useState(post.likes);
+  const [showComments, setShowComments] = useState(false);
+  const { user } = useAuth();
+
+  const isOwner = user?.id === post.user_id;
 
   const handleLike = () => {
     setIsLiked(!isLiked);
@@ -122,7 +134,28 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="bg-white/95 backdrop-blur-sm border shadow-xl">
-              <DropdownMenuItem className="hover:bg-blue-50">Save post</DropdownMenuItem>
+              {isOwner && (
+                <>
+                  <DropdownMenuItem 
+                    onClick={() => onEdit?.(post.id)}
+                    className="hover:bg-blue-50 text-blue-600"
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    Edit Post
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => onDelete?.(post.id)}
+                    className="hover:bg-red-50 text-red-600"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete Post
+                  </DropdownMenuItem>
+                </>
+              )}
+              <DropdownMenuItem className="hover:bg-blue-50">
+                <Bookmark className="w-4 h-4 mr-2" />
+                Save post
+              </DropdownMenuItem>
               <DropdownMenuItem className="hover:bg-blue-50">Hide post</DropdownMenuItem>
               <DropdownMenuItem className="hover:bg-red-50 text-red-600">Report post</DropdownMenuItem>
             </DropdownMenuContent>
@@ -185,7 +218,14 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
               <span className="font-semibold">{likesCount}</span>
             </Button>
             
-            <Button variant="ghost" size="sm" className="space-x-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setShowComments(!showComments)}
+              className={`space-x-2 transition-colors ${
+                showComments ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
+              }`}
+            >
               <MessageCircle className="w-5 h-5" />
               <span className="font-semibold">{post.comments}</span>
             </Button>
@@ -196,6 +236,9 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             </Button>
           </div>
         </div>
+
+        {/* Comments Section */}
+        <CommentSection postId={post.id} isVisible={showComments} />
       </CardContent>
     </Card>
   );

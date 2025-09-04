@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 export interface Notification {
   id: string;
   user_id: string;
-  type: string;
+  type: 'like' | 'comment' | 'follow' | 'message' | 'mention' | 'post_tag';
   title: string;
   message: string;
   data: any;
@@ -19,6 +19,7 @@ export const useNotifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (user) {
@@ -41,7 +42,7 @@ export const useNotifications = () => {
 
       if (error) throw error;
 
-      setNotifications(data || []);
+      setNotifications(data as Notification[] || []);
       setUnreadCount(data?.filter(n => !n.is_read).length || 0);
     } catch (err: any) {
       console.error('Error fetching notifications:', err);

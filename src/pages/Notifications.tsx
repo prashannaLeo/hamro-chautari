@@ -1,8 +1,7 @@
 import React from 'react';
 import { useNotifications } from '@/hooks/useNotifications';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   Bell, 
@@ -14,13 +13,15 @@ import {
   Check,
   CheckCheck,
   Trash2,
-  ArrowLeft
+  ArrowLeft,
+  ExternalLink
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { format } from 'date-fns';
+import { Link, useNavigate } from 'react-router-dom';
+import { formatDistanceToNow } from 'date-fns';
 
 const Notifications = () => {
   const { notifications, loading, unreadCount, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
+  const navigate = useNavigate();
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -42,17 +43,37 @@ const Notifications = () => {
   const getNotificationColor = (type: string) => {
     switch (type) {
       case 'like':
-        return 'bg-red-50 border-red-100';
+        return 'bg-red-50 border-red-100 hover:bg-red-100';
       case 'comment':
-        return 'bg-blue-50 border-blue-100';
+        return 'bg-blue-50 border-blue-100 hover:bg-blue-100';
       case 'follow':
-        return 'bg-green-50 border-green-100';
+        return 'bg-green-50 border-green-100 hover:bg-green-100';
       case 'message':
-        return 'bg-purple-50 border-purple-100';
+        return 'bg-purple-50 border-purple-100 hover:bg-purple-100';
       case 'mention':
-        return 'bg-orange-50 border-orange-100';
+        return 'bg-orange-50 border-orange-100 hover:bg-orange-100';
       default:
-        return 'bg-gray-50 border-gray-100';
+        return 'bg-gray-50 border-gray-100 hover:bg-gray-100';
+    }
+  };
+
+  const handleNotificationClick = async (notification: any) => {
+    // Mark as read if unread
+    if (!notification.is_read) {
+      await markAsRead(notification.id);
+    }
+
+    // Navigate based on notification type and data
+    if (notification.type === 'comment' && notification.data?.post_id) {
+      navigate(`/?post=${notification.data.post_id}`);
+    } else if (notification.type === 'like' && notification.data?.post_id) {
+      navigate(`/?post=${notification.data.post_id}`);
+    } else if (notification.type === 'follow') {
+      navigate('/friends');
+    } else if (notification.type === 'message') {
+      navigate('/messages');
+    } else if (notification.action_url) {
+      navigate(notification.action_url);
     }
   };
 
@@ -116,16 +137,17 @@ const Notifications = () => {
             notifications.map((notification) => (
               <Card 
                 key={notification.id} 
-                className={`transition-all duration-200 hover:shadow-lg border ${
+                onClick={() => handleNotificationClick(notification)}
+                className={`cursor-pointer transition-all duration-200 hover:shadow-lg border ${
                   notification.is_read 
-                    ? 'bg-white/60 border-gray-100' 
-                    : `bg-white/90 ${getNotificationColor(notification.type)} shadow-md`
+                    ? 'bg-white/80 border-gray-100 hover:bg-gray-50' 
+                    : `bg-white/95 ${getNotificationColor(notification.type)} shadow-lg hover:shadow-xl`
                 }`}
               >
-                <CardContent className="p-4">
+                <CardContent className="p-5">
                   <div className="flex items-start space-x-4">
                     {/* Icon */}
-                    <div className={`p-2 rounded-xl ${getNotificationColor(notification.type)}`}>
+                    <div className={`p-3 rounded-xl ${getNotificationColor(notification.type)} shadow-sm`}>
                       {getNotificationIcon(notification.type)}
                     </div>
                     
@@ -133,45 +155,57 @@ const Notifications = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <h4 className={`font-semibold ${notification.is_read ? 'text-gray-700' : 'text-gray-900'}`}>
-                            {notification.title}
-                          </h4>
-                          <p className={`text-sm mt-1 ${notification.is_read ? 'text-gray-500' : 'text-gray-700'}`}>
+                          <div className="flex items-center space-x-2 mb-1">
+                            <h4 className={`font-semibold ${notification.is_read ? 'text-gray-700' : 'text-gray-900'}`}>
+                              {notification.title}
+                            </h4>
+                            <ExternalLink className="w-3 h-3 text-gray-400" />
+                          </div>
+                          <p className={`text-sm leading-relaxed ${notification.is_read ? 'text-gray-500' : 'text-gray-700'}`}>
                             {notification.message}
                           </p>
-                          <p className="text-xs text-gray-400 mt-2">
-                            {format(new Date(notification.created_at), 'PPp')}
-                          </p>
+                          <div className="flex items-center justify-between mt-3">
+                            <p className="text-xs text-gray-400">
+                              {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                            </p>
+                            {!notification.is_read && (
+                              <div className="flex items-center space-x-1">
+                                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                                <span className="text-xs text-blue-600 font-medium">New</span>
+                              </div>
+                            )}
+                          </div>
                         </div>
                         
                         {/* Actions */}
-                        <div className="flex items-center space-x-2 ml-4">
+                        <div className="flex items-center space-x-1 ml-4">
                           {!notification.is_read && (
                             <Button
-                              onClick={() => markAsRead(notification.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                markAsRead(notification.id);
+                              }}
                               variant="ghost"
                               size="sm"
-                              className="rounded-lg hover:bg-blue-50 text-blue-600"
+                              className="rounded-lg hover:bg-blue-50 text-blue-600 h-8 w-8 p-0"
                             >
                               <Check className="w-4 h-4" />
                             </Button>
                           )}
                           <Button
-                            onClick={() => deleteNotification(notification.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteNotification(notification.id);
+                            }}
                             variant="ghost"
                             size="sm"
-                            className="rounded-lg hover:bg-red-50 text-red-500"
+                            className="rounded-lg hover:bg-red-50 text-red-500 h-8 w-8 p-0"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
                       </div>
                     </div>
-                    
-                    {/* Unread indicator */}
-                    {!notification.is_read && (
-                      <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                    )}
                   </div>
                 </CardContent>
               </Card>

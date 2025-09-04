@@ -94,7 +94,20 @@ const Index = () => {
                   className="animate-fade-in"
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
-                  <PostCard post={post} />
+                  <PostCard 
+                    post={{
+                      ...post,
+                      user_id: user?.id === post.user.username ? user.id : 'other-user-id'
+                    }}
+                    onEdit={(postId) => {
+                      console.log('Edit post:', postId);
+                      // TODO: Implement edit functionality
+                    }}
+                    onDelete={(postId) => {
+                      console.log('Delete post:', postId);
+                      // TODO: Implement delete functionality
+                    }}
+                  />
                 </div>
               ))}
             </div>
