@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import Navbar from '@/components/Layout/Navbar';
@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';  
+import { useProfile } from '@/hooks/useProfile';
 import { 
   User, 
   Bell, 
@@ -36,6 +37,8 @@ import { toast } from '@/hooks/use-toast';
 
 const Settings = () => {
   const { user, loading } = useAuth();
+  const { profile, updateProfile, loading: profileLoading } = useProfile();
+  
   const [profileData, setProfileData] = useState({
     displayName: '',
     username: '',
@@ -43,6 +46,19 @@ const Settings = () => {
     location: '',
     mood: 'neutral'
   });
+
+  // Load profile data when available
+  useEffect(() => {
+    if (profile) {
+      setProfileData({
+        displayName: profile.display_name || '',
+        username: profile.username || '',
+        bio: profile.bio || '',
+        location: profile.location || '',
+        mood: profile.mood || 'neutral'
+      });
+    }
+  }, [profile]);
   
   const [privacySettings, setPrivacySettings] = useState({
     profileVisibility: 'public',
@@ -89,15 +105,22 @@ const Settings = () => {
 
   const handleSaveProfile = async () => {
     try {
-      // TODO: Implement profile update
+      await updateProfile({
+        display_name: profileData.displayName,
+        username: profileData.username,
+        bio: profileData.bio,
+        location: profileData.location,
+        mood: profileData.mood
+      });
+      
       toast({
         title: "Success",
         description: "Profile updated successfully"
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to update profile",
+        description: error.message || "Failed to update profile",
         variant: "destructive"
       });
     }
