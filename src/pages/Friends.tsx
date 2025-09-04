@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useFriends } from '@/hooks/useFriends';
 import { useCalling } from '@/hooks/useCalling';
 import { useUserSearch } from '@/hooks/useUserSearch';
+import EnhancedSearch from '@/components/Friends/EnhancedSearch';
 import { toast } from '@/hooks/use-toast';
 import { 
   Search, 
@@ -166,16 +167,19 @@ const Friends = () => {
           </TabsList>
 
           <TabsContent value="friends" className="space-y-4">
-            {/* Search */}
-            <div className="relative mb-8">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <Input
-                placeholder="Search friends..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-12 h-12 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
-              />
-            </div>
+            {/* Enhanced Search */}
+            <EnhancedSearch
+              placeholder="Search friends by name or initials..."
+              onUserSelect={(user) => {
+                console.log('Selected user:', user);
+                // You can add logic here to navigate to user profile or send friend request
+              }}
+              onPostSelect={(post) => {
+                console.log('Selected post:', post);
+                // You can add logic here to navigate to the post
+              }}
+              className="mb-8"
+            />
 
             {/* Friends Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -368,16 +372,19 @@ const Friends = () => {
           </TabsContent>
 
           <TabsContent value="discover" className="space-y-4">
-            {/* User Search */}
-            <div className="relative mb-8">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <Input
-                placeholder="Search for users to add as friends..."
-                value={userSearchQuery}
-                onChange={(e) => handleUserSearch(e.target.value)}
-                className="pl-12 h-12 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
-              />
-            </div>
+            {/* Enhanced User Search */}
+            <EnhancedSearch
+              placeholder="Search for users to add as friends or explore posts..."
+              onUserSelect={(user) => {
+                // Open user profile or show add friend option
+                console.log('Selected user for friend request:', user);
+              }}
+              onPostSelect={(post) => {
+                // Navigate to post or show post details
+                console.log('Selected post:', post);
+              }}
+              className="mb-8"
+            />
 
             {/* Search Results */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
