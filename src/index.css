@@ -8,57 +8,57 @@
 /* Professional Color Palette & Design System */
 @layer base {
   :root {
-    /* Professional Blue Primary Palette */
-    --background: 249 250 251; /* #F9FAFB - Light gray background */
-    --foreground: 17 24 39; /* #111827 - Dark gray text */
+    /* Professional Neutral Palette */
+    --background: 255 255 255; /* Pure white background */
+    --foreground: 15 23 42; /* Slate-900 text */
 
     --card: 255 255 255; /* Pure white cards */
-    --card-foreground: 17 24 39;
+    --card-foreground: 15 23 42;
 
     --popover: 255 255 255;
-    --popover-foreground: 17 24 39;
+    --popover-foreground: 15 23 42;
 
-    /* Professional Blue (#3B82F6) */
-    --primary: 59 130 246;
+    /* Professional Blue Primary */
+    --primary: 37 99 235;
     --primary-foreground: 255 255 255;
 
-    /* Professional Green (#10B981) */
-    --secondary: 16 185 129;
+    /* Professional Slate Secondary */
+    --secondary: 100 116 139;
     --secondary-foreground: 255 255 255;
 
-    /* Soft neutral background */
-    --muted: 243 244 246; /* #F3F4F6 */
-    --muted-foreground: 107 114 128; /* #6B7280 */
+    /* Light neutral backgrounds */
+    --muted: 248 250 252; /* Slate-50 */
+    --muted-foreground: 100 116 139; /* Slate-500 */
 
-    /* Professional Amber Accent (#F59E0B) */
-    --accent: 245 158 11;
-    --accent-foreground: 17 24 39;
+    /* Subtle blue accent */
+    --accent: 248 250 252;
+    --accent-foreground: 15 23 42;
 
     --destructive: 239 68 68; /* #EF4444 - Professional red */
     --destructive-foreground: 255 255 255;
 
-    --border: 229 231 235; /* #E5E7EB - Subtle borders */
-    --input: 229 231 235;
-    --ring: 59 130 246; /* Primary blue for focus rings */
+    --border: 226 232 240; /* Slate-200 - Subtle borders */
+    --input: 226 232 240;
+    --ring: 37 99 235; /* Primary blue for focus rings */
 
-    --radius: 0.75rem; /* 12px - Professional rounded corners */
+    --radius: 0.5rem; /* 8px - More subtle rounded corners */
 
     /* Sidebar colors */
     --sidebar-background: 255 255 255;
-    --sidebar-foreground: 17 24 39;
-    --sidebar-primary: 59 130 246;
+    --sidebar-foreground: 15 23 42;
+    --sidebar-primary: 37 99 235;
     --sidebar-primary-foreground: 255 255 255;
-    --sidebar-accent: 243 244 246;
-    --sidebar-accent-foreground: 17 24 39;
-    --sidebar-border: 229 231 235;
-    --sidebar-ring: 59 130 246;
+    --sidebar-accent: 248 250 252;
+    --sidebar-accent-foreground: 15 23 42;
+    --sidebar-border: 226 232 240;
+    --sidebar-ring: 37 99 235;
 
     /* Professional shadows and gradients */
     --shadow-soft: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
     --shadow-medium: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     --shadow-large: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)));
-    --gradient-subtle: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(16, 185, 129, 0.05));
+    --gradient-primary: linear-gradient(135deg, hsl(37 99 235), hsl(100 116 139));
+    --gradient-subtle: linear-gradient(135deg, rgba(37, 99, 235, 0.05), rgba(100, 116, 139, 0.05));
   }
 
   .dark {
@@ -75,14 +75,14 @@
     --primary: 96 165 250; /* Lighter blue for dark mode */
     --primary-foreground: 17 24 39;
 
-    --secondary: 52 211 153; /* Lighter green for dark mode */
-    --secondary-foreground: 17 24 39;
+    --secondary: 148 163 184; /* Lighter slate for dark mode */
+    --secondary-foreground: 15 23 42;
 
     --muted: 55 65 81; /* #374151 */
     --muted-foreground: 156 163 175; /* #9CA3AF */
 
-    --accent: 251 191 36; /* Lighter amber for dark mode */
-    --accent-foreground: 17 24 39;
+    --accent: 55 65 81; /* Consistent slate accent */
+    --accent-foreground: 249 250 251;
 
     --destructive: 248 113 113;
     --destructive-foreground: 17 24 39;
@@ -139,19 +139,19 @@
 /* Professional Button Styles */
 @layer components {
   .btn-primary {
-    @apply bg-primary text-primary-foreground px-6 py-3 rounded-xl font-medium shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+    @apply bg-primary text-primary-foreground px-6 py-3 rounded-lg font-medium shadow-md hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
   }
 
   .btn-secondary {
-    @apply border-2 border-primary text-primary bg-transparent px-6 py-3 rounded-xl font-medium hover:bg-primary hover:text-primary-foreground transform hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+    @apply border-2 border-primary text-primary bg-transparent px-6 py-3 rounded-lg font-medium hover:bg-primary hover:text-primary-foreground transform hover:scale-[1.02] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
   }
 
   .btn-success {
-    @apply bg-secondary text-secondary-foreground px-6 py-3 rounded-xl font-medium shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2;
+    @apply bg-secondary text-secondary-foreground px-6 py-3 rounded-lg font-medium shadow-md hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2;
   }
 
   .btn-danger {
-    @apply bg-destructive text-destructive-foreground px-6 py-3 rounded-xl font-medium shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-destructive focus:ring-offset-2;
+    @apply bg-destructive text-destructive-foreground px-6 py-3 rounded-lg font-medium shadow-md hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-destructive focus:ring-offset-2;
   }
 
   /* Glass morphism cards */
