@@ -17,8 +17,22 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
+
+  // Check for password reset token on component mount
+  React.useEffect(() => {
+    // Check if there's a password reset token in the URL
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const accessToken = hashParams.get('access_token');
+    const type = hashParams.get('type');
+    
+    if (type === 'recovery' && accessToken) {
+      setIsResettingPassword(true);
+    }
+  }, []);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,6 +130,101 @@ const Auth = () => {
 
     setLoading(false);
   };
+
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (newPassword.length < 6) {
+      toast({
+        title: "Password too short",
+        description: "Password must be at least 6 characters long",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword
+    });
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
+    } else {
+      toast({
+        title: "Password updated!",
+        description: "Your password has been successfully updated",
+      });
+      
+      // Clear the hash from URL and reset state
+      window.history.replaceState(null, '', window.location.pathname);
+      setIsResettingPassword(false);
+      setNewPassword('');
+      navigate('/');
+    }
+
+    setLoading(false);
+  };
+
+  // Show password reset form when user clicks the reset link from email
+  if (isResettingPassword) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted flex items-center justify-center p-4">
+        <Card className="w-full max-w-md shadow-2xl border border-border/50 bg-card/95 backdrop-blur-sm">
+          <CardHeader className="text-center pb-6">
+            <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-primary/20">
+              <Users className="w-8 h-8 text-primary" />
+            </div>
+            <CardTitle className="text-2xl font-bold text-foreground">
+              Set New Password
+            </CardTitle>
+            <CardDescription className="text-muted-foreground">
+              Enter your new password below
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="px-8 pb-8">
+            <form onSubmit={handlePasswordReset} className="space-y-6">
+              <div className="space-y-2">
+                <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter new password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    className="h-12 rounded-xl border-border/50 focus:border-primary/50 focus:ring-primary/20 pr-12"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+                <p className="text-xs text-muted-foreground px-1">
+                  Minimum 6 characters required
+                </p>
+              </div>
+              <Button 
+                type="submit" 
+                className="w-full h-12 text-base font-medium rounded-xl bg-primary hover:bg-primary/90 transition-all duration-200" 
+                disabled={loading}
+              >
+                {loading ? "Updating..." : "Update Password"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (showForgotPassword) {
     return (
