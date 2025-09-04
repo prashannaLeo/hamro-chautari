@@ -1,0 +1,289 @@
+import React, { useRef, useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { toast } from '@/hooks/use-toast';
+import { 
+  Video, 
+  VideoOff, 
+  Mic, 
+  MicOff, 
+  Phone, 
+  PhoneOff,
+  Monitor,
+  MonitorOff,
+  Settings,
+  Users
+} from 'lucide-react';
+
+interface VideoCallProps {
+  callId: string;
+  isIncoming?: boolean;
+  callerName?: string;
+  onEndCall: () => void;
+  onAcceptCall?: () => void;
+  onDeclineCall?: () => void;
+}
+
+const VideoCall: React.FC<VideoCallProps> = ({
+  callId,
+  isIncoming = false,
+  callerName = "Unknown",
+  onEndCall,
+  onAcceptCall,
+  onDeclineCall
+}) => {
+  const localVideoRef = useRef<HTMLVideoElement>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement>(null);
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [isVideoEnabled, setIsVideoEnabled] = useState(true);
+  const [isAudioEnabled, setIsAudioEnabled] = useState(true);
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const [callDuration, setCallDuration] = useState(0);
+  const [isCallActive, setIsCallActive] = useState(!isIncoming);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isCallActive) {
+      interval = setInterval(() => {
+        setCallDuration(prev => prev + 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isCallActive]);
+
+  useEffect(() => {
+    if (isCallActive) {
+      initializeMedia();
+    }
+    return () => {
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [isCallActive]);
+
+  const initializeMedia = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true
+      });
+      
+      setLocalStream(stream);
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = stream;
+      }
+
+      toast({
+        title: "Media Access",
+        description: "Camera and microphone access granted"
+      });
+    } catch (error) {
+      console.error('Error accessing media devices:', error);
+      toast({
+        title: "Media Error",
+        description: "Failed to access camera or microphone",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const toggleVideo = () => {
+    if (localStream) {
+      const videoTrack = localStream.getVideoTracks()[0];
+      if (videoTrack) {
+        videoTrack.enabled = !videoTrack.enabled;
+        setIsVideoEnabled(videoTrack.enabled);
+      }
+    }
+  };
+
+  const toggleAudio = () => {
+    if (localStream) {
+      const audioTrack = localStream.getAudioTracks()[0];
+      if (audioTrack) {
+        audioTrack.enabled = !audioTrack.enabled;
+        setIsAudioEnabled(audioTrack.enabled);
+      }
+    }
+  };
+
+  const toggleScreenShare = async () => {
+    try {
+      if (!isScreenSharing) {
+        const screenStream = await navigator.mediaDevices.getDisplayMedia({
+          video: true,
+          audio: true
+        });
+        
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = screenStream;
+        }
+        setIsScreenSharing(true);
+        
+        screenStream.getVideoTracks()[0].onended = () => {
+          setIsScreenSharing(false);
+          if (localVideoRef.current && localStream) {
+            localVideoRef.current.srcObject = localStream;
+          }
+        };
+      } else {
+        if (localVideoRef.current && localStream) {
+          localVideoRef.current.srcObject = localStream;
+        }
+        setIsScreenSharing(false);
+      }
+    } catch (error) {
+      toast({
+        title: "Screen Share Error",
+        description: "Failed to start screen sharing",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleAcceptCall = () => {
+    setIsCallActive(true);
+    onAcceptCall?.();
+  };
+
+  const handleDeclineCall = () => {
+    onDeclineCall?.();
+  };
+
+  const handleEndCall = () => {
+    if (localStream) {
+      localStream.getTracks().forEach(track => track.stop());
+    }
+    setIsCallActive(false);
+    onEndCall();
+  };
+
+  const formatDuration = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    
+    if (hours > 0) {
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  if (isIncoming && !isCallActive) {
+    return (
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center">
+        <Card className="w-96 p-8 text-center bg-card border-border shadow-large">
+          <div className="mb-6">
+            <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Video className="w-12 h-12 text-primary" />
+            </div>
+            <h2 className="text-2xl font-bold text-foreground mb-2">Incoming Video Call</h2>
+            <p className="text-muted-foreground text-lg">{callerName}</p>
+          </div>
+          
+          <div className="flex gap-4 justify-center">
+            <Button
+              onClick={handleDeclineCall}
+              variant="destructive"
+              size="lg"
+              className="rounded-full w-16 h-16"
+            >
+              <PhoneOff className="w-6 h-6" />
+            </Button>
+            <Button
+              onClick={handleAcceptCall}
+              className="bg-green-500 hover:bg-green-600 rounded-full w-16 h-16"
+            >
+              <Phone className="w-6 h-6" />
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black z-50 flex flex-col">
+      {/* Call Header */}
+      <div className="bg-black/50 backdrop-blur-sm p-4 flex justify-between items-center">
+        <div className="flex items-center gap-3">
+          <Users className="w-5 h-5 text-white" />
+          <span className="text-white font-medium">{callerName}</span>
+          <span className="text-white/70 text-sm">{formatDuration(callDuration)}</span>
+        </div>
+        <Button variant="ghost" size="sm" className="text-white hover:bg-white/10">
+          <Settings className="w-4 h-4" />
+        </Button>
+      </div>
+
+      {/* Video Container */}
+      <div className="flex-1 relative">
+        {/* Remote Video (Main) */}
+        <video
+          ref={remoteVideoRef}
+          autoPlay
+          playsInline
+          className="w-full h-full object-cover bg-gray-900"
+        />
+        
+        {/* Local Video (Picture-in-Picture) */}
+        <div className="absolute top-4 right-4 w-48 h-36 bg-gray-800 rounded-lg overflow-hidden border-2 border-white/20">
+          <video
+            ref={localVideoRef}
+            autoPlay
+            playsInline
+            muted
+            className="w-full h-full object-cover"
+          />
+          {!isVideoEnabled && (
+            <div className="absolute inset-0 bg-gray-800 flex items-center justify-center">
+              <VideoOff className="w-8 h-8 text-white/60" />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Controls */}
+      <div className="bg-black/50 backdrop-blur-sm p-6 flex justify-center items-center gap-4">
+        <Button
+          onClick={toggleAudio}
+          variant={isAudioEnabled ? "secondary" : "destructive"}
+          size="lg"
+          className="rounded-full w-14 h-14"
+        >
+          {isAudioEnabled ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
+        </Button>
+        
+        <Button
+          onClick={toggleVideo}
+          variant={isVideoEnabled ? "secondary" : "destructive"}
+          size="lg"
+          className="rounded-full w-14 h-14"
+        >
+          {isVideoEnabled ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
+        </Button>
+        
+        <Button
+          onClick={toggleScreenShare}
+          variant={isScreenSharing ? "default" : "secondary"}
+          size="lg"
+          className="rounded-full w-14 h-14"
+        >
+          {isScreenSharing ? <MonitorOff className="w-6 h-6" /> : <Monitor className="w-6 h-6" />}
+        </Button>
+        
+        <Button
+          onClick={handleEndCall}
+          variant="destructive"
+          size="lg"
+          className="rounded-full w-14 h-14 ml-4"
+        >
+          <PhoneOff className="w-6 h-6" />
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+export default VideoCall;

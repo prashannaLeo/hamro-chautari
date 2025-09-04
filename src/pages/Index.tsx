@@ -6,6 +6,7 @@ import CreatePost from '@/components/Feed/CreatePost';
 import PostCard from '@/components/Feed/PostCard';
 import PostSuggestions from '@/components/AI/PostSuggestions';
 import MoodMatcher from '@/components/MoodMatching/MoodMatcher';
+import CallManager from '@/components/Calling/CallManager';
 
 const mockPosts = [
   {
@@ -76,6 +77,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
       <Navbar />
+      <CallManager />
       
       <main className="max-w-6xl mx-auto px-4 py-8 pb-20 sm:pb-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">

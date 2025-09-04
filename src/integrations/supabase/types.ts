@@ -394,6 +394,7 @@ export type Database = {
           display_name: string | null
           id: string
           is_verified: boolean | null
+          location: string | null
           mood: string | null
           privacy_level: string | null
           updated_at: string
@@ -408,6 +409,7 @@ export type Database = {
           display_name?: string | null
           id?: string
           is_verified?: boolean | null
+          location?: string | null
           mood?: string | null
           privacy_level?: string | null
           updated_at?: string
@@ -422,6 +424,7 @@ export type Database = {
           display_name?: string | null
           id?: string
           is_verified?: boolean | null
+          location?: string | null
           mood?: string | null
           privacy_level?: string | null
           updated_at?: string

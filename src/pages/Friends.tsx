@@ -8,6 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useFriends } from '@/hooks/useFriends';
+import { useCalling } from '@/hooks/useCalling';
+import { toast } from '@/hooks/use-toast';
 import { 
   Search, 
   UserPlus, 
@@ -17,7 +20,9 @@ import {
   MoreHorizontal,
   Users,
   Heart,
-  MapPin
+  MapPin,
+  Phone,
+  Video
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -141,8 +146,19 @@ const getMoodEmoji = (mood: string) => {
 const Friends = () => {
   const { user, loading } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
+  const { 
+    friends, 
+    friendRequests, 
+    sentRequests, 
+    loading: friendsLoading,
+    acceptFriendRequest,
+    declineFriendRequest,
+    removeFriend,
+    sendFriendRequest
+  } = useFriends();
+  const { initiateCall } = useCalling();
 
-  if (loading) {
+  if (loading || friendsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -154,24 +170,51 @@ const Friends = () => {
     return <Navigate to="/auth" replace />;
   }
 
-  const handleAcceptRequest = (friendId: string) => {
-    // TODO: Implement accept friend request
-    console.log('Accepting friend request:', friendId);
+  const handleAcceptRequest = async (requestId: string) => {
+    await acceptFriendRequest(requestId);
   };
 
-  const handleDeclineRequest = (friendId: string) => {
-    // TODO: Implement decline friend request
-    console.log('Declining friend request:', friendId);
+  const handleDeclineRequest = async (requestId: string) => {
+    await declineFriendRequest(requestId);
   };
 
-  const handleSendRequest = (userId: string) => {
-    // TODO: Implement send friend request
-    console.log('Sending friend request:', userId);
+  const handleSendRequest = async (userId: string) => {
+    await sendFriendRequest(userId);
   };
 
-  const filteredFriends = mockFriends.filter(friend =>
-    friend.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    friend.username.toLowerCase().includes(searchQuery.toLowerCase())
+  const handleMessage = (friend: any) => {
+    toast({
+      title: "Message",
+      description: `Opening chat with ${friend.profiles?.display_name || friend.profiles?.username || friend.name}`
+    });
+  };
+
+  const handleVideoCall = (friend: any) => {
+    initiateCall(
+      friend.profiles?.id || friend.id,
+      friend.profiles?.display_name || friend.profiles?.username || friend.name,
+      'video',
+      friend.profiles?.avatar_url
+    );
+  };
+
+  const handleVoiceCall = (friend: any) => {
+    initiateCall(
+      friend.profiles?.id || friend.id,
+      friend.profiles?.display_name || friend.profiles?.username || friend.name,
+      'voice',
+      friend.profiles?.avatar_url
+    );
+  };
+
+  const handleRemoveFriend = async (connectionId: string, friendName: string) => {
+    if (window.confirm(`Are you sure you want to remove ${friendName} from your friends?`)) {
+      await removeFriend(connectionId);
+    }
+  };
+
+  const filteredFriends = friends.filter(friend =>
+    (friend.profiles?.display_name || friend.profiles?.username || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -188,15 +231,15 @@ const Friends = () => {
           <TabsList className="grid w-full grid-cols-3 mb-8 bg-gray-100 p-1 rounded-xl">
             <TabsTrigger value="friends" className="rounded-lg font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm">
               <Users className="w-4 h-4 mr-2" />
-              Friends ({mockFriends.length})
+              Friends ({friends.length})
             </TabsTrigger>
             <TabsTrigger value="requests" className="rounded-lg font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm">
               <UserPlus className="w-4 h-4 mr-2" />
-              Requests ({mockRequests.length})
+              Requests ({friendRequests.length})
             </TabsTrigger>
             <TabsTrigger value="suggestions" className="rounded-lg font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm">
               <Heart className="w-4 h-4 mr-2" />
-              Suggestions
+              Sent ({sentRequests.length})
             </TabsTrigger>
           </TabsList>
 
@@ -214,184 +257,191 @@ const Friends = () => {
 
             {/* Friends Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredFriends.map((friend) => (
-                <Card key={friend.id} className="hover:shadow-xl transition-all duration-300 bg-white/90 backdrop-blur-sm border-0 shadow-lg">
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center space-x-3">
-                        <div className="relative">
-                          <Avatar className="h-12 w-12">
-                            <AvatarImage src={friend.avatar} alt={friend.name} />
-                            <AvatarFallback className="bg-primary text-primary-foreground">
-                              {friend.name.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          {friend.isOnline && (
-                            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-background rounded-full"></div>
-                          )}
+              {filteredFriends.length === 0 ? (
+                <div className="col-span-full text-center py-12">
+                  <Users className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">No friends yet</h3>
+                  <p className="text-muted-foreground">Start connecting with people in your community!</p>
+                </div>
+              ) : (
+                filteredFriends.map((friend) => (
+                  <Card key={friend.id} className="hover:shadow-xl transition-all duration-300 bg-white/90 backdrop-blur-sm border-0 shadow-lg">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center space-x-3">
+                          <div className="relative">
+                            <Avatar className="h-12 w-12">
+                              <AvatarImage src={friend.profiles?.avatar_url || ''} alt={friend.profiles?.display_name || friend.profiles?.username} />
+                              <AvatarFallback className="bg-primary text-primary-foreground">
+                                {(friend.profiles?.display_name || friend.profiles?.username)?.charAt(0)?.toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-medium truncate">{friend.profiles?.display_name || friend.profiles?.username}</h3>
+                            <p className="text-sm text-muted-foreground">@{friend.profiles?.username}</p>
+                          </div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-medium truncate">{friend.name}</h3>
-                          <p className="text-sm text-muted-foreground">@{friend.username}</p>
-                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreHorizontal className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem>View profile</DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => handleRemoveFriend(friend.id, friend.profiles?.display_name || friend.profiles?.username || 'User')}
+                            >
+                              Unfriend
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>View profile</DropdownMenuItem>
-                          <DropdownMenuItem>Unfriend</DropdownMenuItem>
-                          <DropdownMenuItem>Block</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
 
-                    {friend.mood && (
-                      <Badge variant="outline" className="mb-2">
-                        {getMoodEmoji(friend.mood)} {friend.mood}
-                      </Badge>
-                    )}
+                      {friend.profiles?.mood && (
+                        <Badge variant="outline" className="mb-2">
+                          {getMoodEmoji(friend.profiles.mood)} {friend.profiles.mood}
+                        </Badge>
+                      )}
 
-                    <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
-                      {friend.bio}
-                    </p>
+                      {friend.profiles?.bio && (
+                        <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
+                          {friend.profiles.bio}
+                        </p>
+                      )}
 
-                    <div className="flex items-center text-xs text-muted-foreground mb-3">
-                      <MapPin className="w-3 h-3 mr-1" />
-                      <span className="truncate">{friend.location}</span>
-                    </div>
-
-                    <div className="text-xs text-muted-foreground mb-4">
-                      {friend.mutualFriends} mutual friends
-                    </div>
-
-                    <div className="flex space-x-2">
-                      <Button variant="outline" size="sm" className="flex-1">
-                        <MessageCircle className="w-4 h-4 mr-1" />
-                        Message
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <UserCheck className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                      <div className="flex space-x-1 mb-4">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => handleMessage(friend)}
+                          className="flex-1 hover:bg-primary hover:text-primary-foreground"
+                        >
+                          <MessageCircle className="w-4 h-4 mr-1" />
+                          Message
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleVoiceCall(friend)}
+                          className="hover:bg-green-500 hover:text-white"
+                        >
+                          <Phone className="w-4 h-4" />
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleVideoCall(friend)}
+                          className="hover:bg-blue-500 hover:text-white"
+                        >
+                          <Video className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
             </div>
           </TabsContent>
 
           <TabsContent value="requests" className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {mockRequests.map((request) => (
-                <Card key={request.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex items-center space-x-3 mb-3">
-                      <Avatar className="h-12 w-12">
-                        <AvatarImage src={request.avatar} alt={request.name} />
-                        <AvatarFallback className="bg-primary text-primary-foreground">
-                          {request.name.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-medium truncate">{request.name}</h3>
-                        <p className="text-sm text-muted-foreground">@{request.username}</p>
+              {friendRequests.length === 0 ? (
+                <div className="col-span-full text-center py-12">
+                  <UserPlus className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">No friend requests</h3>
+                  <p className="text-muted-foreground">You're all caught up!</p>
+                </div>
+              ) : (
+                friendRequests.map((request) => (
+                  <Card key={request.id} className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-4">
+                      <div className="flex items-center space-x-3 mb-3">
+                        <Avatar className="h-12 w-12">
+                          <AvatarImage src={request.profiles?.avatar_url || ''} alt={request.profiles?.display_name || request.profiles?.username} />
+                          <AvatarFallback className="bg-primary text-primary-foreground">
+                            {(request.profiles?.display_name || request.profiles?.username)?.charAt(0)?.toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium truncate">{request.profiles?.display_name || request.profiles?.username}</h3>
+                          <p className="text-sm text-muted-foreground">@{request.profiles?.username}</p>
+                        </div>
                       </div>
-                    </div>
 
-                    <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
-                      {request.bio}
-                    </p>
+                      {request.profiles?.bio && (
+                        <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
+                          {request.profiles.bio}
+                        </p>
+                      )}
 
-                    <div className="flex items-center text-xs text-muted-foreground mb-2">
-                      <MapPin className="w-3 h-3 mr-1" />
-                      <span className="truncate">{request.location}</span>
-                    </div>
+                      <div className="text-xs text-muted-foreground mb-4">
+                        Friend request received
+                      </div>
 
-                    <div className="text-xs text-muted-foreground mb-2">
-                      {request.mutualFriends} mutual friends
-                    </div>
-
-                    <div className="text-xs text-muted-foreground mb-4">
-                      Requested {request.requestedAt}
-                    </div>
-
-                    <div className="flex space-x-2">
-                      <Button 
-                        size="sm" 
-                        className="flex-1"
-                        onClick={() => handleAcceptRequest(request.id)}
-                      >
-                        <UserCheck className="w-4 h-4 mr-1" />
-                        Accept
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleDeclineRequest(request.id)}
-                      >
-                        <UserX className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                      <div className="flex space-x-2">
+                        <Button 
+                          size="sm" 
+                          className="flex-1"
+                          onClick={() => handleAcceptRequest(request.id)}
+                        >
+                          <UserCheck className="w-4 h-4 mr-1" />
+                          Accept
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleDeclineRequest(request.id)}
+                        >
+                          <UserX className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
             </div>
           </TabsContent>
 
           <TabsContent value="suggestions" className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {mockSuggestions.map((suggestion) => (
-                <Card key={suggestion.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex items-center space-x-3 mb-3">
-                      <Avatar className="h-12 w-12">
-                        <AvatarImage src={suggestion.avatar} alt={suggestion.name} />
-                        <AvatarFallback className="bg-primary text-primary-foreground">
-                          {suggestion.name.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-medium truncate">{suggestion.name}</h3>
-                        <p className="text-sm text-muted-foreground">@{suggestion.username}</p>
+              {sentRequests.length === 0 ? (
+                <div className="col-span-full text-center py-12">
+                  <Heart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">No sent requests</h3>
+                  <p className="text-muted-foreground">Send friend requests to connect with people!</p>
+                </div>
+              ) : (
+                sentRequests.map((request) => (
+                  <Card key={request.id} className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-4">
+                      <div className="flex items-center space-x-3 mb-3">
+                        <Avatar className="h-12 w-12">
+                          <AvatarImage src={request.profiles?.avatar_url || ''} alt={request.profiles?.display_name || request.profiles?.username} />
+                          <AvatarFallback className="bg-primary text-primary-foreground">
+                            {(request.profiles?.display_name || request.profiles?.username)?.charAt(0)?.toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium truncate">{request.profiles?.display_name || request.profiles?.username}</h3>
+                          <p className="text-sm text-muted-foreground">@{request.profiles?.username}</p>
+                        </div>
                       </div>
-                    </div>
 
-                    <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
-                      {suggestion.bio}
-                    </p>
+                      {request.profiles?.bio && (
+                        <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
+                          {request.profiles.bio}
+                        </p>
+                      )}
 
-                    <div className="flex items-center text-xs text-muted-foreground mb-2">
-                      <MapPin className="w-3 h-3 mr-1" />
-                      <span className="truncate">{suggestion.location}</span>
-                    </div>
-
-                    <div className="text-xs text-muted-foreground mb-2">
-                      {suggestion.mutualFriends} mutual friends
-                    </div>
-
-                    <div className="text-xs text-primary mb-4">
-                      {suggestion.reason}
-                    </div>
-
-                    <div className="flex space-x-2">
-                      <Button 
-                        size="sm" 
-                        className="flex-1"
-                        onClick={() => handleSendRequest(suggestion.id)}
-                      >
-                        <UserPlus className="w-4 h-4 mr-1" />
-                        Add Friend
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <UserX className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                      <div className="flex items-center justify-center py-4">
+                        <Badge variant="outline">Request Sent</Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
             </div>
           </TabsContent>
         </Tabs>

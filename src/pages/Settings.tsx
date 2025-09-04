@@ -43,7 +43,6 @@ const Settings = () => {
     displayName: '',
     username: '',
     bio: '',
-    location: '',
     mood: 'neutral'
   });
 
@@ -54,7 +53,6 @@ const Settings = () => {
         displayName: profile.display_name || '',
         username: profile.username || '',
         bio: profile.bio || '',
-        location: profile.location || '',
         mood: profile.mood || 'neutral'
       });
     }
@@ -109,7 +107,6 @@ const Settings = () => {
         display_name: profileData.displayName,
         username: profileData.username,
         bio: profileData.bio,
-        location: profileData.location,
         mood: profileData.mood
       });
       
@@ -198,16 +195,6 @@ const Settings = () => {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="space-y-3">
-                  <Label htmlFor="location" className="text-sm font-medium text-foreground">Location</Label>
-                  <Input
-                    id="location"
-                    value={profileData.location}
-                    onChange={(e) => setProfileData(prev => ({ ...prev, location: e.target.value }))}
-                    placeholder="Kathmandu, Nepal"
-                    className="bg-background border-border focus:ring-primary"
-                  />
-                </div>
                 <div className="space-y-3">
                   <Label htmlFor="mood" className="text-sm font-medium text-foreground">Default Mood</Label>
                   <Select value={profileData.mood} onValueChange={(value) => setProfileData(prev => ({ ...prev, mood: value }))}>
