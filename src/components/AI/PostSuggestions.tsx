@@ -103,67 +103,82 @@ const PostSuggestions = () => {
   };
 
   return (
-    <Card className="shadow-lg bg-white/90 backdrop-blur-sm border-0">
-      <CardHeader className="pb-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-t-xl">
+    <Card className="shadow-xl bg-white/95 backdrop-blur-sm border border-gray-100/50 overflow-hidden">
+      <CardHeader className="pb-4 bg-gradient-to-br from-blue-50/80 via-purple-50/60 to-pink-50/40 border-b border-gray-100/50">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center space-x-3 text-xl">
-            <Brain className="w-6 h-6 text-blue-600" />
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent font-bold">AI Post Suggestions</span>
-            <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-200">Beta</Badge>
-          </CardTitle>
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl shadow-lg">
+              <Brain className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <CardTitle className="flex items-center space-x-2 text-lg">
+                <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent font-bold">AI Post Suggestions</span>
+                <Badge variant="secondary" className="bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700 border-blue-200 text-xs px-2 py-0.5">
+                  Beta
+                </Badge>
+              </CardTitle>
+              <p className="text-xs text-gray-600 mt-0.5">
+                Smart content ideas for you
+              </p>
+            </div>
+          </div>
           <Button 
             variant="outline" 
             size="sm" 
             onClick={refreshSuggestions}
             disabled={loading}
-            className="rounded-xl hover:bg-blue-50 border-blue-200"
+            className="rounded-xl hover:bg-blue-50 border-blue-200 h-8 w-8 p-0"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
         </div>
-        <p className="text-sm text-gray-600 mt-2">
-          AI-powered content ideas based on your interests and current trends
-        </p>
       </CardHeader>
-      <CardContent className="space-y-4 p-6">
+      <CardContent className="space-y-3 p-4">
         {suggestions.slice(0, 2).map((suggestion) => (
           <div 
             key={suggestion.id}
-            className="p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl hover:from-blue-50 hover:to-purple-50 transition-all duration-300 border border-gray-100 hover:border-blue-200 hover:shadow-md"
+            className="group p-4 bg-gradient-to-br from-white to-gray-50/50 rounded-xl hover:from-blue-50/50 hover:to-purple-50/30 transition-all duration-300 border border-gray-100 hover:border-blue-200/50 hover:shadow-lg cursor-pointer"
           >
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-white rounded-lg shadow-sm">
+            <div className="flex items-start justify-between mb-2">
+              <div className="flex items-center space-x-2 flex-1 min-w-0">
+                <div className="p-1.5 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg">
                   {getTypeIcon(suggestion.type)}
                 </div>
-                <span className="font-semibold text-gray-800">{suggestion.title}</span>
-                <Badge variant="outline" className="bg-gradient-to-r from-purple-100 to-pink-100 border-purple-200 text-purple-800">
-                  {getMoodEmoji(suggestion.mood)} {suggestion.mood}
-                </Badge>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-medium text-gray-900 text-sm truncate">{suggestion.title}</h4>
+                  <Badge variant="outline" className="mt-1 bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200 text-purple-700 text-xs">
+                    {getMoodEmoji(suggestion.mood)} {suggestion.mood}
+                  </Badge>
+                </div>
               </div>
               <Button 
                 size="sm" 
                 variant="ghost"
                 onClick={() => useSuggestion(suggestion)}
-                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-xl"
+                className="ml-2 text-blue-600 hover:text-white hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-600 rounded-lg h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-all duration-200"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-3.5 h-3.5" />
               </Button>
             </div>
             
-            <p className="text-sm text-gray-700 mb-3 leading-relaxed">
+            <p className="text-xs text-gray-600 mb-3 leading-relaxed line-clamp-2">
               {suggestion.content}
             </p>
             
             <div className="flex items-center justify-between">
-              <div className="flex flex-wrap gap-2">
-                {suggestion.tags.map((tag) => (
-                  <Badge key={tag} variant="secondary" className="text-xs bg-white/80 text-gray-600 border-gray-200">
+              <div className="flex flex-wrap gap-1">
+                {suggestion.tags.slice(0, 2).map((tag) => (
+                  <Badge key={tag} variant="secondary" className="text-xs bg-white/60 text-gray-500 border-gray-200 px-2 py-0.5">
                     #{tag}
                   </Badge>
                 ))}
+                {suggestion.tags.length > 2 && (
+                  <Badge variant="secondary" className="text-xs bg-white/60 text-gray-400 border-gray-200 px-2 py-0.5">
+                    +{suggestion.tags.length - 2}
+                  </Badge>
+                )}
               </div>
-              <span className="text-xs text-gray-500 italic">
+              <span className="text-xs text-gray-400 italic truncate max-w-[120px]">
                 {suggestion.reason}
               </span>
             </div>
@@ -173,12 +188,12 @@ const PostSuggestions = () => {
         <Button 
           variant="outline" 
           size="sm" 
-          className="w-full rounded-xl bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200 hover:from-blue-100 hover:to-purple-100 text-blue-700 font-medium"
+          className="w-full rounded-xl bg-gradient-to-r from-blue-50/50 to-purple-50/50 border-blue-200/50 hover:from-blue-100/80 hover:to-purple-100/80 hover:border-blue-300 text-blue-700 font-medium h-9 mt-3"
           onClick={refreshSuggestions}
           disabled={loading}
         >
           <Sparkles className="w-4 h-4 mr-2" />
-          {loading ? 'Generating...' : 'Get More Suggestions'}
+          {loading ? 'Generating...' : 'More Ideas'}
         </Button>
       </CardContent>
     </Card>

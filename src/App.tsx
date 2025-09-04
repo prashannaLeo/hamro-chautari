@@ -12,6 +12,7 @@ import Auth from "./pages/Auth";
 import Messages from "./pages/Messages";
 import Stories from "./pages/Stories";
 import Friends from "./pages/Friends";
+import Notifications from "./pages/Notifications";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
@@ -33,6 +34,7 @@ const App = () => (
                 <Route path="/messages" element={<Messages />} />
                 <Route path="/stories" element={<Stories />} />
                 <Route path="/friends" element={<Friends />} />
+                <Route path="/notifications" element={<Notifications />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/settings" element={<Settings />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

@@ -115,9 +115,11 @@ const Navbar = () => {
                   </DropdownMenuItem>
                 </div>
                 <div className="p-3 border-t">
-                  <Button variant="ghost" className="w-full text-sm text-blue-600 hover:bg-blue-50">
-                    View all notifications
-                  </Button>
+                  <Link to="/notifications">
+                    <Button variant="ghost" className="w-full text-sm text-blue-600 hover:bg-blue-50">
+                      View all notifications
+                    </Button>
+                  </Link>
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
