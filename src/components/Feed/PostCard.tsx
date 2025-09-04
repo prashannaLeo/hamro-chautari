@@ -105,34 +105,41 @@ const PostCard: React.FC<PostCardProps> = ({ post, onEdit, onDelete, onPostUpdat
 
   // Subscribe to comment count changes
   useEffect(() => {
-    const { supabase } = require('@/integrations/supabase/client');
-    
-    const subscription = supabase
-      .channel(`post-updates:${post.id}`)
-      .on('postgres_changes', 
-        { 
-          event: 'UPDATE', 
-          schema: 'public', 
-          table: 'posts',
-          filter: `id=eq.${post.id}`
-        }, 
-        (payload: any) => {
-          if (payload.new.comments_count !== undefined) {
-            setCommentsCount(payload.new.comments_count);
-            onPostUpdate?.(post.id, { 
-              likes: payload.new.likes_count || likesCount, 
-              comments: payload.new.comments_count 
-            });
+    const setupSubscription = async () => {
+      const { supabase } = await import('@/integrations/supabase/client');
+      
+      const subscription = supabase
+        .channel(`post-updates:${post.id}`)
+        .on('postgres_changes', 
+          { 
+            event: 'UPDATE', 
+            schema: 'public', 
+            table: 'posts',
+            filter: `id=eq.${post.id}`
+          }, 
+          (payload: any) => {
+            if (payload.new.comments_count !== undefined) {
+              setCommentsCount(payload.new.comments_count);
+              onPostUpdate?.(post.id, { 
+                likes: payload.new.likes_count || likesCount, 
+                comments: payload.new.comments_count 
+              });
+            }
+            if (payload.new.likes_count !== undefined) {
+              setLikesCount(payload.new.likes_count);
+            }
           }
-          if (payload.new.likes_count !== undefined) {
-            setLikesCount(payload.new.likes_count);
-          }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe();
 
+      return () => {
+        subscription.unsubscribe();
+      };
+    };
+
+    const cleanup = setupSubscription();
     return () => {
-      subscription.unsubscribe();
+      cleanup.then(cleanupFn => cleanupFn?.());
     };
   }, [post.id, likesCount, commentsCount, onPostUpdate]);
 
