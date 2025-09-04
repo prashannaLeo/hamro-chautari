@@ -19,6 +19,7 @@ const Auth = () => {
   const [resetEmail, setResetEmail] = useState('');
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
 
@@ -143,6 +144,15 @@ const Auth = () => {
       return;
     }
 
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: "Passwords don't match",
+        description: "Please make sure both passwords are identical",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setLoading(true);
 
     const { error } = await supabase.auth.updateUser({
@@ -165,6 +175,7 @@ const Auth = () => {
       window.history.replaceState(null, '', window.location.pathname);
       setIsResettingPassword(false);
       setNewPassword('');
+      setConfirmPassword('');
       navigate('/');
     }
 
@@ -210,6 +221,29 @@ const Auth = () => {
                 </div>
                 <p className="text-xs text-muted-foreground px-1">
                   Minimum 6 characters required
+                </p>
+              </div>
+              <div className="space-y-2">
+                <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Confirm new password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    className="h-12 rounded-xl border-border/50 focus:border-primary/50 focus:ring-primary/20 pr-12"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+                <p className="text-xs text-muted-foreground px-1">
+                  Re-enter your new password to confirm
                 </p>
               </div>
               <Button 
