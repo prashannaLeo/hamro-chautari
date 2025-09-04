@@ -111,7 +111,7 @@ export const usePostOperations = () => {
         .select('id')
         .eq('post_id', postId)
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (existingLike) {
         // Unlike

@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useMessages } from '@/hooks/useMessages';
+import NewChatDialog from '@/components/Messages/NewChatDialog';
 import { 
   Search, 
   MoreVertical, 
@@ -111,6 +112,7 @@ const Messages = () => {
   const [selectedChat, setSelectedChat] = useState<any>(null);
   const [newMessage, setNewMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [newChatDialogOpen, setNewChatDialogOpen] = useState(false);
 
   if (loading || messagesLoading) {
     return (
@@ -164,7 +166,12 @@ const Messages = () => {
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold">Messages</h2>
-                <Button variant="ghost" size="sm">
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => setNewChatDialogOpen(true)}
+                  className="hover:bg-primary/10"
+                >
                   <Plus className="w-4 h-4" />
                 </Button>
               </div>
@@ -375,6 +382,12 @@ const Messages = () => {
             )}
           </Card>
         </div>
+
+        {/* New Chat Dialog */}
+        <NewChatDialog 
+          open={newChatDialogOpen} 
+          onOpenChange={setNewChatDialogOpen} 
+        />
       </main>
     </div>
   );
