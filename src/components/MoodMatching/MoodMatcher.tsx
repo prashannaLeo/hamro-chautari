@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useMoodMatcher } from '@/hooks/useMoodMatcher';
 import { 
   Heart, 
   Users, 
@@ -21,62 +22,13 @@ const moodOptions = [
   { value: 'creative', emoji: '🎨', label: 'Creative', color: 'bg-pink-50 text-pink-700 border-pink-200' },
 ];
 
-const mockMatches = [
-  {
-    id: '1',
-    name: 'Amit Shrestha',
-    username: 'amit_shrestha',
-    avatar: '',
-    mood: 'adventurous',
-    location: 'Pokhara, Nepal',
-    recentActivity: 'Just completed Poon Hill trek!',
-    matchScore: 95,
-    mutualInterests: ['trekking', 'photography', 'mountains']
-  },
-  {
-    id: '2',
-    name: 'Rashika Maharjan',
-    username: 'rashika_m',
-    avatar: '',
-    mood: 'adventurous',
-    location: 'Kathmandu, Nepal',
-    recentActivity: 'Planning next weekend adventure',
-    matchScore: 88,
-    mutualInterests: ['hiking', 'nature', 'adventure']
-  },
-  {
-    id: '3',
-    name: 'Suresh Tamang',
-    username: 'suresh_tamang',
-    avatar: '',
-    mood: 'adventurous',
-    location: 'Langtang, Nepal',
-    recentActivity: 'Mountain guide sharing trail tips',
-    matchScore: 92,
-    mutualInterests: ['mountaineering', 'guiding', 'culture']
-  }
-];
-
 const MoodMatcher = () => {
   const [selectedMood, setSelectedMood] = useState('adventurous');
-  const [matches, setMatches] = useState(mockMatches);
-  const [loading, setLoading] = useState(false);
+  const { matches, loading, findMatches } = useMoodMatcher();
 
-  const findMatches = async (mood: string) => {
-    setLoading(true);
+  const handleFindMatches = (mood: string) => {
     setSelectedMood(mood);
-    
-    // TODO: Implement AI-powered mood matching
-    setTimeout(() => {
-      // Filter matches based on selected mood
-      const filteredMatches = mockMatches.map(match => ({
-        ...match,
-        mood,
-        matchScore: Math.floor(Math.random() * 20) + 80 // Random score between 80-100
-      }));
-      setMatches(filteredMatches);
-      setLoading(false);
-    }, 1000);
+    findMatches(mood);
   };
 
   const getMoodData = (moodValue: string) => {
@@ -120,7 +72,7 @@ const MoodMatcher = () => {
                     ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg scale-105' 
                     : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50 hover:scale-102'
                 }`}
-                onClick={() => findMatches(mood.value)}
+                onClick={() => handleFindMatches(mood.value)}
                 disabled={loading}
               >
                 <span className="text-xl sm:text-2xl">{mood.emoji}</span>
@@ -149,7 +101,7 @@ const MoodMatcher = () => {
               <Button 
                 variant="ghost" 
                 size="sm"
-                onClick={() => findMatches(selectedMood)}
+                onClick={() => handleFindMatches(selectedMood)}
                 disabled={loading}
                 className="rounded-xl hover:bg-blue-50 h-8 w-8 p-0 flex-shrink-0"
               >
@@ -201,10 +153,12 @@ const MoodMatcher = () => {
                           </div>
                         </div>
                         
-                        {/* Activity */}
-                        <p className="text-xs sm:text-sm text-gray-700 italic leading-relaxed">
-                          "{match.recentActivity}"
-                        </p>
+                        {/* Bio */}
+                        {match.bio && (
+                          <p className="text-xs sm:text-sm text-gray-700 italic leading-relaxed">
+                            "{match.bio}"
+                          </p>
+                        )}
                         
                         {/* Interests and Actions */}
                         <div className="space-y-3">
