@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import Navbar from '@/components/Layout/Navbar';
@@ -7,16 +7,31 @@ import PostCard from '@/components/Feed/PostCard';
 import PostSuggestions from '@/components/AI/PostSuggestions';
 import MoodMatcher from '@/components/MoodMatching/MoodMatcher';
 import CallManager from '@/components/Calling/CallManager';
+import EditPostDialog from '@/components/Feed/EditPostDialog';
 import { useToast } from '@/hooks/use-toast';
 import { usePosts } from '@/hooks/usePosts';
+import { usePostOperations } from '@/hooks/usePostOperations';
 import { createUserProfile } from '@/utils/createSampleData';
-import { useEffect } from 'react';
+import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 
 const Index = () => {
   const { user, loading } = useAuth();
-  const { toast } = useToast();
+  const { toast: toastHook } = useToast();
   const { posts, loading: postsLoading, refetch } = usePosts();
+  const { deletePost } = usePostOperations();
+  const [editingPost, setEditingPost] = useState<any>(null);
+  const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
 
   // Initialize user profile when user logs in
   useEffect(() => {
@@ -39,6 +54,28 @@ const Index = () => {
   if (!user) {
     return <Navigate to="/auth" replace />;
   }
+
+  const handleEditPost = (postId: string) => {
+    const post = posts.find(p => p.id === postId);
+    if (post) {
+      setEditingPost(post);
+    }
+  };
+
+  const handleDeletePost = async (postId: string) => {
+    try {
+      const success = await deletePost(postId);
+      if (success) {
+        toast.success('Post deleted successfully');
+        refetch();
+        setDeletingPostId(null);
+      } else {
+        toast.error('Failed to delete post');
+      }
+    } catch (error) {
+      toast.error('Failed to delete post');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
@@ -86,20 +123,12 @@ const Index = () => {
                         images: post.media_urls || []
                       }}
                       onEdit={(postId) => {
-                        console.log('Edit post:', postId);
-                        toast({
-                          title: "Edit Feature",
-                          description: "Post editing will be available soon!"
-                        });
+                        const post = posts.find(p => p.id === postId);
+                        if (post) {
+                          setEditingPost(post);
+                        }
                       }}
-                      onDelete={async (postId) => {
-                        console.log('Delete post:', postId);
-                        toast({
-                          title: "Delete Feature", 
-                          description: "Post deletion will be available soon!"
-                        });
-                        refetch();
-                      }}
+                      onDelete={(postId) => setDeletingPostId(postId)}
                     />
                   </div>
                 ))
@@ -118,6 +147,41 @@ const Index = () => {
           </div>
         </div>
       </main>
+
+      {/* Edit Post Dialog */}
+      <EditPostDialog
+        open={!!editingPost}
+        onOpenChange={(open) => !open && setEditingPost(null)}
+        postId={editingPost?.id || ''}
+        initialContent={editingPost?.content || ''}
+        initialMood={editingPost?.mood_tag}
+        initialLocation={editingPost?.location}
+        onPostUpdated={() => {
+          refetch();
+          setEditingPost(null);
+        }}
+      />
+
+      {/* Delete Post Confirmation */}
+      <AlertDialog open={!!deletingPostId} onOpenChange={(open) => !open && setDeletingPostId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Post</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this post? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deletingPostId && handleDeletePost(deletingPostId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

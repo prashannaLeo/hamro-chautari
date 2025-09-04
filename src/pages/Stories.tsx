@@ -15,22 +15,36 @@ import {
   Share,
   MoreHorizontal,
   Clock,
-  Trash2
+  Trash2,
+  Edit
 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useStories, Story } from '@/hooks/useStories';
 import CreateStoryDialog from '@/components/Stories/CreateStoryDialog';
+import EditStoryDialog from '@/components/Stories/EditStoryDialog';
 import { toast } from 'sonner';
 
 const Stories = () => {
   const { user, loading } = useAuth();
   const [selectedStory, setSelectedStory] = useState<any>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const { stories, loading: storiesLoading, deleteStory, incrementViews } = useStories();
+  const [editingStory, setEditingStory] = useState<Story | null>(null);
+  const [deletingStoryId, setDeletingStoryId] = useState<string | null>(null);
+  const { stories, loading: storiesLoading, deleteStory, incrementViews, refetch } = useStories();
 
   if (loading || storiesLoading) {
     return (
@@ -105,7 +119,13 @@ const Stories = () => {
     } else {
       toast.success('Story deleted successfully');
       setSelectedStory(null);
+      setDeletingStoryId(null);
+      refetch();
     }
+  };
+
+  const handleEditStory = (story: Story) => {
+    setEditingStory(story);
   };
 
   // Create a "your story" placeholder and combine with existing stories
@@ -316,6 +336,26 @@ const Stories = () => {
                               <Share className="w-5 h-5" />
                             </Button>
                           </div>
+                          {'isOwn' in selectedStory && selectedStory.isOwn && (
+                            <div className="flex items-center space-x-2">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-white hover:bg-white/20"
+                                onClick={() => handleEditStory(selectedStory as Story)}
+                              >
+                                <Edit className="w-5 h-5" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-red-400 hover:bg-red-500/20"
+                                onClick={() => setDeletingStoryId(selectedStory.id)}
+                              >
+                                <Trash2 className="w-5 h-5" />
+                              </Button>
+                            </div>
+                          )}
                           <div className="flex items-center space-x-1 text-white/80 text-xs">
                             <Clock className="w-3 h-3" />
                             <span>{getTimeRemaining('expires_at' in story ? story.expires_at : '')}</span>
@@ -364,6 +404,37 @@ const Stories = () => {
           open={createDialogOpen} 
           onOpenChange={setCreateDialogOpen} 
         />
+
+        <EditStoryDialog
+          open={!!editingStory}
+          onOpenChange={(open) => !open && setEditingStory(null)}
+          storyId={editingStory?.id || ''}
+          initialCaption={editingStory?.caption || ''}
+          onStoryUpdated={() => {
+            refetch();
+            setEditingStory(null);
+          }}
+        />
+
+        <AlertDialog open={!!deletingStoryId} onOpenChange={(open) => !open && setDeletingStoryId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Story</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this story? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => deletingStoryId && handleDeleteStory(deletingStoryId)}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </main>
     </div>
   );

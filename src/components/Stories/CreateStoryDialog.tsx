@@ -89,25 +89,32 @@ const CreateStoryDialog: React.FC<CreateStoryDialogProps> = ({ open, onOpenChang
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Camera className="w-5 h-5" />
+      <DialogContent className="w-full max-w-sm mx-auto sm:max-w-md md:max-w-lg h-fit max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="pb-4">
+          <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
+            <div className="p-2 bg-primary/10 rounded-full">
+              <Camera className="w-5 h-5 text-primary" />
+            </div>
             Create Story
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-6">
           {!selectedFile ? (
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-              <Upload className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-              <p className="text-gray-600 mb-4">Select a photo or video to share</p>
+            <div className="border-2 border-dashed border-muted-foreground/20 rounded-xl p-8 text-center bg-muted/5 hover:bg-muted/10 transition-colors">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Upload className="w-8 h-8 text-primary" />
+              </div>
+              <h3 className="text-lg font-medium text-foreground mb-2">Add to your story</h3>
+              <p className="text-muted-foreground mb-6 text-sm">Share a photo or video that will disappear after 24 hours</p>
               <Button
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full"
+                className="w-full sm:w-auto px-8 py-2.5 font-medium"
+                size="lg"
               >
                 Choose File
               </Button>
+              <p className="text-xs text-muted-foreground mt-3">Supports images and videos up to 50MB</p>
               <Input
                 ref={fileInputRef}
                 type="file"
@@ -117,9 +124,9 @@ const CreateStoryDialog: React.FC<CreateStoryDialogProps> = ({ open, onOpenChang
               />
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-6">
               {/* Preview */}
-              <div className="relative aspect-[3/4] bg-gray-100 rounded-lg overflow-hidden">
+              <div className="relative aspect-[9/16] max-w-xs mx-auto bg-muted rounded-2xl overflow-hidden shadow-lg">
                 {selectedFile.type.startsWith('image/') ? (
                   <img
                     src={preview!}
@@ -131,13 +138,14 @@ const CreateStoryDialog: React.FC<CreateStoryDialogProps> = ({ open, onOpenChang
                     src={preview!}
                     className="w-full h-full object-cover"
                     controls
+                    playsInline
                   />
                 )}
                 
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="absolute top-2 right-2 bg-black/50 text-white hover:bg-black/70"
+                  className="absolute top-3 right-3 h-8 w-8 p-0 bg-black/60 text-white hover:bg-black/80 rounded-full"
                   onClick={() => {
                     setSelectedFile(null);
                     setPreview(null);
@@ -151,8 +159,8 @@ const CreateStoryDialog: React.FC<CreateStoryDialogProps> = ({ open, onOpenChang
               </div>
 
               {/* Caption */}
-              <div className="space-y-2">
-                <Label htmlFor="caption">Caption (optional)</Label>
+              <div className="space-y-3">
+                <Label htmlFor="caption" className="text-sm font-medium">Caption (optional)</Label>
                 <Textarea
                   id="caption"
                   placeholder="Write a caption..."
@@ -160,12 +168,15 @@ const CreateStoryDialog: React.FC<CreateStoryDialogProps> = ({ open, onOpenChang
                   onChange={(e) => setCaption(e.target.value)}
                   rows={3}
                   maxLength={200}
+                  className="resize-none"
                 />
-                <p className="text-xs text-gray-500">{caption.length}/200</p>
+                <div className="flex justify-between items-center">
+                  <p className="text-xs text-muted-foreground">{caption.length}/200 characters</p>
+                </div>
               </div>
 
               {/* Actions */}
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <Button
                   variant="outline"
                   onClick={() => {
@@ -175,7 +186,7 @@ const CreateStoryDialog: React.FC<CreateStoryDialogProps> = ({ open, onOpenChang
                       fileInputRef.current.value = '';
                     }
                   }}
-                  className="flex-1"
+                  className="flex-1 font-medium"
                   disabled={isUploading}
                 >
                   Change File
@@ -183,9 +194,16 @@ const CreateStoryDialog: React.FC<CreateStoryDialogProps> = ({ open, onOpenChang
                 <Button
                   onClick={handleSubmit}
                   disabled={isUploading}
-                  className="flex-1"
+                  className="flex-1 font-medium bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary"
                 >
-                  {isUploading ? 'Sharing...' : 'Share Story'}
+                  {isUploading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                      Sharing...
+                    </>
+                  ) : (
+                    'Share Story'
+                  )}
                 </Button>
               </div>
 
