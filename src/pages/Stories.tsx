@@ -22,7 +22,7 @@ import {
   DialogContent,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { useStories } from '@/hooks/useStories';
+import { useStories, Story } from '@/hooks/useStories';
 import CreateStoryDialog from '@/components/Stories/CreateStoryDialog';
 import { toast } from 'sonner';
 
@@ -93,7 +93,7 @@ const Stories = () => {
     if (story.isEmpty) return;
     
     setSelectedStory(story);
-    if (story.user_id !== user?.id) {
+    if ('user_id' in story && story.user_id !== user?.id) {
       incrementViews(story.id);
     }
   };
@@ -182,7 +182,7 @@ const Stories = () => {
                       onClick={() => handleStoryClick(story)}
                     >
                       <CardContent className="p-0 h-full">
-                        {story.media_type === 'image' ? (
+                        {'media_type' in story && story.media_type === 'image' ? (
                           <img 
                             src={story.media_url} 
                             alt="Story"
@@ -213,12 +213,12 @@ const Stories = () => {
                             {story.user.name}
                           </p>
                           <p className="text-white/80 text-xs">
-                            {formatTime(story.created_at)}
+                            {'created_at' in story ? formatTime(story.created_at) : 'Now'}
                           </p>
                         </div>
 
                         {/* Views count */}
-                        {story.user.isOwn && (
+                        {story.user.isOwn && 'views_count' in story && (
                           <div className="absolute top-3 right-3">
                             <Badge variant="secondary" className="text-xs">
                               <Eye className="w-3 h-3 mr-1" />
@@ -230,96 +230,100 @@ const Stories = () => {
                     </Card>
                   </DialogTrigger>
 
-                  <DialogContent className="max-w-md p-0 bg-black">
-                    <div className="relative aspect-[3/4]">
-                      {/* Progress bar */}
-                      <div className="absolute top-4 left-4 right-4 z-10">
-                        <div className="h-1 bg-white/30 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-white rounded-full transition-all duration-300"
-                            style={{ width: '30%' }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* User info */}
-                      <div className="absolute top-8 left-4 right-4 z-10 flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src={story.user.avatar} alt={story.user.name} />
-                            <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                              {story.user.name.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="text-white text-sm font-medium">{story.user.name}</p>
-                            <p className="text-white/80 text-xs">{formatTime(story.created_at || '')}</p>
+                  {!story.isEmpty && (
+                    <DialogContent className="max-w-md p-0 bg-black">
+                      <div className="relative aspect-[3/4]">
+                        {/* Progress bar */}
+                        <div className="absolute top-4 left-4 right-4 z-10">
+                          <div className="h-1 bg-white/30 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-white rounded-full transition-all duration-300"
+                              style={{ width: '30%' }}
+                            />
                           </div>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          {story.user.isOwn && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="text-white hover:bg-white/20"
-                              onClick={() => handleDeleteStory(story.id)}
-                            >
-                              <Trash2 className="w-4 h-4" />
+
+                        {/* User info */}
+                        <div className="absolute top-8 left-4 right-4 z-10 flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage src={story.user.avatar} alt={story.user.name} />
+                              <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                                {story.user.name.charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="text-white text-sm font-medium">{story.user.name}</p>
+                              <p className="text-white/80 text-xs">
+                                {'created_at' in story ? formatTime(story.created_at) : 'Now'}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            {story.user.isOwn && 'id' in story && (
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-white hover:bg-white/20"
+                                onClick={() => handleDeleteStory(story.id)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            )}
+                            <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
+                              <MoreHorizontal className="w-4 h-4" />
                             </Button>
-                          )}
-                          <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
+                          </div>
+                        </div>
+
+                        {/* Media */}
+                        {'media_type' in story && story.media_type === 'image' ? (
+                          <img 
+                            src={'media_url' in story ? story.media_url : ''} 
+                            alt="Story"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-black flex items-center justify-center">
+                            <video 
+                              className="w-full h-full object-cover" 
+                              autoPlay 
+                              muted 
+                              loop
+                            >
+                              <source src={'media_url' in story ? story.media_url : ''} type="video/mp4" />
+                            </video>
+                          </div>
+                        )}
+
+                        {/* Caption */}
+                        {'caption' in story && story.caption && (
+                          <div className="absolute bottom-20 left-4 right-4">
+                            <p className="text-white text-sm">{story.caption}</p>
+                          </div>
+                        )}
+
+                        {/* Actions */}
+                        <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+                          <div className="flex items-center space-x-4">
+                            <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
+                              <Heart className="w-5 h-5" />
+                            </Button>
+                            <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
+                              <MessageCircle className="w-5 h-5" />
+                            </Button>
+                            <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
+                              <Share className="w-5 h-5" />
+                            </Button>
+                          </div>
+                          <div className="flex items-center space-x-1 text-white/80 text-xs">
+                            <Clock className="w-3 h-3" />
+                            <span>{getTimeRemaining('expires_at' in story ? story.expires_at : '')}</span>
+                          </div>
                         </div>
                       </div>
-
-                      {/* Media */}
-                      {story.media_type === 'image' ? (
-                        <img 
-                          src={story.media_url || ''} 
-                          alt="Story"
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-black flex items-center justify-center">
-                          <video 
-                            className="w-full h-full object-cover" 
-                            autoPlay 
-                            muted 
-                            loop
-                          >
-                            <source src={story.media_url || ''} type="video/mp4" />
-                          </video>
-                        </div>
-                      )}
-
-                      {/* Caption */}
-                      {story.caption && (
-                        <div className="absolute bottom-20 left-4 right-4">
-                          <p className="text-white text-sm">{story.caption}</p>
-                        </div>
-                      )}
-
-                      {/* Actions */}
-                      <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                          <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
-                            <Heart className="w-5 h-5" />
-                          </Button>
-                          <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
-                            <MessageCircle className="w-5 h-5" />
-                          </Button>
-                          <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
-                            <Share className="w-5 h-5" />
-                          </Button>
-                        </div>
-                        <div className="flex items-center space-x-1 text-white/80 text-xs">
-                          <Clock className="w-3 h-3" />
-                          <span>{getTimeRemaining(story.expires_at || '')}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </DialogContent>
+                    </DialogContent>
+                  )}
                 </Dialog>
               )}
             </div>

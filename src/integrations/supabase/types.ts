@@ -502,6 +502,10 @@ export type Database = {
         Args: { post_id: string }
         Returns: undefined
       }
+      increment_story_views: {
+        Args: { story_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
