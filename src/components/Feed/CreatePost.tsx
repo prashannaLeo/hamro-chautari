@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { usePostOperations } from '@/hooks/usePostOperations';
+import { useImageUpload } from '@/hooks/useImageUpload';
 import { 
   Image, 
   Video, 
@@ -13,7 +15,9 @@ import {
   Smile,
   Globe,
   Users,
-  Lock
+  Lock,
+  X,
+  Upload
 } from 'lucide-react';
 import {
   Select,
@@ -27,9 +31,14 @@ import { toast } from '@/hooks/use-toast';
 const CreatePost = () => {
   const { user } = useAuth();
   const { createPost, loading } = usePostOperations();
+  const { uploadMultiple, loading: uploadLoading } = useImageUpload('posts');
   const [content, setContent] = useState('');
   const [visibility, setVisibility] = useState('public');
   const [mood, setMood] = useState('none');
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<string[]>([]);
+  const [location, setLocation] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const moods = [
     { value: 'happy', emoji: '😊', label: 'Happy' },
@@ -46,20 +55,56 @@ const CreatePost = () => {
     { value: 'private', icon: Lock, label: 'Private' },
   ];
 
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    if (files.length === 0) return;
+
+    // Validate and limit to 4 files
+    const validFiles = files.slice(0, 4);
+    setSelectedFiles(validFiles);
+
+    // Create previews
+    const newPreviews = validFiles.map(file => URL.createObjectURL(file));
+    setPreviews(newPreviews);
+  };
+
+  const removeFile = (index: number) => {
+    const newFiles = selectedFiles.filter((_, i) => i !== index);
+    const newPreviews = previews.filter((_, i) => i !== index);
+    setSelectedFiles(newFiles);
+    setPreviews(newPreviews);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!content.trim()) return;
+    if (!content.trim() && selectedFiles.length === 0) return;
 
     try {
+      let mediaUrls: string[] = [];
+      
+      // Upload images if any
+      if (selectedFiles.length > 0) {
+        const uploadResults = await uploadMultiple(selectedFiles);
+        mediaUrls = uploadResults.map(result => result.url);
+      }
+
       await createPost({
         content,
         visibility,
         mood: mood === 'none' ? undefined : mood,
+        location: location || undefined,
+        media_urls: mediaUrls.length > 0 ? mediaUrls : undefined,
       });
       
       // Reset form on success
       setContent('');
       setMood('none');
+      setLocation('');
+      setSelectedFiles([]);
+      setPreviews([]);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
       
       toast({
         title: "Success",
@@ -111,27 +156,79 @@ const CreatePost = () => {
 
           {/* Content */}
           <Textarea
-            placeholder="What's on your mind? Share your thoughts with Hamro Chautari..."
+            placeholder="What's on your mind? Share your thoughts..."
             value={content}
             onChange={(e) => setContent(e.target.value)}
             className="min-h-24 resize-none border-0 bg-gray-50 rounded-xl p-4 text-base focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:bg-white transition-all"
           />
 
+          {/* Image Previews */}
+          {previews.length > 0 && (
+            <div className="grid grid-cols-2 gap-2 mt-4">
+              {previews.map((preview, index) => (
+                <div key={index} className="relative aspect-square rounded-lg overflow-hidden">
+                  <img 
+                    src={preview} 
+                    alt={`Preview ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    className="absolute top-2 right-2 h-6 w-6 p-0 rounded-full"
+                    onClick={() => removeFile(index)}
+                  >
+                    <X className="w-3 h-3" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Location Input */}
+          {location !== undefined && (
+            <Input
+              placeholder="Add location..."
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className="border-0 bg-gray-50 rounded-xl focus-visible:ring-2 focus-visible:ring-blue-500"
+            />
+          )}
+
           {/* Actions */}
           <div className="flex items-center justify-between pt-4 border-t border-gray-100">
             <div className="flex items-center space-x-3">
-              <Button type="button" variant="ghost" size="sm" className="text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl">
+              <Button 
+                type="button" 
+                variant="ghost" 
+                size="sm" 
+                className="text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={selectedFiles.length >= 4}
+              >
                 <Image className="w-5 h-5 mr-2" />
                 <span className="hidden sm:inline font-medium">Photo</span>
               </Button>
-              <Button type="button" variant="ghost" size="sm" className="text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-xl">
-                <Video className="w-5 h-5 mr-2" />
-                <span className="hidden sm:inline font-medium">Video</span>
-              </Button>
-              <Button type="button" variant="ghost" size="sm" className="text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-xl">
+              <Button 
+                type="button" 
+                variant="ghost" 
+                size="sm" 
+                className="text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-xl"
+                onClick={() => setLocation(location === '' ? 'current' : '')}
+              >
                 <MapPin className="w-5 h-5 mr-2" />
                 <span className="hidden sm:inline font-medium">Location</span>
               </Button>
+              
+              <Input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleFileSelect}
+                className="hidden"
+              />
               
               {/* Mood selector */}
               <Select value={mood} onValueChange={setMood}>
@@ -159,10 +256,10 @@ const CreatePost = () => {
 
             <Button 
               type="submit" 
-              disabled={!content.trim() || loading}
+              disabled={(!content.trim() && selectedFiles.length === 0) || loading || uploadLoading}
               className="px-6 py-2 rounded-xl font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
             >
-              {loading ? 'Posting...' : 'Post'}
+              {(loading || uploadLoading) ? 'Posting...' : 'Post'}
             </Button>
           </div>
         </form>
