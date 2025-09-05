@@ -31,6 +31,7 @@ export const usePostOperations = () => {
     mood?: string;
     location?: string;
     media_urls?: string[];
+    shared_post_id?: string;
   }) => {
     if (!user) {
       toast({
@@ -53,7 +54,8 @@ export const usePostOperations = () => {
           mood_tag: postData.mood === 'none' ? null : postData.mood,
           location: postData.location,
           media_urls: postData.media_urls,
-          post_type: postData.media_urls?.length ? 'media' : 'text'
+          shared_post_id: postData.shared_post_id,
+          post_type: postData.media_urls?.length ? 'media' : (postData.shared_post_id ? 'shared' : 'text')
         })
         .select()
         .single();

@@ -21,7 +21,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
-import { usePostOperations } from '@/hooks/usePostOperations';
+import { SimplifiedPostReactions } from './SimplifiedPostReactions';
+import { SharePostDialog } from './SharePostDialog';
 
 // Lazy load CommentSection to avoid circular dependencies
 const CommentSection = React.lazy(() => import('@/components/Comments/CommentSection'));
@@ -56,52 +57,10 @@ const PostCard: React.FC<PostCardProps> = ({ post, onEdit, onDelete, onPostUpdat
   const [likesCount, setLikesCount] = useState(post.likes);
   const [commentsCount, setCommentsCount] = useState(post.comments);
   const [showComments, setShowComments] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
   const { user } = useAuth();
-  const { likePost, loading } = usePostOperations();
 
   const isOwner = user?.id === post.user_id;
-
-  // Check if user has liked this post on component mount
-  useEffect(() => {
-    const checkIfLiked = async () => {
-      if (!user || !post.id) return;
-      
-      try {
-        const { supabase } = await import('@/integrations/supabase/client');
-        const { data } = await supabase
-          .from('likes')
-          .select('id')
-          .eq('post_id', post.id)
-          .eq('user_id', user.id)
-          .single();
-        
-        setIsLiked(!!data);
-      } catch (error) {
-        // User hasn't liked this post
-        setIsLiked(false);
-      }
-    };
-
-    checkIfLiked();
-  }, [post.id, user]);
-
-  const handleLike = async () => {
-    if (!user || loading) return;
-    
-    try {
-      const wasLiked = await likePost(post.id);
-      setIsLiked(wasLiked ?? false);
-      
-      // Update likes count optimistically
-      const newLikesCount = wasLiked ? likesCount + 1 : likesCount - 1;
-      setLikesCount(newLikesCount);
-      
-      // Notify parent component of the update
-      onPostUpdate?.(post.id, { likes: newLikesCount, comments: commentsCount });
-    } catch (error) {
-      console.error('Error handling like:', error);
-    }
-  };
 
   // Subscribe to comment count changes
   useEffect(() => {
@@ -288,17 +247,11 @@ const PostCard: React.FC<PostCardProps> = ({ post, onEdit, onDelete, onPostUpdat
         {/* Actions */}
         <div className="flex items-center justify-between pt-5 border-t border-gray-100">
           <div className="flex items-center space-x-8">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={handleLike}
-              className={`space-x-2 hover:bg-red-50 transition-colors ${
-                isLiked ? 'text-red-600' : 'text-gray-600 hover:text-red-600'
-              }`}
-            >
-              <Heart className={`w-5 h-5 transition-all ${isLiked ? 'fill-current scale-110' : ''}`} />
-              <span className="font-semibold">{likesCount}</span>
-            </Button>
+            <SimplifiedPostReactions 
+              postId={post.id}
+              initialLikes={likesCount}
+              initialIsLiked={isLiked}
+            />
             
             <Button 
               variant="ghost" 
@@ -312,7 +265,12 @@ const PostCard: React.FC<PostCardProps> = ({ post, onEdit, onDelete, onPostUpdat
               <span className="font-semibold">{commentsCount}</span>
             </Button>
             
-            <Button variant="ghost" size="sm" className="space-x-2 text-gray-600 hover:text-green-600 hover:bg-green-50 transition-colors">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="space-x-2 text-gray-600 hover:text-green-600 hover:bg-green-50 transition-colors"
+              onClick={() => setShowShareDialog(true)}
+            >
               <Share className="w-5 h-5" />
               <span className="font-semibold">{post.shares}</span>
             </Button>
@@ -323,6 +281,19 @@ const PostCard: React.FC<PostCardProps> = ({ post, onEdit, onDelete, onPostUpdat
         <React.Suspense fallback={<div className="p-4 text-center text-gray-500">Loading comments...</div>}>
           <CommentSection postId={post.id} isVisible={showComments} />
         </React.Suspense>
+
+        {/* Share Dialog */}
+        <SharePostDialog
+          open={showShareDialog}
+          onOpenChange={setShowShareDialog}
+          post={{
+            id: post.id,
+            user: post.user,
+            content: post.content,
+            images: post.images,
+            timestamp: post.timestamp
+          }}
+        />
       </CardContent>
     </Card>
   );

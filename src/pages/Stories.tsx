@@ -154,16 +154,32 @@ const Stories = () => {
         isOwn: true,
       },
     } as StoryWithUser)),
-    ...otherStories.map(story => ({
-      ...story,
-      isEmpty: false,
-      user: {
-        name: story.profiles?.display_name || story.profiles?.username || 'User',
-        username: story.profiles?.username || 'user',
-        avatar: story.profiles?.avatar_url || '',
-        isOwn: false,
-      },
-    } as StoryWithUser))
+    ...otherStories.map(story => {
+      // Safety check for profiles
+      if (!story.profiles) {
+        return {
+          ...story,
+          isEmpty: false,
+          user: {
+            name: 'Unknown User',
+            username: 'unknown',
+            avatar: '',
+            isOwn: false,
+          },
+        } as StoryWithUser;
+      }
+      
+      return {
+        ...story,
+        isEmpty: false,
+        user: {
+          name: story.profiles.display_name || story.profiles.username || 'User',
+          username: story.profiles.username || 'user',
+          avatar: story.profiles.avatar_url || '',
+          isOwn: false,
+        },
+      } as StoryWithUser;
+    })
   ];
 
   return (

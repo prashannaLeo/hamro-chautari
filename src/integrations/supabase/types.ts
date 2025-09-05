@@ -340,6 +340,7 @@ export type Database = {
           media_urls: string[] | null
           mood_tag: string | null
           post_type: string | null
+          shared_post_id: string | null
           shares_count: number | null
           updated_at: string
           user_id: string
@@ -355,6 +356,7 @@ export type Database = {
           media_urls?: string[] | null
           mood_tag?: string | null
           post_type?: string | null
+          shared_post_id?: string | null
           shares_count?: number | null
           updated_at?: string
           user_id: string
@@ -370,12 +372,20 @@ export type Database = {
           media_urls?: string[] | null
           mood_tag?: string | null
           post_type?: string | null
+          shared_post_id?: string | null
           shares_count?: number | null
           updated_at?: string
           user_id?: string
           visibility?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "posts_shared_post_id_fkey"
+            columns: ["shared_post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "posts_user_id_fkey"
             columns: ["user_id"]
@@ -430,6 +440,30 @@ export type Database = {
           updated_at?: string
           user_id?: string
           username?: string
+        }
+        Relationships: []
+      }
+      reactions: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          reaction_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          reaction_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          reaction_type?: string
+          user_id?: string
         }
         Relationships: []
       }
