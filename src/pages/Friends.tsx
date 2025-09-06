@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useFriends } from '@/hooks/useFriends';
+import { useMessages } from '@/hooks/useMessages';
 import { useCalling } from '@/hooks/useCalling';
 import { useUserSearch } from '@/hooks/useUserSearch';
 import EnhancedSearch from '@/components/Friends/EnhancedSearch';
@@ -60,6 +61,7 @@ const Friends = () => {
     removeFriend,
     sendFriendRequest
   } = useFriends();
+  const { createChat } = useMessages();
   const { initiateCall } = useCalling();
   const { searchResults, loading: searchLoading, searchUsers } = useUserSearch();
 
@@ -101,11 +103,24 @@ const Friends = () => {
     }
   };
 
-  const handleMessage = (friend: any) => {
-    toast({
-      title: "Message",
-      description: `Opening chat with ${friend.profiles?.display_name || friend.profiles?.username || friend.name}`
-    });
+  const handleMessage = async (friend: any) => {
+    try {
+      const chat = await createChat([friend.connected_user_id], 'direct');
+      if (chat) {
+        toast({
+          title: "Success",
+          description: `Chat created with ${friend.profiles?.display_name || friend.profiles?.username}`
+        });
+        // Navigate to messages page
+        window.location.href = '/messages';
+      }
+    } catch (error) {
+      toast({
+        title: "Error", 
+        description: "Failed to create chat",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleVideoCall = (friend: any) => {

@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Search, UserPlus, Loader2 } from 'lucide-react';
 import { useUserSearch } from '@/hooks/useUserSearch';
+import { useFriends } from '@/hooks/useFriends';
 import { useMessages } from '@/hooks/useMessages';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -18,6 +19,7 @@ const NewChatDialog: React.FC<NewChatDialogProps> = ({ open, onOpenChange }) => 
   const [searchQuery, setSearchQuery] = useState('');
   const [creatingChat, setCreatingChat] = useState(false);
   const { searchResults, loading, searchUsers } = useUserSearch();
+  const { friends } = useFriends();
   const { createChat } = useMessages();
   const { user } = useAuth();
 
@@ -27,6 +29,11 @@ const NewChatDialog: React.FC<NewChatDialogProps> = ({ open, onOpenChange }) => 
       await searchUsers(query.trim());
     }
   };
+
+  // Filter search results to only show friends
+  const friendSearchResults = searchResults.filter(searchUser => 
+    friends.some(friend => friend.connected_user_id === searchUser.user_id)
+  );
 
   const handleCreateChat = async (targetUserId: string, targetUserName: string) => {
     if (!user) return;
@@ -76,14 +83,14 @@ const NewChatDialog: React.FC<NewChatDialogProps> = ({ open, onOpenChange }) => 
               </div>
             )}
 
-            {searchQuery.length > 2 && !loading && searchResults.length === 0 && (
+            {searchQuery.length > 2 && !loading && friendSearchResults.length === 0 && (
               <div className="text-center py-4 text-gray-500">
-                <p>No users found</p>
-                <p className="text-sm">Try searching by username or display name</p>
+                <p>No friends found</p>
+                <p className="text-sm">Only friends can be messaged</p>
               </div>
             )}
 
-            {searchResults.map((searchUser) => (
+            {friendSearchResults.map((searchUser) => (
               <div
                 key={searchUser.id}
                 className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors"
@@ -124,7 +131,7 @@ const NewChatDialog: React.FC<NewChatDialogProps> = ({ open, onOpenChange }) => 
             <div className="text-center py-8 text-gray-500">
               <UserPlus className="w-12 h-12 mx-auto mb-2 text-gray-300" />
               <p className="font-medium">Start a new conversation</p>
-              <p className="text-sm">Search for users to start chatting with them</p>
+              <p className="text-sm">Search for friends to start chatting with them</p>
             </div>
           )}
         </div>

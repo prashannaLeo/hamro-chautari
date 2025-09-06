@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/hooks/useProfile';
+import { usePosts } from '@/hooks/usePosts';
 import { Navigate } from 'react-router-dom';
 import Navbar from '@/components/Layout/Navbar';
+import EditProfileDialog from '@/components/Profile/EditProfileDialog';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -78,9 +81,12 @@ const mockPosts = [
 
 const Profile = () => {
   const { user, loading } = useAuth();
+  const { profile, loading: profileLoading, updateProfile } = useProfile();
+  const { posts, loading: postsLoading } = usePosts();
   const [isOwnProfile] = useState(true); // For now, always show own profile
+  const [editProfileOpen, setEditProfileOpen] = useState(false);
 
-  if (loading) {
+  if (loading || profileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -147,9 +153,9 @@ const Profile = () => {
               {/* Avatar */}
               <div className="relative">
                 <Avatar className="h-32 w-32 border-4 border-background">
-                  <AvatarImage src={mockProfile.avatar} alt={mockProfile.name} />
+                  <AvatarImage src={profile?.avatar_url || ''} alt={profile?.display_name || profile?.username} />
                   <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
-                    {mockProfile.name.charAt(0)}
+                    {(profile?.display_name || profile?.username || user?.email || 'U').charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 {isOwnProfile && (
@@ -168,17 +174,17 @@ const Profile = () => {
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <div className="flex items-center space-x-2 mb-1">
-                      <h1 className="text-2xl font-bold">{mockProfile.name}</h1>
-                      {mockProfile.isVerified && (
+                      <h1 className="text-2xl font-bold">{profile?.display_name || profile?.username || 'Your Name'}</h1>
+                      {profile?.is_verified && (
                         <Badge variant="secondary" className="h-5 px-2">✓</Badge>
                       )}
                     </div>
-                    <p className="text-muted-foreground">@{mockProfile.username}</p>
+                    <p className="text-muted-foreground">@{profile?.username || 'username'}</p>
                   </div>
                   
                   <div className="flex items-center space-x-2 mt-4 sm:mt-0">
                     {isOwnProfile ? (
-                      <Button variant="outline">
+                      <Button variant="outline" onClick={() => setEditProfileOpen(true)}>
                         <Settings className="w-4 h-4 mr-2" />
                         Edit Profile
                       </Button>
@@ -200,19 +206,19 @@ const Profile = () => {
                 {/* Stats */}
                 <div className="flex items-center space-x-6 mt-4">
                   <div className="text-center">
-                    <div className="text-xl font-bold">{mockProfile.stats.posts}</div>
+                    <div className="text-xl font-bold">{posts?.length || 0}</div>
                     <div className="text-xs text-muted-foreground">Posts</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-xl font-bold">{mockProfile.stats.friends}</div>
+                    <div className="text-xl font-bold">0</div>
                     <div className="text-xs text-muted-foreground">Friends</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-xl font-bold">{mockProfile.stats.followers}</div>
+                    <div className="text-xl font-bold">0</div>
                     <div className="text-xs text-muted-foreground">Followers</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-xl font-bold">{mockProfile.stats.following}</div>
+                    <div className="text-xl font-bold">0</div>
                     <div className="text-xs text-muted-foreground">Following</div>
                   </div>
                 </div>
@@ -221,22 +227,20 @@ const Profile = () => {
 
             {/* Bio and Details */}
             <div className="mt-6 space-y-3">
-              {mockProfile.mood && (
+              {profile?.mood && (
                 <Badge variant="outline" className="w-fit">
-                  {getMoodEmoji(mockProfile.mood)} Feeling {mockProfile.mood}
+                  {getMoodEmoji(profile.mood)} Feeling {profile.mood}
                 </Badge>
               )}
               
-              <p className="text-sm leading-relaxed">{mockProfile.bio}</p>
+              {profile?.bio && (
+                <p className="text-sm leading-relaxed">{profile.bio}</p>
+              )}
               
               <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center space-x-1">
-                  <MapPin className="w-4 h-4" />
-                  <span>{mockProfile.location}</span>
-                </div>
-                <div className="flex items-center space-x-1">
                   <Calendar className="w-4 h-4" />
-                  <span>Joined {formatDate(mockProfile.joinedDate)}</span>
+                  <span>Joined {formatDate(profile?.created_at || new Date().toISOString())}</span>
                 </div>
               </div>
             </div>
@@ -265,9 +269,41 @@ const Profile = () => {
           </TabsList>
 
           <TabsContent value="posts" className="mt-6 space-y-4">
-            {mockPosts.map((post) => (
-              <PostCard key={post.id} post={post} />
-            ))}
+            {postsLoading ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : posts && posts.length > 0 ? (
+              posts.filter(post => post.user_id === user?.id).map((post) => {
+                // Transform database post to PostCard format
+                const transformedPost = {
+                  id: post.id,
+                  user_id: post.user_id,
+                  user: {
+                    name: profile?.display_name || profile?.username || 'User',
+                    username: profile?.username || 'user',
+                    avatar: profile?.avatar_url || '',
+                    isVerified: profile?.is_verified || false
+                  },
+                  content: post.content || '',
+                  images: post.media_urls || [],
+                  mood: post.mood_tag || '',
+                  location: post.location || '',
+                  timestamp: post.created_at,
+                  likes: post.likes_count || 0,
+                  comments: post.comments_count || 0,
+                  shares: post.shares_count || 0,
+                  isLiked: false // TODO: implement like status check
+                };
+                return <PostCard key={post.id} post={transformedPost} />;
+              })
+            ) : (
+              <div className="text-center py-12">
+                <Grid3X3 className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">No posts yet</h3>
+                <p className="text-muted-foreground">Share your first post to get started!</p>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="media" className="mt-6">
@@ -310,6 +346,13 @@ const Profile = () => {
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* Edit Profile Dialog */}
+        <EditProfileDialog 
+          open={editProfileOpen} 
+          onOpenChange={setEditProfileOpen}
+          profile={profile}
+        />
       </main>
     </div>
   );

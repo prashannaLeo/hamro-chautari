@@ -146,14 +146,29 @@ const Messages = () => {
   const filteredChats = chats.filter(chat => {
     const chatName = chat.name || 
       chat.chat_participants
-        ?.filter(p => p.user_id !== user.id)
-        ?.map(p => p.profiles?.display_name || p.profiles?.username)
+        ?.filter((p: any) => p.user_id !== user?.id)
+        ?.map((p: any) => p.profiles?.display_name || p.profiles?.username)
         ?.join(', ') || 'Unknown';
     
     return chatName.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
   const currentMessages = selectedChat ? messages[selectedChat.id] || [] : [];
+
+  // Get chat name for display
+  const getChatName = (chat: any) => {
+    if (chat.name) return chat.name;
+    const otherParticipants = chat.chat_participants?.filter((p: any) => p.user_id !== user?.id);
+    return otherParticipants?.map((p: any) => p.profiles?.display_name || p.profiles?.username)?.join(', ') || 'Unknown';
+  };
+
+  // Get last message for chat
+  const getLastMessage = (chatId: string) => {
+    const chatMessages = messages[chatId] || [];
+    if (chatMessages.length === 0) return 'No messages yet';
+    const lastMessage = chatMessages[chatMessages.length - 1];
+    return lastMessage.content || 'Media';
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
@@ -189,48 +204,43 @@ const Messages = () => {
               <div className="space-y-1">
                 {filteredChats.length === 0 ? (
                   <div className="p-4 text-center text-gray-500">
-                    No conversations found
+                    {chats.length === 0 ? 'No conversations yet' : 'No conversations found'}
                   </div>
                 ) : (
                   filteredChats.map((chat) => {
-                    const chatName = chat.name || 
-                      chat.chat_participants
-                        ?.filter(p => p.user_id !== user.id)
-                        ?.map(p => p.profiles?.display_name || p.profiles?.username)
-                        ?.join(', ') || 'Unknown';
-                    
-                    const otherParticipant = chat.chat_participants?.find(p => p.user_id !== user.id);
-                    const avatar = otherParticipant?.profiles?.avatar_url;
+                    const chatName = getChatName(chat);
+                    const otherParticipant = chat.chat_participants?.find((p: any) => p.user_id !== user?.id);
+                    const avatarUrl = otherParticipant?.profiles?.avatar_url || '';
+                    const lastMessage = getLastMessage(chat.id);
                     
                     return (
                       <div
                         key={chat.id}
                         onClick={() => handleSelectChat(chat)}
-                        className={`flex items-center space-x-3 p-3 hover:bg-muted cursor-pointer transition-colors ${
-                          selectedChat?.id === chat.id ? 'bg-muted' : ''
+                        className={`p-4 hover:bg-gray-50 cursor-pointer border-b transition-colors ${
+                          selectedChat?.id === chat.id ? 'bg-primary/5' : ''
                         }`}
                       >
-                        <div className="relative">
-                          <Avatar className="h-12 w-12">
-                            <AvatarImage src={avatar || ''} alt={chatName} />
-                            <AvatarFallback className="bg-primary text-primary-foreground">
-                              {chatName.charAt(0)?.toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-medium truncate">
-                              {chatName}
-                            </h3>
-                            <span className="text-xs text-muted-foreground">
-                              {/* Time formatting would go here */}
-                            </span>
+                        <div className="flex items-center space-x-3">
+                          <div className="relative">
+                            <Avatar className="h-12 w-12">
+                              <AvatarImage src={avatarUrl} alt={chatName} />
+                              <AvatarFallback className="bg-primary text-primary-foreground">
+                                {chatName.charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
                           </div>
-                          <div className="flex items-center justify-between">
-                            <p className="text-xs text-muted-foreground truncate">
-                              {/* Last message would go here */}
-                              Start a conversation
+                          
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-1">
+                              <h3 className="font-medium text-sm truncate">{chatName}</h3>
+                              <span className="text-xs text-muted-foreground">
+                                {new Date(chat.updated_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                              </span>
+                            </div>
+                            
+                            <p className="text-sm text-muted-foreground truncate">
+                              {lastMessage}
                             </p>
                           </div>
                         </div>
