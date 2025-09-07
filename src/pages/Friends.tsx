@@ -183,18 +183,15 @@ const Friends = () => {
 
           <TabsContent value="friends" className="space-y-4">
             {/* Enhanced Search */}
-            <EnhancedSearch
-              placeholder="Search friends by name or initials..."
-              onUserSelect={(user) => {
-                console.log('Selected user:', user);
-                // You can add logic here to navigate to user profile or send friend request
-              }}
-              onPostSelect={(post) => {
-                console.log('Selected post:', post);
-                // You can add logic here to navigate to the post
-              }}
-              className="mb-8"
-            />
+            <div className="relative mb-8">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Input
+                placeholder="Search friends by name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-12 h-12 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+              />
+            </div>
 
             {/* Friends Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -391,8 +388,8 @@ const Friends = () => {
             <EnhancedSearch
               placeholder="Search for users to add as friends or explore posts..."
               onUserSelect={(user) => {
-                // Open user profile or show add friend option
-                console.log('Selected user for friend request:', user);
+                // Send friend request when user is selected
+                handleSendRequest(user.user_id || user.id);
               }}
               onPostSelect={(post) => {
                 // Navigate to post or show post details

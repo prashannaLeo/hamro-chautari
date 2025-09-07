@@ -30,6 +30,7 @@ const Notifications = () => {
       case 'comment':
         return <MessageCircle className="w-5 h-5 text-blue-500" />;
       case 'follow':
+      case 'friend_request':
         return <UserPlus className="w-5 h-5 text-green-500" />;
       case 'message':
         return <Mail className="w-5 h-5 text-purple-500" />;
@@ -47,6 +48,7 @@ const Notifications = () => {
       case 'comment':
         return 'bg-blue-50 border-blue-100 hover:bg-blue-100';
       case 'follow':
+      case 'friend_request':
         return 'bg-green-50 border-green-100 hover:bg-green-100';
       case 'message':
         return 'bg-purple-50 border-purple-100 hover:bg-purple-100';
@@ -68,7 +70,7 @@ const Notifications = () => {
       navigate(`/?post=${notification.data.post_id}`);
     } else if (notification.type === 'like' && notification.data?.post_id) {
       navigate(`/?post=${notification.data.post_id}`);
-    } else if (notification.type === 'follow') {
+    } else if (notification.type === 'follow' || notification.type === 'friend_request') {
       navigate('/friends');
     } else if (notification.type === 'message') {
       navigate('/messages');
