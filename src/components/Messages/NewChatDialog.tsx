@@ -5,7 +5,6 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Search, UserPlus, Loader2 } from 'lucide-react';
 import { useUserSearch } from '@/hooks/useUserSearch';
-import { useFriends } from '@/hooks/useFriends';
 import { useMessages } from '@/hooks/useMessages';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -19,7 +18,6 @@ const NewChatDialog: React.FC<NewChatDialogProps> = ({ open, onOpenChange }) => 
   const [searchQuery, setSearchQuery] = useState('');
   const [creatingChat, setCreatingChat] = useState(false);
   const { searchResults, loading, searchUsers } = useUserSearch();
-  const { friends } = useFriends();
   const { createChat } = useMessages();
   const { user } = useAuth();
 
@@ -29,9 +27,6 @@ const NewChatDialog: React.FC<NewChatDialogProps> = ({ open, onOpenChange }) => 
       await searchUsers(query.trim());
     }
   };
-
-  // Use all search results (not just friends) for chat creation
-  const availableUsers = searchResults;
 
   const handleCreateChat = async (targetUserId: string, targetUserName: string) => {
     if (!user) return;
@@ -43,9 +38,12 @@ const NewChatDialog: React.FC<NewChatDialogProps> = ({ open, onOpenChange }) => 
         toast.success(`Chat started with ${targetUserName}`);
         onOpenChange(false);
         setSearchQuery('');
+        // Navigate to messages to see the new chat
+        window.location.reload(); // Refresh to load new chat
       }
-    } catch (error) {
-      toast.error('Failed to start chat');
+    } catch (error: any) {
+      console.error('Failed to create chat:', error);
+      toast.error(error.message || 'Failed to start chat');
     } finally {
       setCreatingChat(false);
     }
@@ -81,14 +79,14 @@ const NewChatDialog: React.FC<NewChatDialogProps> = ({ open, onOpenChange }) => 
               </div>
             )}
 
-            {searchQuery.length > 2 && !loading && availableUsers.length === 0 && (
+            {searchQuery.length > 2 && !loading && searchResults.length === 0 && (
               <div className="text-center py-4 text-gray-500">
                 <p>No users found</p>
-                <p className="text-sm">Try searching for a different username</p>
+                <p className="text-sm">Try searching with a different name</p>
               </div>
             )}
 
-            {availableUsers.map((searchUser) => (
+            {searchResults.map((searchUser) => (
               <div
                 key={searchUser.id}
                 className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors"

@@ -37,7 +37,8 @@ const Messages = () => {
     loading: messagesLoading,
     sendMessage,
     fetchMessages,
-    sendingMessage 
+    sendingMessage,
+    refetchChats
   } = useMessages();
   const [selectedChat, setSelectedChat] = useState<any>(null);
   const [newMessage, setNewMessage] = useState('');

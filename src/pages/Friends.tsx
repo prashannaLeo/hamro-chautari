@@ -13,7 +13,7 @@ import { useMessages } from '@/hooks/useMessages';
 import { useCalling } from '@/hooks/useCalling';
 import { useUserSearch } from '@/hooks/useUserSearch';
 import EnhancedSearch from '@/components/Friends/EnhancedSearch';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { 
   Search, 
   UserPlus, 
@@ -25,7 +25,10 @@ import {
   Heart,
   MapPin,
   Phone,
-  Video
+  Video,
+  Loader2,
+  Check,
+  X
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -33,7 +36,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-
 
 const getMoodEmoji = (mood: string) => {
   const moodEmojis: { [key: string]: string } = {
@@ -43,14 +45,20 @@ const getMoodEmoji = (mood: string) => {
     adventurous: '🏔️',
     peaceful: '🧘',
     creative: '🎨',
+    sad: '😢',
+    stressed: '😰',
+    focused: '🎯',
+    neutral: '😐'
   };
-  return moodEmojis[mood] || '';
+  return moodEmojis[mood] || '😐';
 };
 
 const Friends = () => {
   const { user, loading } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  
   const { 
     friends, 
     friendRequests, 
@@ -61,6 +69,7 @@ const Friends = () => {
     removeFriend,
     sendFriendRequest
   } = useFriends();
+  
   const { createChat } = useMessages();
   const { initiateCall } = useCalling();
   const { searchResults, loading: searchLoading, searchUsers } = useUserSearch();
@@ -77,19 +86,43 @@ const Friends = () => {
     return <Navigate to="/auth" replace />;
   }
 
-  const handleAcceptRequest = async (requestId: string) => {
-    await acceptFriendRequest(requestId);
+  const handleAcceptRequest = async (requestId: string, senderName: string) => {
+    setActionLoading(requestId);
+    try {
+      await acceptFriendRequest(requestId);
+      toast.success(`You are now friends with ${senderName}`);
+    } catch (error) {
+      toast.error('Failed to accept friend request');
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   const handleDeclineRequest = async (requestId: string) => {
-    await declineFriendRequest(requestId);
+    setActionLoading(requestId);
+    try {
+      await declineFriendRequest(requestId);
+      toast.success('Friend request declined');
+    } catch (error) {
+      toast.error('Failed to decline friend request');
+    } finally {
+      setActionLoading(null);
+    }
   };
 
-  const handleSendRequest = async (userId: string) => {
-    await sendFriendRequest(userId);
-    // Refresh search to remove the user from results
-    if (userSearchQuery.trim()) {
-      searchUsers(userSearchQuery);
+  const handleSendRequest = async (userId: string, userName: string) => {
+    setActionLoading(userId);
+    try {
+      await sendFriendRequest(userId);
+      toast.success(`Friend request sent to ${userName}`);
+      // Refresh search to remove the user from results
+      if (userSearchQuery.trim()) {
+        searchUsers(userSearchQuery);
+      }
+    } catch (error) {
+      toast.error('Failed to send friend request');
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -97,9 +130,6 @@ const Friends = () => {
     setUserSearchQuery(query);
     if (query.trim()) {
       searchUsers(query);
-    } else {
-      // Clear results when search is empty
-      searchUsers('');
     }
   };
 
@@ -107,44 +137,40 @@ const Friends = () => {
     try {
       const chat = await createChat([friend.connected_user_id], 'direct');
       if (chat) {
-        toast({
-          title: "Success",
-          description: `Chat created with ${friend.profiles?.display_name || friend.profiles?.username}`
-        });
+        toast.success(`Chat started with ${friend.profiles?.display_name || friend.profiles?.username}`);
         // Navigate to messages page
         window.location.href = '/messages';
       }
     } catch (error) {
-      toast({
-        title: "Error", 
-        description: "Failed to create chat",
-        variant: "destructive"
-      });
+      toast.error('Failed to start chat');
     }
   };
 
   const handleVideoCall = (friend: any) => {
-    initiateCall(
-      friend.profiles?.id || friend.id,
-      friend.profiles?.display_name || friend.profiles?.username || friend.name,
-      'video',
-      friend.profiles?.avatar_url
-    );
+    initiateCall(friend.connected_user_id, friend.profiles?.display_name || friend.profiles?.username || 'Unknown', 'video', friend.profiles?.avatar_url);
+    toast.success(`Starting video call with ${friend.profiles?.display_name || friend.profiles?.username}`);
   };
 
   const handleVoiceCall = (friend: any) => {
-    initiateCall(
-      friend.profiles?.id || friend.id,
-      friend.profiles?.display_name || friend.profiles?.username || friend.name,
-      'voice',
-      friend.profiles?.avatar_url
-    );
+    initiateCall(friend.connected_user_id, friend.profiles?.display_name || friend.profiles?.username || 'Unknown', 'voice', friend.profiles?.avatar_url);
+    toast.success(`Starting voice call with ${friend.profiles?.display_name || friend.profiles?.username}`);
   };
 
   const handleRemoveFriend = async (connectionId: string, friendName: string) => {
-    if (window.confirm(`Are you sure you want to remove ${friendName} from your friends?`)) {
+    setActionLoading(connectionId);
+    try {
       await removeFriend(connectionId);
+      toast.success(`Removed ${friendName} from friends`);
+    } catch (error) {
+      toast.error('Failed to remove friend');
+    } finally {
+      setActionLoading(null);
     }
+  };
+
+  // Handle user selection from EnhancedSearch
+  const handleUserSelect = (selectedUser: any) => {
+    handleSendRequest(selectedUser.user_id || selectedUser.id, selectedUser.display_name || selectedUser.username);
   };
 
   const filteredFriends = friends.filter(friend =>
@@ -182,11 +208,11 @@ const Friends = () => {
           </TabsList>
 
           <TabsContent value="friends" className="space-y-4">
-            {/* Enhanced Search */}
+            {/* Friend Search */}
             <div className="relative mb-8">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <Input
-                placeholder="Search friends by name..."
+                placeholder="Search your friends..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-12 h-12 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
@@ -207,14 +233,12 @@ const Friends = () => {
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center space-x-3">
-                          <div className="relative">
-                            <Avatar className="h-12 w-12">
-                              <AvatarImage src={friend.profiles?.avatar_url || ''} alt={friend.profiles?.display_name || friend.profiles?.username} />
-                              <AvatarFallback className="bg-primary text-primary-foreground">
-                                {(friend.profiles?.display_name || friend.profiles?.username)?.charAt(0)?.toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                          </div>
+                          <Avatar className="h-12 w-12">
+                            <AvatarImage src={friend.profiles?.avatar_url || ''} alt={friend.profiles?.display_name || friend.profiles?.username} />
+                            <AvatarFallback className="bg-primary text-primary-foreground">
+                              {(friend.profiles?.display_name || friend.profiles?.username)?.charAt(0)?.toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
                           <div className="flex-1 min-w-0">
                             <h3 className="font-medium truncate">{friend.profiles?.display_name || friend.profiles?.username}</h3>
                             <p className="text-sm text-muted-foreground">@{friend.profiles?.username}</p>
@@ -322,17 +346,25 @@ const Friends = () => {
                         <Button 
                           size="sm" 
                           className="flex-1"
-                          onClick={() => handleAcceptRequest(request.id)}
+                          onClick={() => handleAcceptRequest(request.id, request.profiles?.display_name || request.profiles?.username || 'Unknown')}
+                          disabled={actionLoading === request.id}
                         >
-                          <UserCheck className="w-4 h-4 mr-1" />
-                          Accept
+                          {actionLoading === request.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <>
+                              <Check className="w-4 h-4 mr-1" />
+                              Accept
+                            </>
+                          )}
                         </Button>
                         <Button 
                           variant="outline" 
                           size="sm"
                           onClick={() => handleDeclineRequest(request.id)}
+                          disabled={actionLoading === request.id}
                         >
-                          <UserX className="w-4 h-4" />
+                          <X className="w-4 h-4" />
                         </Button>
                       </div>
                     </CardContent>
@@ -386,83 +418,106 @@ const Friends = () => {
           <TabsContent value="discover" className="space-y-4">
             {/* Enhanced User Search */}
             <EnhancedSearch
-              placeholder="Search for users to add as friends or explore posts..."
-              onUserSelect={(user) => {
-                // Send friend request when user is selected
-                handleSendRequest(user.user_id || user.id);
-              }}
-              onPostSelect={(post) => {
-                // Navigate to post or show post details
-                console.log('Selected post:', post);
-              }}
+              placeholder="Search for users to add as friends..."
+              onUserSelect={handleUserSelect}
               className="mb-8"
             />
 
+            {/* Manual Search Input */}
+            <div className="relative mb-8">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Input
+                placeholder="Or search manually by username..."
+                value={userSearchQuery}
+                onChange={(e) => handleUserSearch(e.target.value)}
+                className="pl-12 h-12 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+              />
+            </div>
+            
             {/* Search Results */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {searchLoading ? (
-                <div className="col-span-full text-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                  <p className="text-muted-foreground mt-4">Searching...</p>
-                </div>
-              ) : searchResults.length === 0 && userSearchQuery.trim() ? (
-                <div className="col-span-full text-center py-12">
-                  <Search className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No users found</h3>
-                  <p className="text-muted-foreground">Try searching with a different username or name</p>
-                </div>
-              ) : searchResults.length === 0 ? (
-                <div className="col-span-full text-center py-12">
-                  <UserPlus className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-2">Discover New Friends</h3>
-                  <p className="text-muted-foreground">Search for users by username or name to send friend requests</p>
-                </div>
-              ) : (
-                searchResults.map((user) => (
-                  <Card key={user.id} className="hover:shadow-xl transition-all duration-300 bg-white/90 backdrop-blur-sm border-0 shadow-lg">
-                    <CardContent className="p-4">
-                      <div className="flex items-center space-x-3 mb-3">
-                        <Avatar className="h-12 w-12">
-                          <AvatarImage src={user.avatar_url || ''} alt={user.display_name || user.username} />
-                          <AvatarFallback className="bg-primary text-primary-foreground">
-                            {(user.display_name || user.username)?.charAt(0)?.toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-medium truncate">{user.display_name || user.username}</h3>
-                          <p className="text-sm text-muted-foreground">@{user.username}</p>
-                        </div>
+            <div className="space-y-4">
+              {userSearchQuery.trim().length > 2 && (
+                <>
+                  <h3 className="text-lg font-semibold">Search Results</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {searchLoading ? (
+                      <div className="col-span-full text-center py-12">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                        <p className="text-muted-foreground mt-4">Searching...</p>
                       </div>
+                    ) : searchResults.length === 0 ? (
+                      <div className="col-span-full text-center py-12">
+                        <Search className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                        <h3 className="text-lg font-medium mb-2">No users found</h3>
+                        <p className="text-muted-foreground">Try searching for a different name or username</p>
+                      </div>
+                    ) : (
+                      searchResults.map((user) => (
+                        <Card key={user.id} className="hover:shadow-xl transition-all duration-300 bg-white/90 backdrop-blur-sm border-0 shadow-lg">
+                          <CardContent className="p-4">
+                            <div className="flex items-center space-x-3 mb-3">
+                              <Avatar className="h-12 w-12">
+                                <AvatarImage src={user.avatar_url || ''} alt={user.display_name || user.username} />
+                                <AvatarFallback className="bg-primary text-primary-foreground">
+                                  {(user.display_name || user.username)?.charAt(0)?.toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-medium truncate">{user.display_name || user.username}</h3>
+                                <p className="text-sm text-muted-foreground">@{user.username}</p>
+                              </div>
+                            </div>
 
-                      {user.mood && (
-                        <Badge variant="outline" className="mb-2">
-                          {getMoodEmoji(user.mood)} {user.mood}
-                        </Badge>
-                      )}
+                            {user.mood && (
+                              <Badge variant="outline" className="mb-2">
+                                {getMoodEmoji(user.mood)} {user.mood}
+                              </Badge>
+                            )}
 
-                      {user.bio && (
-                        <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
-                          {user.bio}
-                        </p>
-                      )}
+                            {user.bio && (
+                              <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                                {user.bio}
+                              </p>
+                            )}
 
-                      {user.location && (
-                        <div className="flex items-center text-sm text-muted-foreground mb-4">
-                          <MapPin className="w-4 h-4 mr-1" />
-                          {user.location}
-                        </div>
-                      )}
+                            {user.location && (
+                              <div className="flex items-center text-xs text-muted-foreground mb-3">
+                                <MapPin className="w-3 h-3 mr-1" />
+                                {user.location}
+                              </div>
+                            )}
 
-                      <Button 
-                        className="w-full"
-                        onClick={() => handleSendRequest(user.user_id)}
-                      >
-                        <UserPlus className="w-4 h-4 mr-2" />
-                        Send Friend Request
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))
+                            <Button 
+                              size="sm" 
+                              className="w-full"
+                              onClick={() => handleSendRequest(user.user_id || user.id, user.display_name || user.username)}
+                              disabled={actionLoading === (user.user_id || user.id)}
+                            >
+                              {actionLoading === (user.user_id || user.id) ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <>
+                                  <UserPlus className="w-4 h-4 mr-1" />
+                                  Add Friend
+                                </>
+                              )}
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      ))
+                    )}
+                  </div>
+                </>
+              )}
+              
+              {!userSearchQuery.trim() && (
+                <div className="text-center py-16">
+                  <Search className="w-20 h-20 text-muted-foreground mx-auto mb-6 opacity-50" />
+                  <h3 className="text-xl font-medium mb-3">Discover New Friends</h3>
+                  <p className="text-muted-foreground text-lg">
+                    Use the search above to find people you'd like to connect with
+                  </p>
+                </div>
               )}
             </div>
           </TabsContent>
