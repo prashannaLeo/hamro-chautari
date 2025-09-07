@@ -27,77 +27,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-const mockChats = [
-  {
-    id: '1',
-    name: 'Priya Sharma',
-    username: 'priya_sharma',
-    avatar: '',
-    lastMessage: 'Hey! How was your trek yesterday?',
-    timestamp: '2m',
-    unreadCount: 2,
-    isOnline: true,
-    type: 'direct'
-  },
-  {
-    id: '2',
-    name: 'Mountain Enthusiasts',
-    username: 'mountain_group',
-    avatar: '',
-    lastMessage: 'Arjun: Planning another trek this weekend!',
-    timestamp: '15m',
-    unreadCount: 0,
-    isOnline: false,
-    type: 'group',
-    memberCount: 12
-  },
-  {
-    id: '3',
-    name: 'Sita Rai',
-    username: 'sita_rai',
-    avatar: '',
-    lastMessage: 'The dance practice went really well today',
-    timestamp: '1h',
-    unreadCount: 0,
-    isOnline: false,
-    type: 'direct'
-  },
-];
-
-const mockMessages = [
-  {
-    id: '1',
-    senderId: 'other',
-    senderName: 'Priya Sharma',
-    content: 'Hey! How was your trek yesterday?',
-    timestamp: '10:30 AM',
-    type: 'text'
-  },
-  {
-    id: '2',
-    senderId: 'me',
-    senderName: 'You',
-    content: 'It was absolutely amazing! The weather was perfect and the views were breathtaking.',
-    timestamp: '10:32 AM',
-    type: 'text'
-  },
-  {
-    id: '3',
-    senderId: 'other',
-    senderName: 'Priya Sharma',
-    content: 'I\'m so jealous! I really want to do that trek soon. Can you share some photos?',
-    timestamp: '10:35 AM',
-    type: 'text'
-  },
-  {
-    id: '4',
-    senderId: 'me',
-    senderName: 'You',
-    content: 'Of course! Let me send you a few shots from the summit.',
-    timestamp: '10:37 AM',
-    type: 'text'
-  },
-];
+// Removed mock data - using real data from useMessages hook
 
 const Messages = () => {
   const { user, loading } = useAuth();
