@@ -352,7 +352,7 @@ const Stories = () => {
                               <Share className="w-5 h-5" />
                             </Button>
                           </div>
-                          {'isOwn' in selectedStory && selectedStory.isOwn && (
+                          {selectedStory && 'isOwn' in selectedStory && selectedStory.isOwn && (
                             <div className="flex items-center space-x-2">
                               <Button 
                                 variant="ghost" 
