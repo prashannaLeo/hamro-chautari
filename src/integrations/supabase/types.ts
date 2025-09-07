@@ -540,6 +540,10 @@ export type Database = {
         Args: { story_id: string }
         Returns: undefined
       }
+      is_chat_participant: {
+        Args: { chat_id_param: string; user_id_param: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
