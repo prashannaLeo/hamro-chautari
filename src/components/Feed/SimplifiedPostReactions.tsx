@@ -13,7 +13,7 @@ interface SimplifiedPostReactionsProps {
 
 const reactions = [
   { type: 'like', emoji: '❤️' },
-  { type: 'love', emoji: '👍' },
+  { type: 'thumbs_up', emoji: '👍' },
   { type: 'laugh', emoji: '😂' },
   { type: 'angry', emoji: '😠' },
   { type: 'sad', emoji: '😢' },
@@ -24,44 +24,77 @@ export const SimplifiedPostReactions: React.FC<SimplifiedPostReactionsProps> = (
   initialLikes = 0,
   initialIsLiked = false 
 }) => {
-  const [isLiked, setIsLiked] = useState(initialIsLiked);
-  const [likesCount, setLikesCount] = useState(initialLikes);
+  const [userReaction, setUserReaction] = useState<string | null>(null);
+  const [reactionCounts, setReactionCounts] = useState<Record<string, number>>({});
   const [showReactions, setShowReactions] = useState(false);
+  const [totalReactions, setTotalReactions] = useState(initialLikes);
   const { user } = useAuth();
-  const { likePost, loading } = usePostOperations();
+  const { reactToPost, getUserReaction, getReactionCounts, loading } = usePostOperations();
 
-  const handleLike = async () => {
+  useEffect(() => {
+    const fetchUserReaction = async () => {
+      if (user) {
+        const reaction = await getUserReaction(postId);
+        setUserReaction(reaction);
+      }
+    };
+
+    const fetchReactionCounts = async () => {
+      const counts = await getReactionCounts(postId);
+      setReactionCounts(counts);
+      const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
+      setTotalReactions(total);
+    };
+
+    fetchUserReaction();
+    fetchReactionCounts();
+  }, [postId, user, getUserReaction, getReactionCounts]);
+
+  const handleReaction = async (reactionType: string) => {
     if (!user || loading) return;
     
     try {
-      const wasLiked = await likePost(postId);
-      setIsLiked(wasLiked ?? false);
+      const newReaction = await reactToPost(postId, reactionType);
+      setUserReaction(newReaction);
       
-      const newLikesCount = wasLiked ? likesCount + 1 : likesCount - 1;
-      setLikesCount(newLikesCount);
+      // Refresh reaction counts
+      const counts = await getReactionCounts(postId);
+      setReactionCounts(counts);
+      const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
+      setTotalReactions(total);
+      
+      setShowReactions(false);
     } catch (error) {
-      console.error('Error handling like:', error);
+      console.error('Error handling reaction:', error);
     }
+  };
+
+  const getCurrentReactionEmoji = () => {
+    if (!userReaction) return null;
+    const reaction = reactions.find(r => r.type === userReaction);
+    return reaction ? reaction.emoji : null;
   };
 
   return (
     <div className="relative">
-      {/* Main Like Button */}
+      {/* Main Reaction Button */}
       <Button
         variant="ghost"
         size="sm"
         className={`space-x-2 hover:bg-red-50 transition-colors ${
-          isLiked ? 'text-red-600' : 'text-gray-600 hover:text-red-600'
+          userReaction ? 'text-red-600' : 'text-gray-600 hover:text-red-600'
         }`}
         onMouseEnter={() => setShowReactions(true)}
         onMouseLeave={() => setShowReactions(false)}
-        onClick={handleLike}
+        onClick={() => handleReaction('like')}
         disabled={loading}
       >
-        <Heart className={`w-5 h-5 transition-all ${
-          isLiked ? 'fill-current scale-110' : ''
-        }`} />
-        <span className="font-semibold">{likesCount}</span>
+        {userReaction ? (
+          <span className="text-lg">{getCurrentReactionEmoji()}</span>
+        ) : (
+          <Heart className="w-5 h-5" />
+        )}
+        <span className="font-semibold">{totalReactions}</span>
       </Button>
 
       {/* Reaction Picker (Simple hover menu) */}
@@ -77,13 +110,22 @@ export const SimplifiedPostReactions: React.FC<SimplifiedPostReactionsProps> = (
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                handleLike(); // For now, all reactions just toggle like
-                setShowReactions(false);
+                handleReaction(type);
               }}
               onMouseDown={(e) => e.preventDefault()}
-              className="text-xl hover:scale-125 transition-transform cursor-pointer select-none"
+              className={`text-xl hover:scale-125 transition-transform cursor-pointer select-none relative ${
+                userReaction === type ? 'scale-110 ring-2 ring-blue-400 ring-opacity-50 rounded-full' : ''
+              }`}
             >
               {emoji}
+              {reactionCounts[type] && (
+                <Badge 
+                  variant="secondary" 
+                  className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs flex items-center justify-center"
+                >
+                  {reactionCounts[type]}
+                </Badge>
+              )}
             </button>
           ))}
         </div>

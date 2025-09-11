@@ -222,9 +222,136 @@ export const usePostOperations = () => {
     }
   };
 
+  const reactToPost = async (postId: string, reactionType: string) => {
+    if (!user) return;
+
+    try {
+      // Check if already reacted
+      const { data: existingReaction } = await supabase
+        .from('reactions')
+        .select('id, reaction_type')
+        .eq('post_id', postId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (existingReaction) {
+        if (existingReaction.reaction_type === reactionType) {
+          // Same reaction - remove it
+          const { error: deleteError } = await supabase
+            .from('reactions')
+            .delete()
+            .eq('post_id', postId)
+            .eq('user_id', user.id);
+
+          if (deleteError) throw deleteError;
+          return null; // removed reaction
+        } else {
+          // Different reaction - update it
+          const { error: updateError } = await supabase
+            .from('reactions')
+            .update({ reaction_type: reactionType })
+            .eq('post_id', postId)
+            .eq('user_id', user.id);
+
+          if (updateError) throw updateError;
+          return reactionType; // updated reaction
+        }
+      } else {
+        // New reaction
+        const { error: insertError } = await supabase
+          .from('reactions')
+          .insert({
+            post_id: postId,
+            user_id: user.id,
+            reaction_type: reactionType
+          });
+
+        if (insertError) throw insertError;
+
+        // Create notification for post owner
+        const { data: postData } = await supabase
+          .from('posts')
+          .select('user_id, content')
+          .eq('id', postId)
+          .single();
+
+        if (postData && postData.user_id !== user.id) {
+          // Get reactor profile
+          const { data: reactorProfile } = await supabase
+            .from('profiles')
+            .select('display_name, username')
+            .eq('user_id', user.id)
+            .single();
+
+          const postTitle = postData.content?.slice(0, 30) + (postData.content?.length > 30 ? '...' : '') || 'your post';
+          const reactorName = reactorProfile?.display_name || reactorProfile?.username || 'Someone';
+
+          await supabase
+            .from('notifications')
+            .insert({
+              user_id: postData.user_id,
+              type: 'reaction',
+              title: 'New Reaction',
+              message: `${reactorName} reacted to "${postTitle}"`,
+              data: { post_id: postId, post_title: postTitle, reaction_type: reactionType }
+            });
+        }
+
+        return reactionType; // added reaction
+      }
+    } catch (err: any) {
+      console.error('Error toggling reaction:', err);
+      toast({
+        title: "Error",
+        description: "Failed to update reaction",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const getUserReaction = async (postId: string) => {
+    if (!user) return null;
+
+    try {
+      const { data } = await supabase
+        .from('reactions')
+        .select('reaction_type')
+        .eq('post_id', postId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      return data?.reaction_type || null;
+    } catch (err: any) {
+      console.error('Error fetching user reaction:', err);
+      return null;
+    }
+  };
+
+  const getReactionCounts = async (postId: string) => {
+    try {
+      const { data } = await supabase
+        .from('reactions')
+        .select('reaction_type')
+        .eq('post_id', postId);
+
+      const counts = (data || []).reduce((acc, { reaction_type }) => {
+        acc[reaction_type] = (acc[reaction_type] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      return counts;
+    } catch (err: any) {
+      console.error('Error fetching reaction counts:', err);
+      return {};
+    }
+  };
+
   return {
     createPost,
     likePost,
+    reactToPost,
+    getUserReaction,
+    getReactionCounts,
     deletePost,
     loading
   };
