@@ -96,7 +96,7 @@ export const useMessages = () => {
         table: 'messages' 
       }, (payload) => {
         const newMessage = payload.new as Message;
-        // Only add if this user is part of the chat
+        // Only add if this user is part of the chat (RLS should ensure this)
         setMessages(prev => {
           const chatMessages = prev[newMessage.chat_id] || [];
           // Check if message already exists to avoid duplicates
@@ -116,6 +116,22 @@ export const useMessages = () => {
       }, () => {
         // Refetch chats when new ones are created - use the current fetchChats ref
         fetchChats();
+      })
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'chat_participants'
+      }, (payload) => {
+        // When current user is added to a chat, refresh chats
+        try {
+          const participant = payload.new as { user_id: string };
+          if (!participant || participant.user_id === user.id) {
+            fetchChats();
+          }
+        } catch {
+          // Fallback: refresh anyway
+          fetchChats();
+        }
       })
       .subscribe();
 
@@ -184,6 +200,18 @@ export const useMessages = () => {
         .single();
 
       if (error) throw error;
+
+      // Optimistically append to local state for instant UI feedback
+      setMessages(prev => {
+        const chatMessages = prev[chatId] || [];
+        if (chatMessages.find(m => m.id === (data as any).id)) {
+          return prev;
+        }
+        return {
+          ...prev,
+          [chatId]: [...chatMessages, data as Message]
+        };
+      });
 
       return data as Message;
     } catch (error: any) {

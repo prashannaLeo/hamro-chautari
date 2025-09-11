@@ -171,15 +171,20 @@ export const usePostOperations = () => {
           const postTitle = postData.content?.slice(0, 30) + (postData.content?.length > 30 ? '...' : '') || 'your post';
           const likerName = likerProfile?.display_name || likerProfile?.username || 'Someone';
 
-          await supabase
-            .from('notifications')
-            .insert({
-              user_id: postData.user_id,
-              type: 'like',
-              title: 'New Like',
-              message: `${likerName} liked "${postTitle}"`,
-              data: { post_id: postId, post_title: postTitle }
-            });
+          try {
+            await supabase
+              .from('notifications')
+              .insert({
+                user_id: postData.user_id,
+                type: 'like',
+                title: 'New Like',
+                message: `${likerName} liked "${postTitle}"`,
+                data: { post_id: postId, post_title: postTitle }
+              });
+          } catch (notifyErr) {
+            console.warn('Notification insert failed (like):', notifyErr);
+            // Do not block like action if notifications fail
+          }
         }
 
         return true; // liked
@@ -246,27 +251,56 @@ export const usePostOperations = () => {
           if (deleteError) throw deleteError;
           return null; // removed reaction
         } else {
-          // Different reaction - update it
+          // Different reaction - update it with fallback for invalid types
           const { error: updateError } = await supabase
             .from('reactions')
             .update({ reaction_type: reactionType })
             .eq('post_id', postId)
             .eq('user_id', user.id);
 
-          if (updateError) throw updateError;
+          if (updateError) {
+            const msg = String(updateError.message || updateError.details || updateError.hint || '');
+            if (msg.includes('reactions_reaction_type_check')) {
+              // Fallback to a supported default
+              const { error: fallbackErr } = await supabase
+                .from('reactions')
+                .update({ reaction_type: 'like' })
+                .eq('post_id', postId)
+                .eq('user_id', user.id);
+              if (fallbackErr) throw fallbackErr;
+              return 'like';
+            }
+            throw updateError;
+          }
           return reactionType; // updated reaction
         }
       } else {
-        // New reaction
+        // New reaction with fallback for invalid types
+        let finalType = reactionType;
         const { error: insertError } = await supabase
           .from('reactions')
           .insert({
             post_id: postId,
             user_id: user.id,
-            reaction_type: reactionType
+            reaction_type: finalType
           });
 
-        if (insertError) throw insertError;
+        if (insertError) {
+          const msg = String(insertError.message || insertError.details || insertError.hint || '');
+          if (msg.includes('reactions_reaction_type_check')) {
+            finalType = 'like';
+            const { error: fallbackInsertError } = await supabase
+              .from('reactions')
+              .insert({
+                post_id: postId,
+                user_id: user.id,
+                reaction_type: finalType
+              });
+            if (fallbackInsertError) throw fallbackInsertError;
+          } else {
+            throw insertError;
+          }
+        }
 
         // Create notification for post owner
         const { data: postData } = await supabase
@@ -286,15 +320,20 @@ export const usePostOperations = () => {
           const postTitle = postData.content?.slice(0, 30) + (postData.content?.length > 30 ? '...' : '') || 'your post';
           const reactorName = reactorProfile?.display_name || reactorProfile?.username || 'Someone';
 
-          await supabase
-            .from('notifications')
-            .insert({
-              user_id: postData.user_id,
-              type: 'reaction',
-              title: 'New Reaction',
-              message: `${reactorName} reacted to "${postTitle}"`,
-              data: { post_id: postId, post_title: postTitle, reaction_type: reactionType }
-            });
+          try {
+            await supabase
+              .from('notifications')
+              .insert({
+                user_id: postData.user_id,
+                type: 'reaction',
+                title: 'New Reaction',
+                message: `${reactorName} reacted to "${postTitle}"`,
+                data: { post_id: postId, post_title: postTitle, reaction_type: finalType }
+              });
+          } catch (notifyErr) {
+            console.warn('Notification insert failed (reaction):', notifyErr);
+            // Do not block reaction action if notifications fail
+          }
         }
 
         return reactionType; // added reaction
