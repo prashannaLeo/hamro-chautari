@@ -114,7 +114,7 @@ export const useMessages = () => {
         schema: 'public',
         table: 'chats'
       }, () => {
-        // Refetch chats when new ones are created
+        // Refetch chats when new ones are created - use the current fetchChats ref
         fetchChats();
       })
       .subscribe();
@@ -122,7 +122,7 @@ export const useMessages = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, fetchChats]);
+  }, [user]); // Removed fetchChats from dependency array to avoid circular dependency
 
 
   // Fetch messages for a specific chat
