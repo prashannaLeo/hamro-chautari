@@ -1,55 +1,117 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
+import { playRingtone, stopRingtone, playNotificationSound, showCallNotification } from '@/utils/audioUtils';
+import { WebRTCService } from '@/utils/webrtc';
 
 export interface CallData {
   id: string;
   type: 'video' | 'voice';
-  callerId: string;
-  callerName: string;
-  callerAvatar?: string;
-  receiverId: string;
-  status: 'ringing' | 'answered' | 'ended' | 'declined';
-  startTime?: Date;
-  endTime?: Date;
+  caller_id: string;
+  caller_name: string;
+  caller_avatar?: string;
+  receiver_id: string;
+  receiver_name: string;
+  receiver_avatar?: string;
+  status: 'initiating' | 'ringing' | 'answered' | 'ended' | 'declined';
+  offer?: any;
+  answer?: any;
+  ice_candidates?: any[];
+  created_at: string;
+  updated_at: string;
 }
 
 export const useCalling = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [currentCall, setCurrentCall] = useState<CallData | null>(null);
   const [incomingCall, setIncomingCall] = useState<CallData | null>(null);
+  const [webrtcService] = useState(() => new WebRTCService());
+  const callTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const channelRef = useRef<any>(null);
 
-  // Simulate receiving an incoming call (for demo purposes)
-  const simulateReceiverCall = useCallback((
-    callData: CallData,
-    receiverName: string,
-    receiverAvatar?: string
-  ) => {
-    // In a real app, this would be triggered by a socket message or push notification
-    // For demo: simulate receiving a call FROM the person we're calling
-    const incomingCallData: CallData = {
-      ...callData,
-      callerName: receiverName, // Show the name of who we called
-      callerAvatar: receiverAvatar
+  // Initialize realtime subscription for calls
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('calls_channel')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'calls',
+          filter: `or(caller_id=eq.${user.id},receiver_id=eq.${user.id})`
+        },
+        async (payload) => {
+          console.log('Call update received:', payload);
+          const callData = payload.new as CallData;
+          
+          if (payload.eventType === 'INSERT' && callData.receiver_id === user.id && callData.status === 'ringing') {
+            // Incoming call
+            setIncomingCall(callData);
+            playRingtone();
+            playNotificationSound();
+            showCallNotification(callData.caller_name, callData.type);
+          } else if (payload.eventType === 'UPDATE') {
+            if (callData.status === 'answered' && callData.answer) {
+              // Call was answered, set remote description
+              if (callData.caller_id === user.id) {
+                await webrtcService.setRemoteDescription(callData.answer);
+                setCurrentCall(callData);
+                setIncomingCall(null);
+                stopRingtone();
+              }
+            } else if (callData.status === 'declined' || callData.status === 'ended') {
+              // Call ended or declined
+              setCurrentCall(null);
+              setIncomingCall(null);
+              stopRingtone();
+              webrtcService.closeConnection();
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    channelRef.current = channel;
+
+    return () => {
+      supabase.removeChannel(channel);
+      stopRingtone();
+    };
+  }, [user, webrtcService]);
+
+  // WebRTC event handlers
+  useEffect(() => {
+    webrtcService.onIceCandidate = async (candidate) => {
+      if (currentCall) {
+        await supabase
+          .from('calls')
+          .update({
+            ice_candidates: [...(currentCall.ice_candidates || []), candidate],
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', currentCall.id);
+      }
     };
 
-    // Clear current call and show as incoming (to simulate receiving the callback)
-    setCurrentCall(null);
-    setIncomingCall(incomingCallData);
-
-    toast({
-      title: `Incoming ${callData.type === 'video' ? 'Video' : 'Voice'} Call`,
-      description: `${receiverName} is calling you back`,
-      duration: 30000
-    });
-  }, []);
+    webrtcService.onConnectionStateChange = (state) => {
+      console.log('WebRTC connection state:', state);
+      if (state === 'failed' || state === 'disconnected') {
+        endCall();
+      }
+    };
+  }, [currentCall]);
 
   const initiateCall = useCallback(async (
     receiverId: string, 
     receiverName: string, 
     callType: 'video' | 'voice',
     receiverAvatar?: string
-  ) => {
+  ): Promise<CallData | undefined> => {
     if (!user) {
       toast({
         title: "Error",
@@ -59,112 +121,189 @@ export const useCalling = () => {
       return;
     }
 
-    const callData: CallData = {
-      id: generateCallId(),
-      type: callType,
-      callerId: user.id,
-      callerName: user.email || 'Unknown User',
-      receiverId,
-      status: 'ringing',
-      startTime: new Date()
-    };
+    try {
+      // Create WebRTC offer
+      const offer = await webrtcService.createOffer(callType === 'video');
 
-    setCurrentCall(callData);
+      // Create call record in database
+      const { data: callData, error } = await supabase
+        .from('calls')
+        .insert({
+          type: callType,
+          caller_id: user.id,
+          caller_name: user.user_metadata?.display_name || user.email || 'Unknown User',
+          caller_avatar: user.user_metadata?.avatar_url,
+          receiver_id: receiverId,
+          receiver_name: receiverName,
+          receiver_avatar: receiverAvatar,
+          status: 'ringing',
+          offer: offer
+        })
+        .select()
+        .single();
 
-    // Show outgoing call toast for caller
-    toast({
-      title: `${callType === 'video' ? 'Video' : 'Voice'} Call`,
-      description: `Calling ${receiverName}...`,
-      duration: 30000
-    });
+      if (error) {
+        console.error('Error creating call:', error);
+        toast({
+          title: "Error",
+          description: "Failed to initiate call",
+          variant: "destructive"
+        });
+        return;
+      }
 
-    // Simulate incoming call for receiver (in real app, this would be sent via socket/server)
-    // For demo purposes, simulate the person calling you back after 3 seconds
-    setTimeout(() => {
-      console.log('Simulating callback from:', receiverName);
-      simulateReceiverCall(callData, receiverName, receiverAvatar);
-    }, 3000);
+      setCurrentCall(callData);
 
-    return callData;
-  }, [user, simulateReceiverCall]);
+      // Set timeout for call (30 seconds)
+      callTimeoutRef.current = setTimeout(() => {
+        endCall();
+      }, 30000);
 
-  const answerCall = useCallback((callData: CallData) => {
-    setIncomingCall(null);
-    setCurrentCall({
-      ...callData,
-      status: 'answered',
-      startTime: new Date()
-    });
-
-    toast({
-      title: "Call Answered",
-      description: `Connected to ${callData.callerName}`
-    });
-  }, []);
-
-  const declineCall = useCallback((callData: CallData) => {
-    setIncomingCall(null);
-    
-    toast({
-      title: "Call Declined",
-      description: `Declined call from ${callData.callerName}`
-    });
-
-    // In a real app, send decline signal to caller
-    console.log('Call declined:', callData);
-  }, []);
-
-  const endCall = useCallback(() => {
-    if (currentCall) {
-      setCurrentCall({
-        ...currentCall,
-        status: 'ended',
-        endTime: new Date()
+      toast({
+        title: `${callType === 'video' ? 'Video' : 'Voice'} Call`,
+        description: `Calling ${receiverName}...`,
       });
 
-      setTimeout(() => {
-        setCurrentCall(null);
-      }, 1000);
+      return callData;
+    } catch (error) {
+      console.error('Error initiating call:', error);
+      toast({
+        title: "Error",
+        description: "Failed to initiate call",
+        variant: "destructive"
+      });
+    }
+  }, [user, webrtcService]);
+
+  const answerCall = useCallback(async (callData: CallData) => {
+    if (!callData.offer) {
+      console.error('No offer found in call data');
+      return;
+    }
+
+    try {
+      // Set remote description and create answer
+      await webrtcService.setRemoteDescription(callData.offer);
+      const answer = await webrtcService.createAnswer(callData.type === 'video');
+
+      // Update call status to answered
+      const { error } = await supabase
+        .from('calls')
+        .update({
+          status: 'answered',
+          answer: answer,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', callData.id);
+
+      if (error) {
+        console.error('Error answering call:', error);
+        return;
+      }
+
+      setIncomingCall(null);
+      setCurrentCall({ ...callData, status: 'answered', answer });
+      stopRingtone();
+
+      toast({
+        title: "Call Answered",
+        description: `Connected to ${callData.caller_name}`
+      });
+    } catch (error) {
+      console.error('Error answering call:', error);
+      toast({
+        title: "Error",
+        description: "Failed to answer call",
+        variant: "destructive"
+      });
+    }
+  }, [webrtcService]);
+
+  const declineCall = useCallback(async (callData: CallData) => {
+    try {
+      await supabase
+        .from('calls')
+        .update({
+          status: 'declined',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', callData.id);
+
+      setIncomingCall(null);
+      stopRingtone();
+      
+      toast({
+        title: "Call Declined",
+        description: `Declined call from ${callData.caller_name}`
+      });
+    } catch (error) {
+      console.error('Error declining call:', error);
+    }
+  }, []);
+
+  const endCall = useCallback(async () => {
+    const activeCall = currentCall || incomingCall;
+    if (!activeCall) return;
+
+    try {
+      await supabase
+        .from('calls')
+        .update({
+          status: 'ended',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', activeCall.id);
+
+      setCurrentCall(null);
+      setIncomingCall(null);
+      stopRingtone();
+      webrtcService.closeConnection();
+
+      if (callTimeoutRef.current) {
+        clearTimeout(callTimeoutRef.current);
+        callTimeoutRef.current = null;
+      }
 
       toast({
         title: "Call Ended",
         description: "The call has been ended"
       });
-    }
-    
-    // Also clear incoming call if ending during ring
-    if (incomingCall) {
+    } catch (error) {
+      console.error('Error ending call:', error);
+      // Still clean up local state even if database update fails
+      setCurrentCall(null);
       setIncomingCall(null);
+      stopRingtone();
+      webrtcService.closeConnection();
     }
-  }, [currentCall, incomingCall]);
+  }, [currentCall, incomingCall, webrtcService]);
 
-  // Simulate receiving an incoming call (public method for testing)
-  const simulateIncomingCall = useCallback((
-    callerId: string,
-    callerName: string,
-    callType: 'video' | 'voice',
-    callerAvatar?: string
-  ) => {
-    if (!user) return;
-
-    const incomingCallData: CallData = {
-      id: generateCallId(),
-      type: callType,
-      callerId,
-      callerName,
-      callerAvatar,
-      receiverId: user.id,
-      status: 'ringing'
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (callTimeoutRef.current) {
+        clearTimeout(callTimeoutRef.current);
+      }
+      stopRingtone();
+      webrtcService.closeConnection();
     };
+  }, [webrtcService]);
 
-    setIncomingCall(incomingCallData);
+  const getLocalStream = useCallback(() => {
+    return webrtcService.getLocalStream();
+  }, [webrtcService]);
 
-    toast({
-      title: `Incoming ${callType === 'video' ? 'Video' : 'Voice'} Call`,
-      description: `${callerName} is calling you`,
-      duration: 30000
-    });
-  }, [user]);
+  const getRemoteStream = useCallback(() => {
+    return webrtcService.getRemoteStream();
+  }, [webrtcService]);
+
+  const toggleMicrophone = useCallback(() => {
+    return webrtcService.toggleMicrophone();
+  }, [webrtcService]);
+
+  const toggleCamera = useCallback(() => {
+    return webrtcService.toggleCamera();
+  }, [webrtcService]);
 
   return {
     currentCall,
@@ -173,7 +312,10 @@ export const useCalling = () => {
     answerCall,
     declineCall,
     endCall,
-    simulateIncomingCall
+    getLocalStream,
+    getRemoteStream,
+    toggleMicrophone,
+    toggleCamera
   };
 };
 
