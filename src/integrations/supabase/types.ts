@@ -610,6 +610,15 @@ export type Database = {
           username: string
         }[]
       }
+      get_public_post_preview: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          content: string
+          created_at: string
+          id: string
+          post_type: string
+        }[]
+      }
       increment_comments: {
         Args: { post_id: string }
         Returns: undefined
