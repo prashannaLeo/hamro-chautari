@@ -129,15 +129,13 @@ export const useComments = (postId: string) => {
         const postTitle = postData.content?.slice(0, 30) + (postData.content?.length > 30 ? '...' : '') || 'your post';
         const commenterName = commenterProfile?.display_name || commenterProfile?.username || 'Someone';
 
-        await supabase
-          .from('notifications')
-          .insert({
-            user_id: postData.user_id,
-            type: 'comment',
-            title: 'New Comment',
-            message: `${commenterName} commented on "${postTitle}"`,
-            data: { post_id: postId, comment_id: data.id, post_title: postTitle }
-          });
+        await supabase.rpc('create_notification', {
+          target_user_id: postData.user_id,
+          notification_type: 'comment',
+          notification_title: 'New Comment',
+          notification_message: `${commenterName} commented on "${postTitle}"`,
+          notification_data: { post_id: postId, comment_id: data.id, post_title: postTitle }
+        });
       }
 
       toast({

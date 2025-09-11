@@ -160,15 +160,13 @@ export const useFriends = () => {
 
       try {
         // Create notification for the target user
-        await supabase
-          .from('notifications')
-          .insert({
-            user_id: targetUserId,
-            type: 'friend_request',
-            title: 'New Friend Request',
-            message: `${senderProfile?.display_name || senderProfile?.username || 'Someone'} sent you a friend request`,
-            data: { from_user_id: user.id, from_username: senderProfile?.username }
-          });
+        await supabase.rpc('create_notification', {
+          target_user_id: targetUserId,
+          notification_type: 'friend_request',
+          notification_title: 'New Friend Request',
+          notification_message: `${senderProfile?.display_name || senderProfile?.username || 'Someone'} sent you a friend request`,
+          notification_data: { from_username: senderProfile?.username }
+        });
       } catch (notifyErr) {
         console.warn('Notification insert failed (friend_request):', notifyErr);
         // Don't block sending request if notification fails

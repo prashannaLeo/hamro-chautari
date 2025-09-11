@@ -172,15 +172,13 @@ export const usePostOperations = () => {
           const likerName = likerProfile?.display_name || likerProfile?.username || 'Someone';
 
           try {
-            await supabase
-              .from('notifications')
-              .insert({
-                user_id: postData.user_id,
-                type: 'like',
-                title: 'New Like',
-                message: `${likerName} liked "${postTitle}"`,
-                data: { post_id: postId, post_title: postTitle }
-              });
+            await supabase.rpc('create_notification', {
+              target_user_id: postData.user_id,
+              notification_type: 'like',
+              notification_title: 'New Like',
+              notification_message: `${likerName} liked "${postTitle}"`,
+              notification_data: { post_id: postId, post_title: postTitle }
+            });
           } catch (notifyErr) {
             console.warn('Notification insert failed (like):', notifyErr);
             // Do not block like action if notifications fail
@@ -321,15 +319,13 @@ export const usePostOperations = () => {
           const reactorName = reactorProfile?.display_name || reactorProfile?.username || 'Someone';
 
           try {
-            await supabase
-              .from('notifications')
-              .insert({
-                user_id: postData.user_id,
-                type: 'reaction',
-                title: 'New Reaction',
-                message: `${reactorName} reacted to "${postTitle}"`,
-                data: { post_id: postId, post_title: postTitle, reaction_type: finalType }
-              });
+            await supabase.rpc('create_notification', {
+              target_user_id: postData.user_id,
+              notification_type: 'reaction',
+              notification_title: 'New Reaction',
+              notification_message: `${reactorName} reacted to "${postTitle}"`,
+              notification_data: { post_id: postId, post_title: postTitle, reaction_type: finalType }
+            });
           } catch (notifyErr) {
             console.warn('Notification insert failed (reaction):', notifyErr);
             // Do not block reaction action if notifications fail
