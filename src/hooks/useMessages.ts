@@ -52,12 +52,27 @@ export const useMessages = () => {
     try {
       setLoading(true);
       
-      // Get chats where user is a participant
+      // First, get all chat IDs where user is a participant
+      const { data: userChats, error: userChatsError } = await supabase
+        .from('chat_participants')
+        .select('chat_id')
+        .eq('user_id', user.id);
+
+      if (userChatsError) throw userChatsError;
+
+      if (!userChats || userChats.length === 0) {
+        setChats([]);
+        return;
+      }
+
+      const chatIds = userChats.map(uc => uc.chat_id);
+
+      // Now get all chats with ALL their participants and profiles
       const { data: chatsWithParticipants, error: chatsError } = await supabase
         .from('chats')
         .select(`
           *,
-          chat_participants!inner (
+          chat_participants (
             user_id,
             role,
             profiles (
@@ -67,7 +82,8 @@ export const useMessages = () => {
             )
           )
         `)
-        .eq('chat_participants.user_id', user.id);
+        .in('id', chatIds)
+        .order('updated_at', { ascending: false });
 
       if (chatsError) throw chatsError;
 
