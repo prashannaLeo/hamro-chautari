@@ -74,8 +74,14 @@ export const SimplifiedPostReactions: React.FC<SimplifiedPostReactionsProps> = (
           {reactions.map(({ type, emoji }) => (
             <button
               key={type}
-              onClick={handleLike} // For now, all reactions just toggle like
-              className="text-xl hover:scale-125 transition-transform"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleLike(); // For now, all reactions just toggle like
+                setShowReactions(false);
+              }}
+              onMouseDown={(e) => e.preventDefault()}
+              className="text-xl hover:scale-125 transition-transform cursor-pointer select-none"
             >
               {emoji}
             </button>

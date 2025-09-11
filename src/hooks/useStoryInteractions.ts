@@ -97,6 +97,10 @@ export const useStoryInteractions = () => {
     if (!user) return;
 
     try {
+      // Show confirmation dialog instead of directly sharing
+      const confirmed = window.confirm("Share this story to your feed?");
+      if (!confirmed) return false;
+
       // Check if already shared
       const { data: existingShare } = await supabase
         .from('story_shares')
@@ -110,7 +114,7 @@ export const useStoryInteractions = () => {
           title: "Already shared",
           description: "You have already shared this story"
         });
-        return;
+        return false;
       }
 
       // Record share
@@ -131,8 +135,8 @@ export const useStoryInteractions = () => {
       }
 
       toast({
-        title: "Success",
-        description: "Story shared successfully"
+        title: "Story Shared!",
+        description: "Story has been shared to your feed"
       });
 
       return true;
@@ -143,6 +147,7 @@ export const useStoryInteractions = () => {
         description: "Failed to share story",
         variant: "destructive"
       });
+      return false;
     }
   }, [user]);
 

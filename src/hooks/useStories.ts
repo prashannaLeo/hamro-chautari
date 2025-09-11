@@ -29,6 +29,27 @@ export const useStories = () => {
     
     setLoading(true);
     try {
+      // First get user's friend connections
+      const { data: connections, error: connectionsError } = await supabase
+        .from('connections')
+        .select('user_id, connected_user_id')
+        .eq('status', 'accepted')
+        .or(`user_id.eq.${user.id},connected_user_id.eq.${user.id}`);
+
+      if (connectionsError) {
+        console.error('Error fetching connections:', connectionsError);
+        return;
+      }
+
+      // Get friend user IDs
+      const friendIds = connections?.flatMap(conn => 
+        conn.user_id === user.id ? [conn.connected_user_id] : [conn.user_id]
+      ) || [];
+      
+      // Add current user ID to show their own stories
+      friendIds.push(user.id);
+
+      // Fetch stories only from friends and user
       const { data, error } = await supabase
         .from('stories')
         .select(`
@@ -39,6 +60,7 @@ export const useStories = () => {
             avatar_url
           )
         `)
+        .in('user_id', friendIds)
         .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false });
 

@@ -27,9 +27,11 @@ const StoryActionsBar: React.FC<StoryActionsBarProps> = ({ storyId }) => {
 
   const handleSendComment = async () => {
     if (comment.trim()) {
-      await commentOnStory(storyId, comment);
-      setComment('');
-      setShowCommentInput(false);
+      const result = await commentOnStory(storyId, comment);
+      if (result) {
+        setComment('');
+        setShowCommentInput(false);
+      }
     }
   };
 
