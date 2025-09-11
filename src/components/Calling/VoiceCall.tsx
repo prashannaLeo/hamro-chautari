@@ -9,17 +9,21 @@ import {
   Mic, 
   MicOff, 
   Volume2, 
-  VolumeX
+  VolumeX,
+  Video
 } from 'lucide-react';
 
 interface VoiceCallProps {
   callId: string;
   isIncoming?: boolean;
+  isOutgoing?: boolean;
   callerName?: string;
   callerAvatar?: string;
+  callStatus?: 'initiating' | 'ringing' | 'answered' | 'ended' | 'declined';
   onEndCall: () => void;
   onAcceptCall?: () => void;
   onDeclineCall?: () => void;
+  onSwitchToVideo?: () => void;
   localStream?: MediaStream;
   remoteStream?: MediaStream;
 }
@@ -27,11 +31,14 @@ interface VoiceCallProps {
 const VoiceCall: React.FC<VoiceCallProps> = ({
   callId,
   isIncoming = false,
+  isOutgoing = false,
   callerName = 'Unknown',
   callerAvatar,
+  callStatus = 'ringing',
   onEndCall,
   onAcceptCall,
   onDeclineCall,
+  onSwitchToVideo,
   localStream,
   remoteStream,
 }) => {
@@ -40,15 +47,22 @@ const VoiceCall: React.FC<VoiceCallProps> = ({
   const [isSpeakerEnabled, setIsSpeakerEnabled] = useState(true);
   const [callDuration, setCallDuration] = useState(0);
   const [isCallActive, setIsCallActive] = useState(!isIncoming);
-  const [callStatus, setCallStatus] = useState<'connecting' | 'connected' | 'ended'>('connecting');
+  const [callStartTime, setCallStartTime] = useState<number | null>(null);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    if (isCallActive && callStatus === 'connected') {
-      interval = setInterval(() => setCallDuration((prev) => prev + 1), 1000);
+    if (isCallActive && callStatus === 'answered') {
+      if (!callStartTime) {
+        setCallStartTime(Date.now());
+      }
+      interval = setInterval(() => {
+        if (callStartTime) {
+          setCallDuration(Math.floor((Date.now() - callStartTime) / 1000));
+        }
+      }, 1000);
     }
     return () => clearInterval(interval);
-  }, [isCallActive, callStatus]);
+  }, [isCallActive, callStatus, callStartTime]);
 
   // Attach remote audio
   useEffect(() => {
@@ -62,12 +76,6 @@ const VoiceCall: React.FC<VoiceCallProps> = ({
     }
   }, [remoteStream]);
 
-  useEffect(() => {
-    if (isCallActive) {
-      // Simulate connection after 2 seconds
-      setTimeout(() => setCallStatus('connected'), 2000);
-    }
-  }, [isCallActive]);
 
   const toggleAudio = () => {
     const track = localStream?.getAudioTracks()[0];
@@ -99,7 +107,6 @@ const VoiceCall: React.FC<VoiceCallProps> = ({
 
   const handleEndCall = () => {
     setIsCallActive(false);
-    setCallStatus('ended');
     onEndCall();
   };
 
@@ -111,9 +118,19 @@ const VoiceCall: React.FC<VoiceCallProps> = ({
 
   const getStatusText = () => {
     if (isIncoming && !isCallActive) return 'Incoming call...';
-    if (callStatus === 'connecting') return 'Connecting...';
-    if (callStatus === 'connected') return formatDuration(callDuration);
-    return 'Call ended';
+    if (isOutgoing) {
+      switch (callStatus) {
+        case 'ringing':
+        case 'initiating':
+          return 'Calling...';
+        case 'answered':
+          return formatDuration(callDuration);
+        default:
+          return 'Connecting...';
+      }
+    }
+    if (callStatus === 'answered') return formatDuration(callDuration);
+    return 'Connecting...';
   };
 
   if (isIncoming && !isCallActive) {
@@ -161,7 +178,7 @@ const VoiceCall: React.FC<VoiceCallProps> = ({
                 {callerName.split(' ').map((n) => n[0]).join('').toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            {callStatus === 'connected' && (
+            {callStatus === 'answered' && (
               <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2">
                 <div className="bg-green-500 w-8 h-8 rounded-full animate-pulse flex items-center justify-center">
                   <div className="w-4 h-4 bg-white rounded-full"></div>
@@ -183,6 +200,11 @@ const VoiceCall: React.FC<VoiceCallProps> = ({
         <Button onClick={toggleSpeaker} variant={isSpeakerEnabled ? 'secondary' : 'outline'} size="lg" className="rounded-full w-16 h-16 bg-white/10 hover:bg-white/20 border-white/30">
           {isSpeakerEnabled ? <Volume2 className="w-6 h-6 text-white" /> : <VolumeX className="w-6 h-6 text-white" />}
         </Button>
+        {callStatus === 'answered' && onSwitchToVideo && (
+          <Button onClick={onSwitchToVideo} variant="secondary" size="lg" className="rounded-full w-16 h-16">
+            <Video className="w-6 h-6" />
+          </Button>
+        )}
         <Button onClick={toggleAudio} variant={isAudioEnabled ? 'secondary' : 'destructive'} size="lg" className="rounded-full w-16 h-16">
           {isAudioEnabled ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
         </Button>

@@ -18,7 +18,10 @@ import {
 interface VideoCallProps {
   callId: string;
   isIncoming?: boolean;
+  isOutgoing?: boolean;
   callerName?: string;
+  callerAvatar?: string;
+  callStatus?: 'initiating' | 'ringing' | 'answered' | 'ended' | 'declined';
   onEndCall: () => void;
   onAcceptCall?: () => void;
   onDeclineCall?: () => void;
@@ -29,7 +32,10 @@ interface VideoCallProps {
 const VideoCall: React.FC<VideoCallProps> = ({
   callId,
   isIncoming = false,
+  isOutgoing = false,
   callerName = "Unknown",
+  callerAvatar,
+  callStatus = 'ringing',
   onEndCall,
   onAcceptCall,
   onDeclineCall,
@@ -43,14 +49,22 @@ const VideoCall: React.FC<VideoCallProps> = ({
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
   const [isCallActive, setIsCallActive] = useState(!isIncoming);
+  const [callStartTime, setCallStartTime] = useState<number | null>(null);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    if (isCallActive) {
-      interval = setInterval(() => setCallDuration((prev) => prev + 1), 1000);
+    if (isCallActive && callStatus === 'answered') {
+      if (!callStartTime) {
+        setCallStartTime(Date.now());
+      }
+      interval = setInterval(() => {
+        if (callStartTime) {
+          setCallDuration(Math.floor((Date.now() - callStartTime) / 1000));
+        }
+      }, 1000);
     }
     return () => clearInterval(interval);
-  }, [isCallActive]);
+  }, [isCallActive, callStatus, callStartTime]);
 
   // Attach provided streams
   useEffect(() => {
@@ -149,6 +163,21 @@ const VideoCall: React.FC<VideoCallProps> = ({
     return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const getCallStatusText = () => {
+    if (isOutgoing) {
+      switch (callStatus) {
+        case 'ringing':
+        case 'initiating':
+          return 'Calling...';
+        case 'answered':
+          return formatDuration(callDuration);
+        default:
+          return 'Connecting...';
+      }
+    }
+    return formatDuration(callDuration);
+  };
+
   if (isIncoming && !isCallActive) {
     return (
       <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center">
@@ -180,7 +209,7 @@ const VideoCall: React.FC<VideoCallProps> = ({
         <div className="flex items-center gap-3">
           <Users className="w-5 h-5 text-white" />
           <span className="text-white font-medium">{callerName}</span>
-          <span className="text-white/70 text-sm">{formatDuration(callDuration)}</span>
+          <span className="text-white/70 text-sm">{getCallStatusText()}</span>
         </div>
         <Button variant="ghost" size="sm" className="text-white hover:bg-white/10">
           <Settings className="w-4 h-4" />
@@ -189,7 +218,22 @@ const VideoCall: React.FC<VideoCallProps> = ({
 
       {/* Video container */}
       <div className="flex-1 relative">
-        <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover bg-gray-900" />
+        {/* Remote video or placeholder */}
+        {remoteStream && callStatus === 'answered' ? (
+          <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover bg-gray-900" />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+            <div className="text-center">
+              <div className="w-32 h-32 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Video className="w-16 h-16 text-white/60" />
+              </div>
+              <h3 className="text-white text-xl font-medium mb-2">{callerName}</h3>
+              <p className="text-white/70">{getCallStatusText()}</p>
+            </div>
+          </div>
+        )}
+        
+        {/* Local video */}
         <div className="absolute top-4 right-4 w-48 h-36 bg-gray-800 rounded-lg overflow-hidden border-2 border-white/20">
           <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
           {!isVideoEnabled && (

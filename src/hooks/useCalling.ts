@@ -398,6 +398,39 @@ export const useCalling = () => {
     return webrtcService.toggleCamera();
   }, [webrtcService]);
 
+  const switchToVideo = useCallback(async () => {
+    const activeCall = currentCall || incomingCall;
+    if (!activeCall || activeCall.type !== 'voice') return;
+
+    try {
+      // Update call type in database
+      await supabase
+        .from('calls')
+        .update({
+          type: 'video',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', activeCall.id);
+
+      // Update local state
+      if (currentCall) {
+        setCurrentCall({ ...currentCall, type: 'video' });
+      }
+
+      toast({
+        title: "Switched to Video",
+        description: "Call upgraded to video call"
+      });
+    } catch (error) {
+      console.error('Error switching to video:', error);
+      toast({
+        title: "Error",
+        description: "Failed to switch to video call",
+        variant: "destructive"
+      });
+    }
+  }, [currentCall, incomingCall, webrtcService]);
+
   return {
     currentCall,
     incomingCall,
@@ -407,6 +440,7 @@ export const useCalling = () => {
     answerCall,
     declineCall,
     endCall,
+    switchToVideo,
     getLocalStream,
     getRemoteStream,
     toggleMicrophone,

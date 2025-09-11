@@ -4,7 +4,7 @@ import VideoCall from './VideoCall';
 import VoiceCall from './VoiceCall';
 
 const CallManager: React.FC = () => {
-  const { currentCall, incomingCall, answerCall, declineCall, endCall, localStream, remoteStream } = useCalling();
+  const { currentCall, incomingCall, answerCall, declineCall, endCall, switchToVideo, localStream, remoteStream } = useCalling();
 
   // Set up media streams for video elements
   useEffect(() => {
@@ -43,6 +43,7 @@ const CallManager: React.FC = () => {
           onEndCall={endCall}
           onAcceptCall={() => answerCall(incomingCall)}
           onDeclineCall={() => declineCall(incomingCall)}
+          onSwitchToVideo={switchToVideo}
           localStream={localStream || undefined}
           remoteStream={remoteStream || undefined}
         />
@@ -52,11 +53,18 @@ const CallManager: React.FC = () => {
 
   // Show current call if there is one
   if (currentCall && currentCall.status !== 'ended') {
+    const isOutgoing = currentCall.status === 'ringing' || currentCall.status === 'initiating';
+    const contactName = isOutgoing ? currentCall.receiver_name : currentCall.caller_name;
+    const contactAvatar = isOutgoing ? currentCall.receiver_avatar : currentCall.caller_avatar;
+    
     if (currentCall.type === 'video') {
       return (
         <VideoCall
           callId={currentCall.id}
-          callerName={currentCall.caller_name}
+          callerName={contactName}
+          callerAvatar={contactAvatar}
+          isOutgoing={isOutgoing}
+          callStatus={currentCall.status}
           onEndCall={endCall}
           localStream={localStream || undefined}
           remoteStream={remoteStream || undefined}
@@ -66,9 +74,12 @@ const CallManager: React.FC = () => {
       return (
         <VoiceCall
           callId={currentCall.id}
-          callerName={currentCall.caller_name}
-          callerAvatar={currentCall.caller_avatar}
+          callerName={contactName}
+          callerAvatar={contactAvatar}
+          isOutgoing={isOutgoing}
+          callStatus={currentCall.status}
           onEndCall={endCall}
+          onSwitchToVideo={switchToVideo}
           localStream={localStream || undefined}
           remoteStream={remoteStream || undefined}
         />
