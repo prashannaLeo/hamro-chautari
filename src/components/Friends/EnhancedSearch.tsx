@@ -145,10 +145,11 @@ const EnhancedSearch: React.FC<EnhancedSearchProps> = ({
           className="pl-12 pr-12 h-12 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
         />
         <Button
-          onClick={handleEnterPress}
+          onClick={(e) => { e.preventDefault(); handleEnterPress(); }}
           size="sm"
           variant="ghost"
           className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 hover:bg-primary hover:text-white rounded-lg"
+          type="button"
         >
           <CornerDownLeft className="w-4 h-4" />
         </Button>
@@ -197,11 +198,14 @@ const EnhancedSearch: React.FC<EnhancedSearchProps> = ({
                 {userSuggestions.map((user, index) => (
                   <div
                     key={user.id}
-                    onClick={() => handleUserSelect(user)}
-                    className={cn(
-                      "flex items-center space-x-3 p-3 hover:bg-blue-50 cursor-pointer transition-colors",
-                      selectedIndex === index && "bg-blue-50"
-                    )}
+                  onClick={() => handleUserSelect(user)}
+                  className={cn(
+                    "flex items-center space-x-3 p-3 hover:bg-blue-50 cursor-pointer transition-colors",
+                    selectedIndex === index && "bg-blue-50"
+                  )}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleUserSelect(user); }}
                   >
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={user.avatar_url || ''} alt={user.display_name || user.username} />
