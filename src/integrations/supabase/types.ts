@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      calls: {
+        Row: {
+          answer: Json | null
+          answered_at: string | null
+          call_type: string
+          caller_id: string
+          created_at: string | null
+          duration_seconds: number | null
+          ended_at: string | null
+          ice_candidates: Json | null
+          id: string
+          offer: Json | null
+          receiver_id: string
+          started_at: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          answer?: Json | null
+          answered_at?: string | null
+          call_type: string
+          caller_id: string
+          created_at?: string | null
+          duration_seconds?: number | null
+          ended_at?: string | null
+          ice_candidates?: Json | null
+          id?: string
+          offer?: Json | null
+          receiver_id: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          answer?: Json | null
+          answered_at?: string | null
+          call_type?: string
+          caller_id?: string
+          created_at?: string | null
+          duration_seconds?: number | null
+          ended_at?: string | null
+          ice_candidates?: Json | null
+          id?: string
+          offer?: Json | null
+          receiver_id?: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       chat_participants: {
         Row: {
           chat_id: string
