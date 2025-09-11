@@ -121,6 +121,14 @@ const VideoCall: React.FC<VideoCallProps> = ({
 
   const handleAcceptCall = () => {
     setIsCallActive(true);
+    // Ensure playback starts within user gesture
+    try { localVideoRef.current?.play(); } catch {}
+    try {
+      if (remoteVideoRef.current) {
+        remoteVideoRef.current.muted = false;
+        remoteVideoRef.current.play();
+      }
+    } catch {}
     onAcceptCall?.();
   };
 

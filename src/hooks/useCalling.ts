@@ -140,21 +140,36 @@ export const useCalling = () => {
   // WebRTC event handlers
   useEffect(() => {
     webrtcService.onIceCandidate = async (candidate) => {
-      if (currentCall) {
+      const activeCallId = currentCall?.id || incomingCall?.id;
+      if (!activeCallId) return;
+      try {
+        // Read latest candidates to avoid overwrite races
+        const { data: callRow } = await supabase
+          .from('calls')
+          .select('ice_candidates')
+          .eq('id', activeCallId)
+          .single();
+        const latest: any[] = (callRow?.ice_candidates as any[]) || [];
+        const set = new Set(latest.map((c) => JSON.stringify(c)));
+        const key = JSON.stringify(candidate);
+        if (!set.has(key)) latest.push(candidate);
+
         await supabase
           .from('calls')
           .update({
-            ice_candidates: [...(currentCall.ice_candidates || []), candidate],
+            ice_candidates: latest,
             updated_at: new Date().toISOString()
           })
-          .eq('id', currentCall.id);
+          .eq('id', activeCallId);
+      } catch (e) {
+        console.warn('Failed to push ICE candidate:', e);
       }
     };
 
     webrtcService.onConnectionStateChange = (state) => {
       console.log('WebRTC connection state:', state);
-      if (state === 'failed' || state === 'disconnected') {
-        // Fallback local cleanup if connection drops
+      if (state === 'failed') {
+        // Fallback local cleanup if connection fails
         setCurrentCall(null);
         setIncomingCall(null);
         stopRingtone();
@@ -167,7 +182,7 @@ export const useCalling = () => {
     webrtcService.onRemoteStream = (stream) => {
       setRemoteStream(stream);
     };
-  }, [currentCall, webrtcService]);
+  }, [currentCall, incomingCall, webrtcService]);
 
   const endCall = useCallback(async () => {
     const activeCall = currentCall || incomingCall;

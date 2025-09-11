@@ -54,6 +54,11 @@ const VoiceCall: React.FC<VoiceCallProps> = ({
   useEffect(() => {
     if (audioRef.current && remoteStream) {
       audioRef.current.srcObject = remoteStream;
+      audioRef.current
+        .play()
+        .catch(() => {
+          // Autoplay might be blocked until user interaction
+        });
     }
   }, [remoteStream]);
 
@@ -84,6 +89,7 @@ const VoiceCall: React.FC<VoiceCallProps> = ({
 
   const handleAcceptCall = () => {
     setIsCallActive(true);
+    try { audioRef.current?.play(); } catch {}
     onAcceptCall?.();
   };
 
