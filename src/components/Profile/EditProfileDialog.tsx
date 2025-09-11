@@ -51,17 +51,26 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({ open, onOpenChang
   const handleSave = async () => {
     setLoading(true);
     try {
-      await updateProfile({
+      const result = await updateProfile({
         display_name: formData.display_name || null,
         bio: formData.bio || null,
         mood: formData.mood || null,
         avatar_url: formData.avatar_url || null
       });
-      onOpenChange(false);
-    } catch (error) {
+      
+      if (result) {
+        toast({
+          title: "Success",
+          description: "Profile updated successfully",
+          variant: "default"
+        });
+        onOpenChange(false);
+      }
+    } catch (error: any) {
+      console.error('Profile update error:', error);
       toast({
         title: "Error",
-        description: "Failed to update profile",
+        description: error.message || "Failed to update profile",
         variant: "destructive"
       });
     } finally {

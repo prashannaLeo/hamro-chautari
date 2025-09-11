@@ -45,30 +45,6 @@ export const useMessages = () => {
   const [loading, setLoading] = useState(true);
   const [sendingMessage, setSendingMessage] = useState(false);
 
-  // Set up real-time subscription for new messages
-  useEffect(() => {
-    if (!user) return;
-
-    const channel = supabase
-      .channel('messages-changes')
-      .on('postgres_changes', { 
-        event: 'INSERT', 
-        schema: 'public', 
-        table: 'messages' 
-      }, (payload) => {
-        const newMessage = payload.new as Message;
-        setMessages(prev => ({
-          ...prev,
-          [newMessage.chat_id]: [...(prev[newMessage.chat_id] || []), newMessage]
-        }));
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user]);
-
   // Fetch user's chats
   const fetchChats = useCallback(async () => {
     if (!user) return;
@@ -107,6 +83,47 @@ export const useMessages = () => {
       setLoading(false);
     }
   }, [user]);
+
+  // Set up real-time subscription for new messages and chats
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel(`user-messages-${user.id}`)
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'messages' 
+      }, (payload) => {
+        const newMessage = payload.new as Message;
+        // Only add if this user is part of the chat
+        setMessages(prev => {
+          const chatMessages = prev[newMessage.chat_id] || [];
+          // Check if message already exists to avoid duplicates
+          if (chatMessages.find(m => m.id === newMessage.id)) {
+            return prev;
+          }
+          return {
+            ...prev,
+            [newMessage.chat_id]: [...chatMessages, newMessage]
+          };
+        });
+      })
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'chats'
+      }, () => {
+        // Refetch chats when new ones are created
+        fetchChats();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, fetchChats]);
+
 
   // Fetch messages for a specific chat
   const fetchMessages = useCallback(async (chatId: string) => {

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -161,9 +161,9 @@ export const useEnhancedSearch = () => {
   }, [user]);
 
   // Load recent searches on mount
-  useState(() => {
+  useEffect(() => {
     loadRecentSearches();
-  });
+  }, [loadRecentSearches]);
 
   return {
     userSuggestions,

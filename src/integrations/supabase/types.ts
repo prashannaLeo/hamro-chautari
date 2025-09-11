@@ -476,6 +476,7 @@ export type Database = {
           id: string
           media_type: string
           media_url: string
+          shares_count: number
           user_id: string
           views_count: number | null
         }
@@ -487,6 +488,7 @@ export type Database = {
           id?: string
           media_type: string
           media_url: string
+          shares_count?: number
           user_id: string
           views_count?: number | null
         }
@@ -498,6 +500,7 @@ export type Database = {
           id?: string
           media_type?: string
           media_url?: string
+          shares_count?: number
           user_id?: string
           views_count?: number | null
         }
@@ -510,6 +513,75 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      story_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          story_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          story_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          story_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      story_reactions: {
+        Row: {
+          created_at: string
+          id: string
+          reaction_type: string
+          story_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          reaction_type?: string
+          story_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          reaction_type?: string
+          story_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      story_shares: {
+        Row: {
+          created_at: string
+          id: string
+          story_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          story_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          story_id?: string
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {
@@ -534,6 +606,10 @@ export type Database = {
       }
       increment_likes: {
         Args: { post_id: string }
+        Returns: undefined
+      }
+      increment_story_shares: {
+        Args: { story_id: string }
         Returns: undefined
       }
       increment_story_views: {

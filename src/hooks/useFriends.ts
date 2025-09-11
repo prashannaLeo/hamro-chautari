@@ -34,6 +34,31 @@ export const useFriends = () => {
   useEffect(() => {
     if (user) {
       fetchConnections();
+      
+      // Set up real-time subscription for connections
+      const channel = supabase
+        .channel(`connections-${user.id}`)
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'connections',
+          filter: `user_id=eq.${user.id}`
+        }, () => {
+          fetchConnections();
+        })
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'connections',
+          filter: `connected_user_id=eq.${user.id}`
+        }, () => {
+          fetchConnections();
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [user]);
 
@@ -126,6 +151,13 @@ export const useFriends = () => {
 
       if (error) throw error;
 
+      // Get sender profile for notification
+      const { data: senderProfile } = await supabase
+        .from('profiles')
+        .select('display_name, username')
+        .eq('user_id', user.id)
+        .single();
+
       // Create notification for the target user
       await supabase
         .from('notifications')
@@ -133,8 +165,8 @@ export const useFriends = () => {
           user_id: targetUserId,
           type: 'friend_request',
           title: 'New Friend Request',
-          message: 'Someone sent you a friend request',
-          data: { from_user_id: user.id }
+          message: `${senderProfile?.display_name || senderProfile?.username || 'Someone'} sent you a friend request`,
+          data: { from_user_id: user.id, from_username: senderProfile?.username }
         });
 
       toast({

@@ -34,8 +34,10 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useStories, Story } from '@/hooks/useStories';
+import { useStoryInteractions } from '@/hooks/useStoryInteractions';
 import CreateStoryDialog from '@/components/Stories/CreateStoryDialog';
 import EditStoryDialog from '@/components/Stories/EditStoryDialog';
+import StoryActionsBar from '@/components/Stories/StoryActionsBar';
 import { toast } from 'sonner';
 
 const Stories = () => {
@@ -45,6 +47,7 @@ const Stories = () => {
   const [editingStory, setEditingStory] = useState<Story | null>(null);
   const [deletingStoryId, setDeletingStoryId] = useState<string | null>(null);
   const { stories, loading: storiesLoading, deleteStory, incrementViews, refetch } = useStories();
+  const { reactToStory, commentOnStory, shareStory } = useStoryInteractions();
 
   if (loading || storiesLoading) {
     return (
@@ -342,15 +345,7 @@ const Stories = () => {
                         {/* Actions */}
                         <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
                           <div className="flex items-center space-x-4">
-                            <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
-                              <Heart className="w-5 h-5" />
-                            </Button>
-                            <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
-                              <MessageCircle className="w-5 h-5" />
-                            </Button>
-                            <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
-                              <Share className="w-5 h-5" />
-                            </Button>
+                            {'id' in story && <StoryActionsBar storyId={story.id} />}
                           </div>
                           {selectedStory && 'isOwn' in selectedStory && selectedStory.isOwn && (
                             <div className="flex items-center space-x-2">

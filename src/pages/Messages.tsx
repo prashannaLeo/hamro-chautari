@@ -70,12 +70,18 @@ const Messages = () => {
     fetchMessages(chat.id);
   };
 
-  const handleAttachmentSelect = (files: any[]) => {
-    // Here you would upload files to your storage service and then send message with attachment URLs
-    files.forEach(file => {
-      const attachmentMessage = `📎 ${file.file.name}`;
-      sendMessage(selectedChat.id, attachmentMessage, 'attachment');
-    });
+  const handleAttachmentSelect = async (files: any[]) => {
+    if (!selectedChat) return;
+    
+    // Send each file as a separate message
+    for (const file of files) {
+      try {
+        const attachmentMessage = `📎 ${file.file.name} (${(file.file.size / 1024 / 1024).toFixed(2)}MB)`;
+        await sendMessage(selectedChat.id, attachmentMessage, 'attachment');
+      } catch (error) {
+        console.error('Error sending attachment:', error);
+      }
+    }
   };
 
   const handleVoiceCall = () => {

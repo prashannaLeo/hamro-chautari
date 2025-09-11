@@ -94,32 +94,31 @@ export const useProfile = (userId?: string) => {
   };
 
   const updateProfile = async (updates: Partial<Profile>) => {
-    if (!user || !profile) return;
+    if (!user || !profile) return null;
 
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .update(updates)
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString()
+        })
         .eq('user_id', user.id)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Profile update error:', error);
+        throw error;
+      }
+      
       setProfile(data);
       
-      toast({
-        title: "Success",
-        description: "Profile updated successfully"
-      });
-
       return data;
     } catch (err: any) {
+      console.error('Update profile error:', err);
       setError(err.message);
-      toast({
-        title: "Error",
-        description: "Failed to update profile",
-        variant: "destructive"
-      });
+      throw err; // Re-throw to handle in component
     }
   };
 

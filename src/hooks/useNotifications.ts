@@ -6,7 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 export interface Notification {
   id: string;
   user_id: string;
-  type: 'like' | 'comment' | 'follow' | 'message' | 'mention' | 'post_tag';
+  type: 'like' | 'comment' | 'follow' | 'message' | 'mention' | 'post_tag' | 'friend_request';
   title: string;
   message: string;
   data: any;
@@ -55,7 +55,7 @@ export const useNotifications = () => {
     if (!user) return;
 
     const channel = supabase
-      .channel('notifications')
+      .channel(`notifications-${user.id}`)
       .on(
         'postgres_changes',
         {
@@ -74,6 +74,27 @@ export const useNotifications = () => {
             title: newNotification.title,
             description: newNotification.message
           });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          const updatedNotification = payload.new as Notification;
+          setNotifications(prev => 
+            prev.map(n => 
+              n.id === updatedNotification.id ? updatedNotification : n
+            )
+          );
+          // Update unread count
+          if (updatedNotification.is_read) {
+            setUnreadCount(prev => Math.max(0, prev - 1));
+          }
         }
       )
       .subscribe();

@@ -114,19 +114,29 @@ export const useComments = (postId: string) => {
       // Create notification for post owner
       const { data: postData } = await supabase
         .from('posts')
-        .select('user_id')
+        .select('user_id, content')
         .eq('id', postId)
         .single();
 
       if (postData && postData.user_id !== user.id) {
+        // Get commenter profile
+        const { data: commenterProfile } = await supabase
+          .from('profiles')
+          .select('display_name, username')
+          .eq('user_id', user.id)
+          .single();
+
+        const postTitle = postData.content?.slice(0, 30) + (postData.content?.length > 30 ? '...' : '') || 'your post';
+        const commenterName = commenterProfile?.display_name || commenterProfile?.username || 'Someone';
+
         await supabase
           .from('notifications')
           .insert({
             user_id: postData.user_id,
             type: 'comment',
             title: 'New Comment',
-            message: `${user.email?.split('@')[0]} commented on your post`,
-            data: { post_id: postId, comment_id: data.id }
+            message: `${commenterName} commented on "${postTitle}"`,
+            data: { post_id: postId, comment_id: data.id, post_title: postTitle }
           });
       }
 

@@ -84,8 +84,17 @@ const CreatePost = () => {
       
       // Upload images if any
       if (selectedFiles.length > 0) {
-        const uploadResults = await uploadMultiple(selectedFiles);
-        mediaUrls = uploadResults.map(result => result.url);
+        try {
+          const uploadResults = await uploadMultiple(selectedFiles);
+          mediaUrls = uploadResults.map(result => result.url);
+        } catch (uploadError) {
+          console.error('Upload error:', uploadError);
+          toast({
+            title: "Upload Error",
+            description: "Failed to upload some files. Post will be created without media.",
+            variant: "destructive"
+          });
+        }
       }
 
       await createPost({

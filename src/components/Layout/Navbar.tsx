@@ -110,6 +110,14 @@ const Navbar = () => {
                           if (!notification.is_read) {
                             markAsRead(notification.id);
                           }
+                          // Navigate based on notification type
+                          if (notification.type === 'comment' && notification.data?.post_id) {
+                            window.location.href = `/?post=${notification.data.post_id}`;
+                          } else if (notification.type === 'like' && notification.data?.post_id) {
+                            window.location.href = `/?post=${notification.data.post_id}`;
+                          } else if (notification.type === 'friend_request') {
+                            window.location.href = '/friends';
+                          }
                         }}
                       >
                         <div className={`w-2 h-2 rounded-full mt-2 ${

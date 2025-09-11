@@ -26,9 +26,10 @@ const MessageAttachment: React.FC<MessageAttachmentProps> = ({ onAttachmentSelec
   };
 
   const handleSend = () => {
-    const uploadedFiles = selectedFiles.filter(file => file.uploaded);
-    if (uploadedFiles.length > 0) {
-      onAttachmentSelect(uploadedFiles);
+    // For now, we'll send all selected files, not just uploaded ones
+    // This simulates the attachment functionality
+    if (selectedFiles.length > 0) {
+      onAttachmentSelect(selectedFiles);
       setSelectedFiles([]);
       setOpen(false);
     }
@@ -60,9 +61,9 @@ const MessageAttachment: React.FC<MessageAttachmentProps> = ({ onAttachmentSelec
               </Button>
               <Button 
                 onClick={handleSend}
-                disabled={selectedFiles.filter(f => f.uploaded).length === 0}
+                disabled={selectedFiles.length === 0}
               >
-                Send ({selectedFiles.filter(f => f.uploaded).length})
+                Send ({selectedFiles.length})
               </Button>
             </div>
           )}
