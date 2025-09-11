@@ -168,6 +168,17 @@ const Friends = () => {
     }
   };
 
+  const handleCancelSentRequest = async (connectionId: string, userName: string) => {
+    setActionLoading(connectionId);
+    try {
+      await removeFriend(connectionId);
+      toast.success(`Cancelled request to ${userName}`);
+    } catch (error) {
+      toast.error('Failed to cancel request');
+    } finally {
+      setActionLoading(null);
+    }
+  };
   // Handle user selection from EnhancedSearch
   const handleUserSelect = (selectedUser: any) => {
     handleSendRequest(selectedUser.user_id || selectedUser.id, selectedUser.display_name || selectedUser.username);
@@ -401,8 +412,24 @@ const Friends = () => {
                         </p>
                       )}
 
-                      <div className="flex items-center justify-center py-4">
-                        <Badge variant="outline">Request Sent</Badge>
+                      <div className="flex items-center justify-between py-4">
+                        <Badge variant="outline" className="mr-3">Request Sent</Badge>
+                        <Button 
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleCancelSentRequest(request.id, request.profiles?.display_name || request.profiles?.username || 'User')}
+                          disabled={actionLoading === request.id}
+                          className="hover:bg-destructive/10 hover:text-destructive"
+                        >
+                          {actionLoading === request.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <>
+                              <X className="w-4 h-4 mr-1" />
+                              Cancel
+                            </>
+                          )}
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>
