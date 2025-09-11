@@ -87,7 +87,40 @@ export const useMessages = () => {
 
       if (chatsError) throw chatsError;
 
-      setChats(chatsWithParticipants as Chat[] || []);
+      // Fetch last message for each chat
+      const chatsWithLastMessages = await Promise.all(
+        (chatsWithParticipants || []).map(async (chat) => {
+          try {
+            const { data: lastMessage } = await supabase
+              .from('messages')
+              .select(`
+                id,
+                content,
+                message_type,
+                created_at,
+                sender_id,
+                profiles (
+                  username,
+                  display_name
+                )
+              `)
+              .eq('chat_id', chat.id)
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            return {
+              ...chat,
+              last_message: lastMessage
+            };
+          } catch (error) {
+            console.error(`Error fetching last message for chat ${chat.id}:`, error);
+            return chat;
+          }
+        })
+      );
+
+      setChats(chatsWithLastMessages as Chat[] || []);
     } catch (error: any) {
       console.error('Error fetching chats:', error);
       toast({

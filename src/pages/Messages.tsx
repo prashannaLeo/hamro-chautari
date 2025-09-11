@@ -137,11 +137,11 @@ const Messages = () => {
   };
 
   // Get last message for chat
-  const getLastMessage = (chatId: string) => {
-    const chatMessages = messages[chatId] || [];
-    if (chatMessages.length === 0) return 'No messages yet';
-    const lastMessage = chatMessages[chatMessages.length - 1];
-    return lastMessage.content || 'Media';
+  const getLastMessage = (chat: any) => {
+    if (chat.last_message) {
+      return chat.last_message.content || 'Media';
+    }
+    return 'No messages yet';
   };
 
   return (
@@ -185,7 +185,7 @@ const Messages = () => {
                     const chatName = getChatName(chat);
                     const otherParticipant = chat.chat_participants?.find((p: any) => p.user_id !== user?.id);
                     const avatarUrl = otherParticipant?.profiles?.avatar_url || '';
-                    const lastMessage = getLastMessage(chat.id);
+                    const lastMessage = getLastMessage(chat);
                     
                     return (
                       <div
