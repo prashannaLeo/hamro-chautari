@@ -209,7 +209,10 @@ const Messages = () => {
                             <div className="flex items-center justify-between mb-1">
                               <h3 className="font-medium text-sm truncate">{chatName}</h3>
                               <span className="text-xs text-muted-foreground">
-                                {new Date(chat.updated_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                {chat.last_message ? 
+                                  new Date(chat.last_message.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) :
+                                  new Date(chat.updated_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                                }
                               </span>
                             </div>
                             

@@ -157,6 +157,20 @@ export const useMessages = () => {
             [newMessage.chat_id]: [...chatMessages, newMessage]
           };
         });
+
+        // Update the chat list to show the new message as the last message
+        setChats(prevChats => {
+          return prevChats.map(chat => {
+            if (chat.id === newMessage.chat_id) {
+              return {
+                ...chat,
+                last_message: newMessage,
+                updated_at: newMessage.created_at
+              };
+            }
+            return chat;
+          }).sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+        });
       })
       .on('postgres_changes', {
         event: 'INSERT',
@@ -260,6 +274,20 @@ export const useMessages = () => {
           ...prev,
           [chatId]: [...chatMessages, data as Message]
         };
+      });
+
+      // Update the chat list to show this as the latest message
+      setChats(prevChats => {
+        return prevChats.map(chat => {
+          if (chat.id === chatId) {
+            return {
+              ...chat,
+              last_message: data as Message,
+              updated_at: (data as Message).created_at
+            };
+          }
+          return chat;
+        }).sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
       });
 
       return data as Message;
