@@ -53,18 +53,43 @@ export const SimplifiedPostReactions: React.FC<SimplifiedPostReactionsProps> = (
 
   const handleReaction = async (reactionType: string) => {
     if (!user || loading) return;
-    
+
+    // Hide picker immediately
+    setShowReactions(false);
+
+    // Optimistic UI update
+    setReactionCounts((prev) => {
+      const updated = { ...prev } as Record<string, number>;
+      const prevType = userReaction;
+
+      if (prevType === reactionType) {
+        // Remove current reaction
+        updated[reactionType] = Math.max((updated[reactionType] || 1) - 1, 0);
+        setUserReaction(null);
+        setTotalReactions((t) => Math.max(t - 1, 0));
+      } else {
+        // Switch or add reaction
+        if (prevType) {
+          updated[prevType] = Math.max((updated[prevType] || 1) - 1, 0);
+        } else {
+          setTotalReactions((t) => t + 1);
+        }
+        updated[reactionType] = (updated[reactionType] || 0) + 1;
+        setUserReaction(reactionType);
+      }
+
+      return updated;
+    });
+
     try {
       const newReaction = await reactToPost(postId, reactionType);
       setUserReaction(newReaction);
-      
-      // Refresh reaction counts
+
+      // Refresh reaction counts to be authoritative
       const counts = await getReactionCounts(postId);
       setReactionCounts(counts);
       const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
       setTotalReactions(total);
-      
-      setShowReactions(false);
     } catch (error) {
       console.error('Error handling reaction:', error);
     }
@@ -111,7 +136,7 @@ export const SimplifiedPostReactions: React.FC<SimplifiedPostReactionsProps> = (
         }`}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        onClick={() => handleReaction('like')}
+        onClick={() => handleReaction(userReaction || 'like')}
         disabled={loading}
       >
         {userReaction ? (
