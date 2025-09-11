@@ -57,9 +57,20 @@ const VideoCall: React.FC<VideoCallProps> = ({
     if (!isCallActive) return;
     if (localVideoRef.current && localStream) {
       localVideoRef.current.srcObject = localStream;
+      localVideoRef.current
+        .play()
+        .catch(() => {
+          // Autoplay might be blocked until user interaction
+        });
     }
     if (remoteVideoRef.current && remoteStream) {
       remoteVideoRef.current.srcObject = remoteStream;
+      remoteVideoRef.current.muted = false;
+      remoteVideoRef.current
+        .play()
+        .catch(() => {
+          // Autoplay might be blocked until user interaction
+        });
     }
   }, [isCallActive, localStream, remoteStream]);
 

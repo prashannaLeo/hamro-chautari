@@ -4,29 +4,19 @@ import VideoCall from './VideoCall';
 import VoiceCall from './VoiceCall';
 
 const CallManager: React.FC = () => {
-  const { currentCall, incomingCall, answerCall, declineCall, endCall, getLocalStream, getRemoteStream } = useCalling();
+  const { currentCall, incomingCall, answerCall, declineCall, endCall, localStream, remoteStream } = useCalling();
 
   // Set up media streams for video elements
   useEffect(() => {
-    const setupStreams = async () => {
-      const localStream = getLocalStream();
-      const remoteStream = getRemoteStream();
-      
-      // Handle local stream setup
+    if (currentCall) {
       if (localStream) {
         console.log('Local stream available:', localStream.getTracks());
       }
-      
-      // Handle remote stream setup  
       if (remoteStream) {
         console.log('Remote stream available:', remoteStream.getTracks());
       }
-    };
-
-    if (currentCall) {
-      setupStreams();
     }
-  }, [currentCall, getLocalStream, getRemoteStream]);
+  }, [currentCall, localStream, remoteStream]);
 
   // Show incoming call if there is one
   if (incomingCall) {
@@ -39,8 +29,8 @@ const CallManager: React.FC = () => {
           onEndCall={endCall}
           onAcceptCall={() => answerCall(incomingCall)}
           onDeclineCall={() => declineCall(incomingCall)}
-          localStream={getLocalStream() || undefined}
-          remoteStream={getRemoteStream() || undefined}
+          localStream={localStream || undefined}
+          remoteStream={remoteStream || undefined}
         />
       );
     } else {
@@ -53,8 +43,8 @@ const CallManager: React.FC = () => {
           onEndCall={endCall}
           onAcceptCall={() => answerCall(incomingCall)}
           onDeclineCall={() => declineCall(incomingCall)}
-          localStream={getLocalStream() || undefined}
-          remoteStream={getRemoteStream() || undefined}
+          localStream={localStream || undefined}
+          remoteStream={remoteStream || undefined}
         />
       );
     }
@@ -68,8 +58,8 @@ const CallManager: React.FC = () => {
           callId={currentCall.id}
           callerName={currentCall.caller_name}
           onEndCall={endCall}
-          localStream={getLocalStream() || undefined}
-          remoteStream={getRemoteStream() || undefined}
+          localStream={localStream || undefined}
+          remoteStream={remoteStream || undefined}
         />
       );
     } else {
@@ -79,8 +69,8 @@ const CallManager: React.FC = () => {
           callerName={currentCall.caller_name}
           callerAvatar={currentCall.caller_avatar}
           onEndCall={endCall}
-          localStream={getLocalStream() || undefined}
-          remoteStream={getRemoteStream() || undefined}
+          localStream={localStream || undefined}
+          remoteStream={remoteStream || undefined}
         />
       );
     }

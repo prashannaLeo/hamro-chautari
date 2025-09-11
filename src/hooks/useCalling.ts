@@ -28,6 +28,8 @@ export const useCalling = () => {
   const [currentCall, setCurrentCall] = useState<CallData | null>(null);
   const [incomingCall, setIncomingCall] = useState<CallData | null>(null);
   const [webrtcService] = useState(() => new WebRTCService());
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const callTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const channelRef = useRef<any>(null);
 
@@ -70,6 +72,7 @@ export const useCalling = () => {
                 status: callData.status as 'initiating' | 'ringing' | 'answered' | 'ended' | 'declined'
               } as CallData);
               setIncomingCall(null);
+              setLocalStream(webrtcService.getLocalStream());
               stopRingtone();
             } catch (error) {
               console.error('Error setting remote description:', error);
@@ -151,10 +154,20 @@ export const useCalling = () => {
     webrtcService.onConnectionStateChange = (state) => {
       console.log('WebRTC connection state:', state);
       if (state === 'failed' || state === 'disconnected') {
-        endCall();
+        // Fallback local cleanup if connection drops
+        setCurrentCall(null);
+        setIncomingCall(null);
+        stopRingtone();
+        webrtcService.closeConnection();
+        setLocalStream(null);
+        setRemoteStream(null);
       }
     };
-  }, [currentCall]);
+
+    webrtcService.onRemoteStream = (stream) => {
+      setRemoteStream(stream);
+    };
+  }, [currentCall, webrtcService]);
 
   const initiateCall = useCallback(async (
     receiverId: string, 
@@ -174,6 +187,8 @@ export const useCalling = () => {
     try {
       // Create WebRTC offer
       const offer = await webrtcService.createOffer(callType === 'video');
+      // Capture local stream for UI
+      setLocalStream(webrtcService.getLocalStream());
 
       // Create call record in database
       const { data: callData, error } = await supabase
@@ -239,6 +254,8 @@ export const useCalling = () => {
       // Set remote description and create answer
       await webrtcService.setRemoteDescription(callData.offer as RTCSessionDescription);
       const answer = await webrtcService.createAnswer(callData.type === 'video');
+      // Capture local stream for UI
+      setLocalStream(webrtcService.getLocalStream());
 
       // Update call status to answered
       const { error } = await supabase
@@ -312,6 +329,8 @@ export const useCalling = () => {
       setIncomingCall(null);
       stopRingtone();
       webrtcService.closeConnection();
+      setLocalStream(null);
+      setRemoteStream(null);
 
       if (callTimeoutRef.current) {
         clearTimeout(callTimeoutRef.current);
@@ -329,6 +348,8 @@ export const useCalling = () => {
       setIncomingCall(null);
       stopRingtone();
       webrtcService.closeConnection();
+      setLocalStream(null);
+      setRemoteStream(null);
     }
   }, [currentCall, incomingCall, webrtcService]);
 
@@ -340,6 +361,8 @@ export const useCalling = () => {
       }
       stopRingtone();
       webrtcService.closeConnection();
+      setLocalStream(null);
+      setRemoteStream(null);
     };
   }, [webrtcService]);
 
@@ -362,6 +385,8 @@ export const useCalling = () => {
   return {
     currentCall,
     incomingCall,
+    localStream,
+    remoteStream,
     initiateCall,
     answerCall,
     declineCall,
