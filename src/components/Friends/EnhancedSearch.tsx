@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Search, CornerDownLeft, User, FileText, Clock } from 'lucide-react';
+import { Search, CornerDownLeft, User, FileText, Clock, UserPlus } from 'lucide-react';
 import { useEnhancedSearch } from '@/hooks/useEnhancedSearch';
 import { cn } from '@/lib/utils';
 
@@ -213,7 +213,15 @@ const EnhancedSearch: React.FC<EnhancedSearchProps> = ({
                       <p className="text-sm font-medium">{user.display_name || user.username}</p>
                       <p className="text-xs text-gray-500">@{user.username}</p>
                     </div>
-                    <User className="w-4 h-4 text-gray-400" />
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="ml-auto"
+                      onClick={(e) => { e.stopPropagation(); handleUserSelect(user); }}
+                      aria-label="Add friend"
+                    >
+                      <UserPlus className="w-4 h-4" />
+                    </Button>
                   </div>
                 ))}
               </div>
