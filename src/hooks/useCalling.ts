@@ -169,6 +169,47 @@ export const useCalling = () => {
     };
   }, [currentCall, webrtcService]);
 
+  const endCall = useCallback(async () => {
+    const activeCall = currentCall || incomingCall;
+    if (!activeCall) return;
+
+    try {
+      await supabase
+        .from('calls')
+        .update({
+          status: 'ended',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', activeCall.id);
+
+      setCurrentCall(null);
+      setIncomingCall(null);
+      stopRingtone();
+      webrtcService.closeConnection();
+      setLocalStream(null);
+      setRemoteStream(null);
+
+      if (callTimeoutRef.current) {
+        clearTimeout(callTimeoutRef.current);
+        callTimeoutRef.current = null;
+      }
+
+      toast({
+        title: "Call Ended",
+        description: "The call has been ended"
+      });
+    } catch (error) {
+      console.error('Error ending call:', error);
+      // Still clean up local state even if database update fails
+      setCurrentCall(null);
+      setIncomingCall(null);
+      stopRingtone();
+      webrtcService.closeConnection();
+      setLocalStream(null);
+      setRemoteStream(null);
+    }
+  }, [currentCall, incomingCall, webrtcService]);
+
   const initiateCall = useCallback(async (
     receiverId: string, 
     receiverName: string, 
@@ -312,46 +353,6 @@ export const useCalling = () => {
     }
   }, []);
 
-  const endCall = useCallback(async () => {
-    const activeCall = currentCall || incomingCall;
-    if (!activeCall) return;
-
-    try {
-      await supabase
-        .from('calls')
-        .update({
-          status: 'ended',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', activeCall.id);
-
-      setCurrentCall(null);
-      setIncomingCall(null);
-      stopRingtone();
-      webrtcService.closeConnection();
-      setLocalStream(null);
-      setRemoteStream(null);
-
-      if (callTimeoutRef.current) {
-        clearTimeout(callTimeoutRef.current);
-        callTimeoutRef.current = null;
-      }
-
-      toast({
-        title: "Call Ended",
-        description: "The call has been ended"
-      });
-    } catch (error) {
-      console.error('Error ending call:', error);
-      // Still clean up local state even if database update fails
-      setCurrentCall(null);
-      setIncomingCall(null);
-      stopRingtone();
-      webrtcService.closeConnection();
-      setLocalStream(null);
-      setRemoteStream(null);
-    }
-  }, [currentCall, incomingCall, webrtcService]);
 
   // Cleanup on unmount
   useEffect(() => {
