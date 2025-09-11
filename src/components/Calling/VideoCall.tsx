@@ -55,33 +55,38 @@ const VideoCall: React.FC<VideoCallProps> = ({
 
   useEffect(() => {
     if (isCallActive) {
-      initializeMedia();
+      setupMediaStreams();
     }
-    return () => {
-      if (localStream) {
-        localStream.getTracks().forEach(track => track.stop());
-      }
-    };
   }, [isCallActive]);
 
-  const initializeMedia = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true
-      });
-      
-      setLocalStream(stream);
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = stream;
-      }
+  // Setup video streams
+  useEffect(() => {
+    const localStream = getLocalStream();
+    const remoteStream = getRemoteStream();
+    
+    if (localStream && localVideoRef.current) {
+      localVideoRef.current.srcObject = localStream;
+      console.log('Local video stream connected');
+    }
+    
+    if (remoteStream && remoteVideoRef.current) {
+      remoteVideoRef.current.srcObject = remoteStream;
+      console.log('Remote video stream connected');
+    }
+  }, [getLocalStream, getRemoteStream]);
 
-      toast({
-        title: "Media Access",
-        description: "Camera and microphone access granted"
-      });
+  const setupMediaStreams = () => {
+    try {
+      const localStream = getLocalStream();
+      if (localStream) {
+        console.log('Local stream connected for video call');
+        toast({
+          title: "Media Access",
+          description: "Camera and microphone access granted"
+        });
+      }
     } catch (error) {
-      console.error('Error accessing media devices:', error);
+      console.error('Error setting up video streams:', error);
       toast({
         title: "Media Error",
         description: "Failed to access camera or microphone",
@@ -115,11 +120,13 @@ const VideoCall: React.FC<VideoCallProps> = ({
         
         screenStream.getVideoTracks()[0].onended = () => {
           setIsScreenSharing(false);
+          const localStream = getLocalStream();
           if (localVideoRef.current && localStream) {
             localVideoRef.current.srcObject = localStream;
           }
         };
       } else {
+        const localStream = getLocalStream();
         if (localVideoRef.current && localStream) {
           localVideoRef.current.srcObject = localStream;
         }
@@ -144,9 +151,6 @@ const VideoCall: React.FC<VideoCallProps> = ({
   };
 
   const handleEndCall = () => {
-    if (localStream) {
-      localStream.getTracks().forEach(track => track.stop());
-    }
     setIsCallActive(false);
     onEndCall();
   };

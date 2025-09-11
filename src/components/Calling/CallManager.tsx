@@ -1,10 +1,32 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useCalling } from '@/hooks/useCalling';
 import VideoCall from './VideoCall';
 import VoiceCall from './VoiceCall';
 
 const CallManager: React.FC = () => {
-  const { currentCall, incomingCall, answerCall, declineCall, endCall } = useCalling();
+  const { currentCall, incomingCall, answerCall, declineCall, endCall, getLocalStream, getRemoteStream } = useCalling();
+
+  // Set up media streams for video elements
+  useEffect(() => {
+    const setupStreams = async () => {
+      const localStream = getLocalStream();
+      const remoteStream = getRemoteStream();
+      
+      // Handle local stream setup
+      if (localStream) {
+        console.log('Local stream available:', localStream.getTracks());
+      }
+      
+      // Handle remote stream setup  
+      if (remoteStream) {
+        console.log('Remote stream available:', remoteStream.getTracks());
+      }
+    };
+
+    if (currentCall) {
+      setupStreams();
+    }
+  }, [currentCall, getLocalStream, getRemoteStream]);
 
   // Show incoming call if there is one
   if (incomingCall) {

@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from '@/hooks/use-toast';
+import { useCalling } from '@/hooks/useCalling';
 import { 
   Phone, 
   PhoneOff, 
@@ -33,7 +34,7 @@ const VoiceCall: React.FC<VoiceCallProps> = ({
   onDeclineCall
 }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
-  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const { getLocalStream, getRemoteStream, toggleMicrophone } = useCalling();
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isSpeakerEnabled, setIsSpeakerEnabled] = useState(true);
   const [callDuration, setCallDuration] = useState(0);
@@ -50,37 +51,39 @@ const VoiceCall: React.FC<VoiceCallProps> = ({
     return () => clearInterval(interval);
   }, [isCallActive, callStatus]);
 
+  // Setup remote audio stream
+  useEffect(() => {
+    const remoteStream = getRemoteStream();
+    if (remoteStream && audioRef.current) {
+      audioRef.current.srcObject = remoteStream;
+      console.log('Remote audio stream connected');
+    }
+  }, [getRemoteStream]);
+
   useEffect(() => {
     if (isCallActive) {
-      initializeAudio();
+      setupMediaStreams();
       // Simulate connection after 2 seconds
       setTimeout(() => {
         setCallStatus('connected');
       }, 2000);
     }
-    return () => {
-      if (localStream) {
-        localStream.getTracks().forEach(track => track.stop());
-      }
-    };
   }, [isCallActive]);
 
-  const initializeAudio = async () => {
+  const setupMediaStreams = () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: false
-      });
-      
-      setLocalStream(stream);
-      toast({
-        title: "Audio Access",
-        description: "Microphone access granted"
-      });
+      const localStream = getLocalStream();
+      if (localStream) {
+        console.log('Local stream connected for voice call');
+        toast({
+          title: "Audio Access",
+          description: "Microphone access granted"
+        });
+      }
     } catch (error) {
-      console.error('Error accessing microphone:', error);
+      console.error('Error setting up audio streams:', error);
       toast({
-        title: "Audio Error",
+        title: "Audio Error", 
         description: "Failed to access microphone",
         variant: "destructive"
       });
@@ -88,13 +91,8 @@ const VoiceCall: React.FC<VoiceCallProps> = ({
   };
 
   const toggleAudio = () => {
-    if (localStream) {
-      const audioTrack = localStream.getAudioTracks()[0];
-      if (audioTrack) {
-        audioTrack.enabled = !audioTrack.enabled;
-        setIsAudioEnabled(audioTrack.enabled);
-      }
-    }
+    const enabled = toggleMicrophone();
+    setIsAudioEnabled(enabled);
   };
 
   const toggleSpeaker = () => {
@@ -115,9 +113,6 @@ const VoiceCall: React.FC<VoiceCallProps> = ({
   };
 
   const handleEndCall = () => {
-    if (localStream) {
-      localStream.getTracks().forEach(track => track.stop());
-    }
     setIsCallActive(false);
     setCallStatus('ended');
     onEndCall();

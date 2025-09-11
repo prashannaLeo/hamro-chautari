@@ -35,6 +35,8 @@ export const useCalling = () => {
   useEffect(() => {
     if (!user) return;
 
+    console.log('Setting up realtime subscription for calls...');
+
     const channel = supabase
       .channel('calls_channel')
       .on(
@@ -51,6 +53,7 @@ export const useCalling = () => {
           
           if (payload.eventType === 'INSERT' && callData.receiver_id === user.id && callData.status === 'ringing') {
             // Incoming call
+            console.log('Incoming call from:', callData.caller_name);
             setIncomingCall(callData);
             playRingtone();
             playNotificationSound();
@@ -59,26 +62,46 @@ export const useCalling = () => {
             if (callData.status === 'answered' && callData.answer) {
               // Call was answered, set remote description
               if (callData.caller_id === user.id) {
-                await webrtcService.setRemoteDescription(callData.answer as RTCSessionDescriptionInit);
-                setCurrentCall({
-                  ...callData,
-                  type: callData.type as 'video' | 'voice',
-                  status: callData.status as 'initiating' | 'ringing' | 'answered' | 'ended' | 'declined'
-                } as CallData);
-                setIncomingCall(null);
-                stopRingtone();
+                console.log('Call answered by receiver, setting remote description');
+                try {
+                  await webrtcService.setRemoteDescription(callData.answer as RTCSessionDescriptionInit);
+                  setCurrentCall({
+                    ...callData,
+                    type: callData.type as 'video' | 'voice',
+                    status: callData.status as 'initiating' | 'ringing' | 'answered' | 'ended' | 'declined'
+                  } as CallData);
+                  setIncomingCall(null);
+                  stopRingtone();
+                } catch (error) {
+                  console.error('Error setting remote description:', error);
+                }
               }
             } else if (callData.status === 'declined' || callData.status === 'ended') {
               // Call ended or declined
+              console.log('Call ended/declined');
               setCurrentCall(null);
               setIncomingCall(null);
               stopRingtone();
               webrtcService.closeConnection();
             }
+            
+            // Handle ICE candidates
+            if (callData.ice_candidates && callData.ice_candidates.length > 0) {
+              console.log('Processing ICE candidates:', callData.ice_candidates.length);
+              for (const candidate of callData.ice_candidates) {
+                try {
+                  await webrtcService.addIceCandidate(candidate);
+                } catch (error) {
+                  console.error('Error adding ICE candidate:', error);
+                }
+              }
+            }
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Realtime subscription status:', status);
+      });
 
     channelRef.current = channel;
 
