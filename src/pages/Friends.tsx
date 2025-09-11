@@ -71,7 +71,7 @@ const Friends = () => {
   } = useFriends();
   
   const { createChat } = useMessages();
-  const { initiateCall } = useCalling();
+  const { initiateCall, simulateIncomingCall } = useCalling();
   const { searchResults, loading: searchLoading, searchUsers } = useUserSearch();
 
   if (loading || friendsLoading) {
@@ -184,6 +184,17 @@ const Friends = () => {
     handleSendRequest(selectedUser.user_id || selectedUser.id, selectedUser.display_name || selectedUser.username);
   };
 
+  // Test calling functionality
+  const handleTestCall = (type: 'voice' | 'video') => {
+    simulateIncomingCall(
+      'test-user-id', 
+      'Test User', 
+      type,
+      undefined
+    );
+    toast.success(`Incoming ${type} call test started`);
+  };
+
   const filteredFriends = friends.filter(friend =>
     (friend.profiles?.display_name || friend.profiles?.username || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -195,7 +206,29 @@ const Friends = () => {
       <main className="max-w-6xl mx-auto px-4 py-8 pb-20 sm:pb-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-3 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Friends</h1>
-          <p className="text-gray-600 text-lg">Connect with people in your community</p>
+          <p className="text-gray-600 text-lg mb-4">Connect with people in your community</p>
+          
+          {/* Test Call Buttons */}
+          <div className="flex gap-3 mb-4">
+            <Button
+              onClick={() => handleTestCall('voice')}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <Phone className="w-4 h-4" />
+              Test Voice Call
+            </Button>
+            <Button
+              onClick={() => handleTestCall('video')}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <Video className="w-4 h-4" />
+              Test Video Call
+            </Button>
+          </div>
         </div>
 
         <Tabs defaultValue="friends" className="w-full">

@@ -19,6 +19,31 @@ export const useCalling = () => {
   const [currentCall, setCurrentCall] = useState<CallData | null>(null);
   const [incomingCall, setIncomingCall] = useState<CallData | null>(null);
 
+  // Simulate receiving an incoming call (for demo purposes)
+  const simulateReceiverCall = useCallback((
+    callData: CallData,
+    receiverName: string,
+    receiverAvatar?: string
+  ) => {
+    // In a real app, this would be triggered by a socket message or push notification
+    // For demo: simulate receiving a call FROM the person we're calling
+    const incomingCallData: CallData = {
+      ...callData,
+      callerName: receiverName, // Show the name of who we called
+      callerAvatar: receiverAvatar
+    };
+
+    // Clear current call and show as incoming (to simulate receiving the callback)
+    setCurrentCall(null);
+    setIncomingCall(incomingCallData);
+
+    toast({
+      title: `Incoming ${callData.type === 'video' ? 'Video' : 'Voice'} Call`,
+      description: `${receiverName} is calling you back`,
+      duration: 30000
+    });
+  }, []);
+
   const initiateCall = useCallback(async (
     receiverId: string, 
     receiverName: string, 
@@ -46,17 +71,22 @@ export const useCalling = () => {
 
     setCurrentCall(callData);
 
+    // Show outgoing call toast for caller
     toast({
       title: `${callType === 'video' ? 'Video' : 'Voice'} Call`,
-      description: `Calling ${receiverName}...`
+      description: `Calling ${receiverName}...`,
+      duration: 30000
     });
 
-    // In a real app, you would send this call data to your signaling server
-    // For demo purposes, we'll simulate the call
-    console.log('Initiating call:', callData);
+    // Simulate incoming call for receiver (in real app, this would be sent via socket/server)
+    // For demo purposes, simulate the person calling you back after 3 seconds
+    setTimeout(() => {
+      console.log('Simulating callback from:', receiverName);
+      simulateReceiverCall(callData, receiverName, receiverAvatar);
+    }, 3000);
 
     return callData;
-  }, [user]);
+  }, [user, simulateReceiverCall]);
 
   const answerCall = useCallback((callData: CallData) => {
     setIncomingCall(null);
@@ -101,9 +131,14 @@ export const useCalling = () => {
         description: "The call has been ended"
       });
     }
-  }, [currentCall]);
+    
+    // Also clear incoming call if ending during ring
+    if (incomingCall) {
+      setIncomingCall(null);
+    }
+  }, [currentCall, incomingCall]);
 
-  // Simulate receiving an incoming call
+  // Simulate receiving an incoming call (public method for testing)
   const simulateIncomingCall = useCallback((
     callerId: string,
     callerName: string,
@@ -127,7 +162,7 @@ export const useCalling = () => {
     toast({
       title: `Incoming ${callType === 'video' ? 'Video' : 'Voice'} Call`,
       description: `${callerName} is calling you`,
-      duration: 10000
+      duration: 30000
     });
   }, [user]);
 
