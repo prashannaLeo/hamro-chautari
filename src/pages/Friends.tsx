@@ -422,17 +422,6 @@ const Friends = () => {
               onUserSelect={handleUserSelect}
               className="mb-8"
             />
-
-            {/* Manual Search Input */}
-            <div className="relative mb-8">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <Input
-                placeholder="Or search manually by username..."
-                value={userSearchQuery}
-                onChange={(e) => handleUserSearch(e.target.value)}
-                className="pl-12 h-12 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
-              />
-            </div>
             
             {/* Search Results */}
             <div className="space-y-4">
