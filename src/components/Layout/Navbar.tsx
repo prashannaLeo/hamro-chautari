@@ -16,12 +16,13 @@ import {
 } from 'lucide-react';
 import { useNotifications } from '@/hooks/useNotifications';
 import { formatDistanceToNow } from 'date-fns';
-import {
+import { 
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import EnhancedSearch from '@/components/Friends/EnhancedSearch';
 
 const Navbar = () => {
   const { user, signOut } = useAuth();
@@ -51,14 +52,11 @@ const Navbar = () => {
 
           {/* Search bar */}
           <div className="hidden md:flex flex-1 max-w-lg mx-8">
-            <div className="relative w-full">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Search friends, posts, stories..."
-                className="w-full pl-12 pr-4 py-3 bg-gray-50 rounded-2xl border-0 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all duration-200 text-gray-700"
-              />
-            </div>
+            <EnhancedSearch 
+              placeholder="Search friends, posts, stories..."
+              onUserSelect={() => { window.location.href = '/friends'; }}
+              onPostSelect={(post: any) => { window.location.href = `/?post=${post.id}`; }}
+            />
           </div>
 
           {/* Navigation items */}

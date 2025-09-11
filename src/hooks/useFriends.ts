@@ -156,18 +156,23 @@ export const useFriends = () => {
         .from('profiles')
         .select('display_name, username')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      // Create notification for the target user
-      await supabase
-        .from('notifications')
-        .insert({
-          user_id: targetUserId,
-          type: 'friend_request',
-          title: 'New Friend Request',
-          message: `${senderProfile?.display_name || senderProfile?.username || 'Someone'} sent you a friend request`,
-          data: { from_user_id: user.id, from_username: senderProfile?.username }
-        });
+      try {
+        // Create notification for the target user
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: targetUserId,
+            type: 'friend_request',
+            title: 'New Friend Request',
+            message: `${senderProfile?.display_name || senderProfile?.username || 'Someone'} sent you a friend request`,
+            data: { from_user_id: user.id, from_username: senderProfile?.username }
+          });
+      } catch (notifyErr) {
+        console.warn('Notification insert failed (friend_request):', notifyErr);
+        // Don't block sending request if notification fails
+      }
 
       toast({
         title: "Success",

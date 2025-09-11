@@ -57,7 +57,8 @@ export const useUserSearch = () => {
 
       // Only add the exclusion filter if there are connected users
       if (connectedUserIds.length > 1) { // > 1 because we always have current user
-        query = query.not('user_id', 'in', `(${connectedUserIds.join(',')})`);
+        const quoted = connectedUserIds.map((id) => `"${id}"`).join(',');
+        query = query.not('user_id', 'in', `(${quoted})`);
       } else {
         // Just exclude current user
         query = query.neq('user_id', user.id);
