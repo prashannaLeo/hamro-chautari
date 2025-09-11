@@ -600,6 +600,16 @@ export type Database = {
         Args: { post_id: string }
         Returns: undefined
       }
+      get_limited_profile_for_search: {
+        Args: { search_user_id: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          is_verified: boolean
+          user_id: string
+          username: string
+        }[]
+      }
       increment_comments: {
         Args: { post_id: string }
         Returns: undefined
