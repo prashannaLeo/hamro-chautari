@@ -35,81 +35,104 @@ export const useCalling = () => {
   useEffect(() => {
     if (!user) return;
 
-    console.log('Setting up realtime subscription for calls...');
+    console.info('Setting up realtime subscription for calls...');
+
+    const processedCandidatesRef = { current: new Set<string>() } as const;
 
     const channel = supabase
       .channel('calls_channel')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'calls',
-          filter: `or(caller_id=eq.${user.id},receiver_id=eq.${user.id})`
-        },
-        async (payload) => {
-          console.log('Call update received:', payload);
-          const callData = payload.new as CallData;
-          
-          if (payload.eventType === 'INSERT' && callData.receiver_id === user.id && callData.status === 'ringing') {
-            // Incoming call
-            console.log('Incoming call from:', callData.caller_name);
-            setIncomingCall(callData);
-            playRingtone();
-            playNotificationSound();
-            showCallNotification(callData.caller_name, callData.type);
-          } else if (payload.eventType === 'UPDATE') {
-            if (callData.status === 'answered' && callData.answer) {
-              // Call was answered, set remote description
-              if (callData.caller_id === user.id) {
-                console.log('Call answered by receiver, setting remote description');
-                try {
-                  await webrtcService.setRemoteDescription(callData.answer as RTCSessionDescriptionInit);
-                  setCurrentCall({
-                    ...callData,
-                    type: callData.type as 'video' | 'voice',
-                    status: callData.status as 'initiating' | 'ringing' | 'answered' | 'ended' | 'declined'
-                  } as CallData);
-                  setIncomingCall(null);
-                  stopRingtone();
-                } catch (error) {
-                  console.error('Error setting remote description:', error);
-                }
-              }
-            } else if (callData.status === 'declined' || callData.status === 'ended') {
-              // Call ended or declined
-              console.log('Call ended/declined');
-              setCurrentCall(null);
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'calls' }, async (payload) => {
+        const callData = payload.new as CallData;
+        // Only react to calls involving current user
+        if (callData.receiver_id !== user.id && callData.caller_id !== user.id) return;
+
+        console.log('Call INSERT received:', callData);
+        if (callData.receiver_id === user.id && callData.status === 'ringing') {
+          // Incoming call
+          setIncomingCall(callData);
+          playRingtone();
+          playNotificationSound();
+          showCallNotification(callData.caller_name, callData.type);
+        }
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'calls' }, async (payload) => {
+        const callData = payload.new as CallData;
+        if (callData.receiver_id !== user.id && callData.caller_id !== user.id) return;
+
+        console.log('Call UPDATE received:', callData.status);
+        if (callData.status === 'answered' && callData.answer) {
+          if (callData.caller_id === user.id) {
+            try {
+              await webrtcService.setRemoteDescription(callData.answer as RTCSessionDescriptionInit);
+              setCurrentCall({
+                ...callData,
+                type: callData.type as 'video' | 'voice',
+                status: callData.status as 'initiating' | 'ringing' | 'answered' | 'ended' | 'declined'
+              } as CallData);
               setIncomingCall(null);
               stopRingtone();
-              webrtcService.closeConnection();
+            } catch (error) {
+              console.error('Error setting remote description:', error);
             }
-            
-            // Handle ICE candidates
-            if (callData.ice_candidates && callData.ice_candidates.length > 0) {
-              console.log('Processing ICE candidates:', callData.ice_candidates.length);
-              for (const candidate of callData.ice_candidates) {
-                try {
-                  await webrtcService.addIceCandidate(candidate);
-                } catch (error) {
-                  console.error('Error adding ICE candidate:', error);
-                }
-              }
+          }
+        } else if (callData.status === 'declined' || callData.status === 'ended') {
+          // Call ended or declined
+          setCurrentCall(null);
+          setIncomingCall(null);
+          stopRingtone();
+          webrtcService.closeConnection();
+        }
+
+        // Handle ICE candidates (dedupe)
+        const candidates = (callData.ice_candidates as any[]) || [];
+        for (const candidate of candidates) {
+          const key = JSON.stringify(candidate);
+          if (!processedCandidatesRef.current.has(key)) {
+            processedCandidatesRef.current.add(key);
+            try {
+              await webrtcService.addIceCandidate(candidate);
+            } catch (err) {
+              console.error('Error adding ICE candidate:', err);
             }
           }
         }
-      )
+      })
       .subscribe((status) => {
-        console.log('Realtime subscription status:', status);
+        console.info('Realtime subscription status:', status);
       });
 
     channelRef.current = channel;
 
+    // Fallback polling if realtime fails
+    const pollInterval = setInterval(async () => {
+      try {
+        const { data, error } = await supabase
+          .from('calls')
+          .select('*')
+          .eq('receiver_id', user.id)
+          .eq('status', 'ringing')
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (!error && data && data.length > 0) {
+          const call = data[0] as CallData;
+          if (!incomingCall || incomingCall.id !== call.id) {
+            setIncomingCall(call);
+            playRingtone();
+            playNotificationSound();
+          }
+        }
+      } catch (e) {
+        // silent
+      }
+    }, 3000);
+
     return () => {
       supabase.removeChannel(channel);
+      clearInterval(pollInterval);
       stopRingtone();
     };
-  }, [user, webrtcService]);
+  }, [user, webrtcService, incomingCall]);
 
   // WebRTC event handlers
   useEffect(() => {

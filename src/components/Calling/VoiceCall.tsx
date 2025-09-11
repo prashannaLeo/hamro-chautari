@@ -3,15 +3,13 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from '@/hooks/use-toast';
-import { useCalling } from '@/hooks/useCalling';
 import { 
   Phone, 
   PhoneOff, 
   Mic, 
   MicOff, 
   Volume2, 
-  VolumeX,
-  UserCircle
+  VolumeX
 } from 'lucide-react';
 
 interface VoiceCallProps {
@@ -22,19 +20,22 @@ interface VoiceCallProps {
   onEndCall: () => void;
   onAcceptCall?: () => void;
   onDeclineCall?: () => void;
+  localStream?: MediaStream;
+  remoteStream?: MediaStream;
 }
 
 const VoiceCall: React.FC<VoiceCallProps> = ({
   callId,
   isIncoming = false,
-  callerName = "Unknown",
+  callerName = 'Unknown',
   callerAvatar,
   onEndCall,
   onAcceptCall,
-  onDeclineCall
+  onDeclineCall,
+  localStream,
+  remoteStream,
 }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
-  const { getLocalStream, getRemoteStream, toggleMicrophone } = useCalling();
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isSpeakerEnabled, setIsSpeakerEnabled] = useState(true);
   const [callDuration, setCallDuration] = useState(0);
@@ -44,62 +45,40 @@ const VoiceCall: React.FC<VoiceCallProps> = ({
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isCallActive && callStatus === 'connected') {
-      interval = setInterval(() => {
-        setCallDuration(prev => prev + 1);
-      }, 1000);
+      interval = setInterval(() => setCallDuration((prev) => prev + 1), 1000);
     }
     return () => clearInterval(interval);
   }, [isCallActive, callStatus]);
 
-  // Setup remote audio stream
+  // Attach remote audio
   useEffect(() => {
-    const remoteStream = getRemoteStream();
-    if (remoteStream && audioRef.current) {
+    if (audioRef.current && remoteStream) {
       audioRef.current.srcObject = remoteStream;
-      console.log('Remote audio stream connected');
     }
-  }, [getRemoteStream]);
+  }, [remoteStream]);
 
   useEffect(() => {
     if (isCallActive) {
-      setupMediaStreams();
       // Simulate connection after 2 seconds
-      setTimeout(() => {
-        setCallStatus('connected');
-      }, 2000);
+      setTimeout(() => setCallStatus('connected'), 2000);
     }
   }, [isCallActive]);
 
-  const setupMediaStreams = () => {
-    try {
-      const localStream = getLocalStream();
-      if (localStream) {
-        console.log('Local stream connected for voice call');
-        toast({
-          title: "Audio Access",
-          description: "Microphone access granted"
-        });
-      }
-    } catch (error) {
-      console.error('Error setting up audio streams:', error);
-      toast({
-        title: "Audio Error", 
-        description: "Failed to access microphone",
-        variant: "destructive"
-      });
+  const toggleAudio = () => {
+    const track = localStream?.getAudioTracks()[0];
+    if (track) {
+      track.enabled = !track.enabled;
+      setIsAudioEnabled(track.enabled);
+    } else {
+      toast({ title: 'Microphone', description: 'No local audio track available', variant: 'destructive' });
     }
   };
 
-  const toggleAudio = () => {
-    const enabled = toggleMicrophone();
-    setIsAudioEnabled(enabled);
-  };
-
   const toggleSpeaker = () => {
-    setIsSpeakerEnabled(!isSpeakerEnabled);
+    setIsSpeakerEnabled((prev) => !prev);
     toast({
-      title: isSpeakerEnabled ? "Speaker Off" : "Speaker On",
-      description: isSpeakerEnabled ? "Audio switched to earpiece" : "Audio switched to speaker"
+      title: !isSpeakerEnabled ? 'Speaker On' : 'Speaker Off',
+      description: !isSpeakerEnabled ? 'Audio switched to speaker' : 'Audio switched to earpiece',
     });
   };
 
@@ -140,7 +119,7 @@ const VoiceCall: React.FC<VoiceCallProps> = ({
               <Avatar className="w-32 h-32 mx-auto ring-4 ring-white/30">
                 <AvatarImage src={callerAvatar} alt={callerName} />
                 <AvatarFallback className="bg-primary/20 text-white text-2xl">
-                  {callerName.split(' ').map(n => n[0]).join('').toUpperCase()}
+                  {callerName.split(' ').map((n) => n[0]).join('').toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
@@ -150,20 +129,12 @@ const VoiceCall: React.FC<VoiceCallProps> = ({
             <h2 className="text-2xl font-bold text-white mb-2">{callerName}</h2>
             <p className="text-white/70 text-lg">Incoming voice call</p>
           </div>
-          
+
           <div className="flex gap-6 justify-center">
-            <Button
-              onClick={handleDeclineCall}
-              variant="destructive"
-              size="lg"
-              className="rounded-full w-16 h-16 bg-red-500 hover:bg-red-600"
-            >
+            <Button onClick={handleDeclineCall} variant="destructive" size="lg" className="rounded-full w-16 h-16 bg-red-500 hover:bg-red-600">
               <PhoneOff className="w-6 h-6" />
             </Button>
-            <Button
-              onClick={handleAcceptCall}
-              className="bg-green-500 hover:bg-green-600 rounded-full w-16 h-16"
-            >
+            <Button onClick={handleAcceptCall} className="bg-green-500 hover:bg-green-600 rounded-full w-16 h-16">
               <Phone className="w-6 h-6" />
             </Button>
           </div>
@@ -181,7 +152,7 @@ const VoiceCall: React.FC<VoiceCallProps> = ({
             <Avatar className="w-40 h-40 mx-auto ring-4 ring-white/30 shadow-2xl">
               <AvatarImage src={callerAvatar} alt={callerName} />
               <AvatarFallback className="bg-primary/20 text-white text-3xl">
-                {callerName.split(' ').map(n => n[0]).join('').toUpperCase()}
+                {callerName.split(' ').map((n) => n[0]).join('').toUpperCase()}
               </AvatarFallback>
             </Avatar>
             {callStatus === 'connected' && (
@@ -192,57 +163,24 @@ const VoiceCall: React.FC<VoiceCallProps> = ({
               </div>
             )}
           </div>
-          
+
           <h1 className="text-3xl font-bold text-white mb-2">{callerName}</h1>
           <p className="text-white/70 text-xl">{getStatusText()}</p>
-          
-          {callStatus === 'connecting' && (
-            <div className="mt-4 flex justify-center">
-              <div className="flex space-x-1">
-                <div className="w-2 h-2 bg-white/60 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                <div className="w-2 h-2 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-              </div>
-            </div>
-          )}
         </div>
 
-        {/* Audio Element for Remote Audio */}
+        {/* Remote Audio */}
         <audio ref={audioRef} autoPlay />
       </div>
 
       {/* Controls */}
       <div className="bg-black/30 backdrop-blur-sm p-8 flex justify-center items-center gap-6">
-        <Button
-          onClick={toggleSpeaker}
-          variant={isSpeakerEnabled ? "secondary" : "outline"}
-          size="lg"
-          className="rounded-full w-16 h-16 bg-white/10 hover:bg-white/20 border-white/30"
-        >
-          {isSpeakerEnabled ? 
-            <Volume2 className="w-6 h-6 text-white" /> : 
-            <VolumeX className="w-6 h-6 text-white" />
-          }
+        <Button onClick={toggleSpeaker} variant={isSpeakerEnabled ? 'secondary' : 'outline'} size="lg" className="rounded-full w-16 h-16 bg-white/10 hover:bg-white/20 border-white/30">
+          {isSpeakerEnabled ? <Volume2 className="w-6 h-6 text-white" /> : <VolumeX className="w-6 h-6 text-white" />}
         </Button>
-        
-        <Button
-          onClick={toggleAudio}
-          variant={isAudioEnabled ? "secondary" : "destructive"}
-          size="lg"
-          className="rounded-full w-16 h-16"
-        >
-          {isAudioEnabled ? 
-            <Mic className="w-6 h-6" /> : 
-            <MicOff className="w-6 h-6" />
-          }
+        <Button onClick={toggleAudio} variant={isAudioEnabled ? 'secondary' : 'destructive'} size="lg" className="rounded-full w-16 h-16">
+          {isAudioEnabled ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
         </Button>
-        
-        <Button
-          onClick={handleEndCall}
-          variant="destructive"
-          size="lg"
-          className="rounded-full w-16 h-16 bg-red-500 hover:bg-red-600"
-        >
+        <Button onClick={handleEndCall} variant="destructive" size="lg" className="rounded-full w-16 h-16 bg-red-500 hover:bg-red-600">
           <PhoneOff className="w-6 h-6" />
         </Button>
       </div>
