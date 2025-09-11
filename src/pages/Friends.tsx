@@ -71,7 +71,7 @@ const Friends = () => {
   } = useFriends();
   
   const { createChat } = useMessages();
-  const { initiateCall, simulateIncomingCall } = useCalling();
+  const { initiateCall } = useCalling();
   const { searchResults, loading: searchLoading, searchUsers } = useUserSearch();
 
   if (loading || friendsLoading) {
@@ -184,15 +184,17 @@ const Friends = () => {
     handleSendRequest(selectedUser.user_id || selectedUser.id, selectedUser.display_name || selectedUser.username);
   };
 
-  // Test calling functionality
+  // Test calling functionality - initiate a call to yourself for testing
   const handleTestCall = (type: 'voice' | 'video') => {
-    simulateIncomingCall(
-      'test-user-id', 
-      'Test User', 
-      type,
-      undefined
-    );
-    toast.success(`Incoming ${type} call test started`);
+    if (user) {
+      initiateCall(
+        user.id,
+        'Test User',
+        type,
+        undefined
+      );
+      toast.success(`${type} call test started`);
+    }
   };
 
   const filteredFriends = friends.filter(friend =>

@@ -17,50 +17,50 @@ export type Database = {
       calls: {
         Row: {
           answer: Json | null
-          answered_at: string | null
-          call_type: string
+          caller_avatar: string | null
           caller_id: string
+          caller_name: string
           created_at: string | null
-          duration_seconds: number | null
-          ended_at: string | null
           ice_candidates: Json | null
           id: string
           offer: Json | null
+          receiver_avatar: string | null
           receiver_id: string
-          started_at: string | null
+          receiver_name: string
           status: string
+          type: string
           updated_at: string | null
         }
         Insert: {
           answer?: Json | null
-          answered_at?: string | null
-          call_type: string
+          caller_avatar?: string | null
           caller_id: string
+          caller_name: string
           created_at?: string | null
-          duration_seconds?: number | null
-          ended_at?: string | null
           ice_candidates?: Json | null
           id?: string
           offer?: Json | null
+          receiver_avatar?: string | null
           receiver_id: string
-          started_at?: string | null
+          receiver_name: string
           status?: string
+          type: string
           updated_at?: string | null
         }
         Update: {
           answer?: Json | null
-          answered_at?: string | null
-          call_type?: string
+          caller_avatar?: string | null
           caller_id?: string
+          caller_name?: string
           created_at?: string | null
-          duration_seconds?: number | null
-          ended_at?: string | null
           ice_candidates?: Json | null
           id?: string
           offer?: Json | null
+          receiver_avatar?: string | null
           receiver_id?: string
-          started_at?: string | null
+          receiver_name?: string
           status?: string
+          type?: string
           updated_at?: string | null
         }
         Relationships: []

@@ -59,8 +59,12 @@ export const useCalling = () => {
             if (callData.status === 'answered' && callData.answer) {
               // Call was answered, set remote description
               if (callData.caller_id === user.id) {
-                await webrtcService.setRemoteDescription(callData.answer);
-                setCurrentCall(callData);
+                await webrtcService.setRemoteDescription(callData.answer as RTCSessionDescriptionInit);
+                setCurrentCall({
+                  ...callData,
+                  type: callData.type as 'video' | 'voice',
+                  status: callData.status as 'initiating' | 'ringing' | 'answered' | 'ended' | 'declined'
+                } as CallData);
                 setIncomingCall(null);
                 stopRingtone();
               }
@@ -137,7 +141,7 @@ export const useCalling = () => {
           receiver_name: receiverName,
           receiver_avatar: receiverAvatar,
           status: 'ringing',
-          offer: offer
+          offer: JSON.parse(JSON.stringify(offer))
         })
         .select()
         .single();
@@ -152,7 +156,7 @@ export const useCalling = () => {
         return;
       }
 
-      setCurrentCall(callData);
+      setCurrentCall(callData as CallData);
 
       // Set timeout for call (30 seconds)
       callTimeoutRef.current = setTimeout(() => {
@@ -164,7 +168,11 @@ export const useCalling = () => {
         description: `Calling ${receiverName}...`,
       });
 
-      return callData;
+      return {
+        ...callData,
+        type: callData.type as 'video' | 'voice',
+        status: callData.status as 'initiating' | 'ringing' | 'answered' | 'ended' | 'declined'
+      } as CallData;
     } catch (error) {
       console.error('Error initiating call:', error);
       toast({
@@ -183,7 +191,7 @@ export const useCalling = () => {
 
     try {
       // Set remote description and create answer
-      await webrtcService.setRemoteDescription(callData.offer);
+      await webrtcService.setRemoteDescription(callData.offer as RTCSessionDescription);
       const answer = await webrtcService.createAnswer(callData.type === 'video');
 
       // Update call status to answered
@@ -191,7 +199,7 @@ export const useCalling = () => {
         .from('calls')
         .update({
           status: 'answered',
-          answer: answer,
+          answer: JSON.parse(JSON.stringify(answer)),
           updated_at: new Date().toISOString()
         })
         .eq('id', callData.id);
@@ -202,7 +210,7 @@ export const useCalling = () => {
       }
 
       setIncomingCall(null);
-      setCurrentCall({ ...callData, status: 'answered', answer });
+      setCurrentCall({ ...callData, status: 'answered', answer: JSON.parse(JSON.stringify(answer)) } as CallData);
       stopRingtone();
 
       toast({

@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
+import { useCalling } from '@/hooks/useCalling';
 import { 
   Video, 
   VideoOff, 
@@ -32,6 +33,7 @@ const VideoCall: React.FC<VideoCallProps> = ({
   onAcceptCall,
   onDeclineCall
 }) => {
+  const { getLocalStream, getRemoteStream, toggleMicrophone, toggleCamera } = useCalling();
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
@@ -89,23 +91,13 @@ const VideoCall: React.FC<VideoCallProps> = ({
   };
 
   const toggleVideo = () => {
-    if (localStream) {
-      const videoTrack = localStream.getVideoTracks()[0];
-      if (videoTrack) {
-        videoTrack.enabled = !videoTrack.enabled;
-        setIsVideoEnabled(videoTrack.enabled);
-      }
-    }
+    const enabled = toggleCamera();
+    setIsVideoEnabled(enabled);
   };
 
   const toggleAudio = () => {
-    if (localStream) {
-      const audioTrack = localStream.getAudioTracks()[0];
-      if (audioTrack) {
-        audioTrack.enabled = !audioTrack.enabled;
-        setIsAudioEnabled(audioTrack.enabled);
-      }
-    }
+    const enabled = toggleMicrophone();
+    setIsAudioEnabled(enabled);
   };
 
   const toggleScreenShare = async () => {

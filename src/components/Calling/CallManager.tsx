@@ -13,7 +13,7 @@ const CallManager: React.FC = () => {
         <VideoCall
           callId={incomingCall.id}
           isIncoming={true}
-          callerName={incomingCall.callerName}
+          callerName={incomingCall.caller_name}
           onEndCall={endCall}
           onAcceptCall={() => answerCall(incomingCall)}
           onDeclineCall={() => declineCall(incomingCall)}
@@ -24,8 +24,8 @@ const CallManager: React.FC = () => {
         <VoiceCall
           callId={incomingCall.id}
           isIncoming={true}
-          callerName={incomingCall.callerName}
-          callerAvatar={incomingCall.callerAvatar}
+          callerName={incomingCall.caller_name}
+          callerAvatar={incomingCall.caller_avatar}
           onEndCall={endCall}
           onAcceptCall={() => answerCall(incomingCall)}
           onDeclineCall={() => declineCall(incomingCall)}
@@ -40,7 +40,7 @@ const CallManager: React.FC = () => {
       return (
         <VideoCall
           callId={currentCall.id}
-          callerName={currentCall.callerName}
+          callerName={currentCall.caller_name}
           onEndCall={endCall}
         />
       );
@@ -48,8 +48,8 @@ const CallManager: React.FC = () => {
       return (
         <VoiceCall
           callId={currentCall.id}
-          callerName={currentCall.callerName}
-          callerAvatar={currentCall.callerAvatar}
+          callerName={currentCall.caller_name}
+          callerAvatar={currentCall.caller_avatar}
           onEndCall={endCall}
         />
       );

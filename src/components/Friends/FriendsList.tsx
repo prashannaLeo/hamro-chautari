@@ -28,7 +28,7 @@ const FriendsList: React.FC = () => {
     removeFriend
   } = useFriends();
   
-  const { initiateCall, simulateIncomingCall } = useCalling();
+  const { initiateCall } = useCalling();
 
   const handleVideoCall = (friend: any) => {
     initiateCall(
