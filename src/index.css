@@ -201,12 +201,37 @@
     @apply bg-background border border-input text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20 transition-colors;
   }
 
-  /* Message bubble improvements */
-  .message-bubble-sent {
-    @apply bg-primary text-primary-foreground;
+  /* Mobile-specific utility classes */
+  .safe-area-pb {
+    padding-bottom: env(safe-area-inset-bottom);
   }
 
-  .message-bubble-received {
-    @apply bg-muted text-muted-foreground;
+  /* Touch-friendly tap targets */
+  @media (max-width: 640px) {
+    button, .btn, [role="button"] {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+
+  /* Improved mobile scrolling */
+  .scroll-smooth {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+
+  /* Mobile input improvements */
+  @media (max-width: 640px) {
+    input, textarea, select {
+      font-size: 16px; /* Prevents zoom on iOS */
+    }
+  }
+
+  /* Better focus states for mobile */
+  @media (max-width: 640px) {
+    *:focus {
+      outline: 2px solid hsl(var(--ring));
+      outline-offset: 2px;
+    }
   }
 }

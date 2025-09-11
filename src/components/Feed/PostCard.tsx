@@ -130,38 +130,38 @@ const PostCard: React.FC<PostCardProps> = ({ post, onEdit, onDelete, onPostUpdat
 
   return (
     <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300 animate-scale-in">
-      <CardContent className="p-6 space-y-5">
+      <CardContent className="p-3 sm:p-6 space-y-3 sm:space-y-5">
         {/* Header */}
-        <div className="flex items-start justify-between">
-          <div className="flex items-center space-x-4">
-            <Avatar className="h-12 w-12 ring-2 ring-white shadow-md">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center space-x-3 min-w-0 flex-1">
+            <Avatar className="h-10 w-10 sm:h-12 sm:w-12 ring-2 ring-white shadow-md flex-shrink-0">
               <AvatarImage src={post.user.avatar} alt={post.user.name} />
-              <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-white font-semibold">
+              <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-white font-semibold text-sm sm:text-base">
                 {post.user.name.charAt(0)}
               </AvatarFallback>
             </Avatar>
-            <div>
-              <div className="flex items-center space-x-2">
-                <h3 className="font-bold text-lg text-gray-900">{post.user.name}</h3>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center space-x-2 flex-wrap">
+                <h3 className="font-bold text-base sm:text-lg text-gray-900 truncate">{post.user.name}</h3>
                 {post.user.isVerified && (
-                  <Badge variant="secondary" className="h-5 px-2 text-xs bg-blue-100 text-blue-800 border-blue-200">
+                  <Badge variant="secondary" className="h-5 px-2 text-xs bg-blue-100 text-blue-800 border-blue-200 flex-shrink-0">
                     ✓ Verified
                   </Badge>
                 )}
               </div>
-              <div className="flex items-center space-x-3 text-sm text-gray-600 mt-1">
-                <span className="font-medium">@{post.user.username}</span>
-                <span>•</span>
-                <div className="flex items-center space-x-1">
-                  <Clock className="w-4 h-4" />
+              <div className="flex items-center space-x-2 text-xs sm:text-sm text-gray-600 mt-1 flex-wrap">
+                <span className="font-medium truncate">@{post.user.username}</span>
+                <span className="hidden sm:inline">•</span>
+                <div className="flex items-center space-x-1 flex-shrink-0">
+                  <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span>{formatTime(post.timestamp)}</span>
                 </div>
                 {post.location && (
                   <>
-                    <span>•</span>
-                    <div className="flex items-center space-x-1">
-                      <MapPin className="w-4 h-4 text-green-600" />
-                      <span className="truncate max-w-32 text-green-700 font-medium">{post.location}</span>
+                    <span className="hidden sm:inline">•</span>
+                    <div className="flex items-center space-x-1 flex-shrink-0">
+                      <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-green-600" />
+                      <span className="truncate max-w-20 sm:max-w-32 text-green-700 font-medium text-xs sm:text-sm">{post.location}</span>
                     </div>
                   </>
                 )}
@@ -170,8 +170,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, onEdit, onDelete, onPostUpdat
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="hover:bg-gray-100 rounded-full">
-                <MoreHorizontal className="w-5 h-5 text-gray-500" />
+              <Button variant="ghost" size="sm" className="hover:bg-gray-100 rounded-full p-1 sm:p-2 flex-shrink-0">
+                <MoreHorizontal className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="bg-white/95 backdrop-blur-sm border shadow-xl">
@@ -213,12 +213,12 @@ const PostCard: React.FC<PostCardProps> = ({ post, onEdit, onDelete, onPostUpdat
         )}
 
         {/* Content */}
-        <div className="space-y-4">
-          <p className="text-gray-800 leading-relaxed text-base">{post.content}</p>
+        <div className="space-y-3 sm:space-y-4">
+          <p className="text-gray-800 leading-relaxed text-sm sm:text-base">{post.content}</p>
           
           {/* Images */}
           {post.images && post.images.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 rounded-lg overflow-hidden">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2 rounded-lg overflow-hidden">
               {post.images.slice(0, 4).map((image, index) => (
                 <div 
                   key={index} 
@@ -233,7 +233,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onEdit, onDelete, onPostUpdat
                   />
                   {post.images!.length > 4 && index === 3 && (
                     <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                      <span className="text-white font-semibold">
+                      <span className="text-white font-semibold text-sm sm:text-base">
                         +{post.images!.length - 4} more
                       </span>
                     </div>
@@ -245,8 +245,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, onEdit, onDelete, onPostUpdat
         </div>
 
         {/* Actions */}
-        <div className="flex items-center justify-between pt-5 border-t border-gray-100">
-          <div className="flex items-center space-x-8">
+        <div className="flex items-center justify-between pt-3 sm:pt-5 border-t border-gray-100">
+          <div className="flex items-center space-x-4 sm:space-x-8">
             <SimplifiedPostReactions 
               postId={post.id}
               initialLikes={likesCount}
@@ -257,22 +257,22 @@ const PostCard: React.FC<PostCardProps> = ({ post, onEdit, onDelete, onPostUpdat
               variant="ghost" 
               size="sm" 
               onClick={() => setShowComments(!showComments)}
-              className={`space-x-2 transition-colors ${
+              className={`space-x-1 sm:space-x-2 transition-colors p-1 sm:p-2 ${
                 showComments ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
               }`}
             >
-              <MessageCircle className="w-5 h-5" />
-              <span className="font-semibold">{commentsCount}</span>
+              <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="font-semibold text-xs sm:text-sm">{commentsCount}</span>
             </Button>
             
             <Button 
               variant="ghost" 
               size="sm" 
-              className="space-x-2 text-gray-600 hover:text-green-600 hover:bg-green-50 transition-colors"
+              className="space-x-1 sm:space-x-2 text-gray-600 hover:text-green-600 hover:bg-green-50 transition-colors p-1 sm:p-2"
               onClick={() => setShowShareDialog(true)}
             >
-              <Share className="w-5 h-5" />
-              <span className="font-semibold">{post.shares}</span>
+              <Share className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="font-semibold text-xs sm:text-sm">{post.shares}</span>
             </Button>
           </div>
         </div>

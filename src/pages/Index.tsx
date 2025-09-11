@@ -82,15 +82,15 @@ const Index = () => {
       <Navbar />
       <CallManager />
       
-      <main className="max-w-6xl mx-auto px-4 py-8 pb-20 sm:pb-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
+      <main className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-8 pb-20 sm:pb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
           {/* Main Feed - Takes 3 columns on large screens */}
-          <div className="lg:col-span-3 space-y-6">
+          <div className="lg:col-span-3 space-y-4 sm:space-y-6">
             <div className="animate-fade-in">
               <CreatePost />
             </div>
             
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {postsLoading ? (
                 <div className="flex items-center justify-center py-12">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -136,8 +136,8 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Sidebar - Takes 1 column on large screens, full width on mobile */}
-          <div className="lg:col-span-1 space-y-6">
+          {/* Sidebar - Takes 1 column on large screens, hidden on mobile, shown as bottom section */}
+          <div className="lg:col-span-1 space-y-4 sm:space-y-6 order-first lg:order-last">
             <div className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
               <PostSuggestions />
             </div>
