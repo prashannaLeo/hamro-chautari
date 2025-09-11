@@ -14,6 +14,8 @@ import {
   LogOut,
   Settings
 } from 'lucide-react';
+import { useNotifications } from '@/hooks/useNotifications';
+import { formatDistanceToNow } from 'date-fns';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,6 +26,7 @@ import {
 const Navbar = () => {
   const { user, signOut } = useAuth();
   const location = useLocation();
+  const { notifications, unreadCount, markAsRead } = useNotifications();
 
   const navItems = [
     { path: '/', icon: Home, label: 'Home' },
@@ -82,9 +85,11 @@ const Navbar = () => {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative p-3 rounded-xl hover:bg-blue-50 transition-colors">
                   <Bell className="w-6 h-6 text-gray-600" />
-                  <Badge className="absolute -top-1 -right-1 w-6 h-6 text-xs p-0 flex items-center justify-center bg-red-500 hover:bg-red-500">
-                    3
-                  </Badge>
+                  {unreadCount > 0 && (
+                    <Badge className="absolute -top-1 -right-1 w-6 h-6 text-xs p-0 flex items-center justify-center bg-red-500 hover:bg-red-500">
+                      {unreadCount}
+                    </Badge>
+                  )}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-80 bg-white/95 backdrop-blur-sm border shadow-xl">
@@ -92,27 +97,37 @@ const Navbar = () => {
                   <h3 className="font-semibold text-gray-800">Notifications</h3>
                 </div>
                 <div className="max-h-96 overflow-y-auto">
-                  <DropdownMenuItem className="p-4 hover:bg-blue-50 flex items-start space-x-3 border-b">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                    <div>
-                      <p className="text-sm font-medium">Priya Sharma liked your post</p>
-                      <p className="text-xs text-gray-500">2 minutes ago</p>
+                  {notifications.length === 0 ? (
+                    <div className="p-4 text-center text-gray-500">
+                      No notifications yet
                     </div>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="p-4 hover:bg-blue-50 flex items-start space-x-3 border-b">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
-                    <div>
-                      <p className="text-sm font-medium">New friend request from Arjun Thapa</p>
-                      <p className="text-xs text-gray-500">5 minutes ago</p>
-                    </div>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="p-4 hover:bg-blue-50 flex items-start space-x-3">
-                    <div className="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>
-                    <div>
-                      <p className="text-sm font-medium">Sita Rai commented on your photo</p>
-                      <p className="text-xs text-gray-500">10 minutes ago</p>
-                    </div>
-                  </DropdownMenuItem>
+                  ) : (
+                    notifications.slice(0, 3).map((notification) => (
+                      <DropdownMenuItem 
+                        key={notification.id}
+                        className="p-4 hover:bg-blue-50 flex items-start space-x-3 border-b cursor-pointer"
+                        onClick={() => {
+                          if (!notification.is_read) {
+                            markAsRead(notification.id);
+                          }
+                        }}
+                      >
+                        <div className={`w-2 h-2 rounded-full mt-2 ${
+                          notification.is_read ? 'bg-gray-300' : 
+                          notification.type === 'like' ? 'bg-red-500' :
+                          notification.type === 'comment' ? 'bg-blue-500' :
+                          notification.type === 'follow' ? 'bg-green-500' :
+                          'bg-purple-500'
+                        }`}></div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">{notification.title}</p>
+                          <p className="text-xs text-gray-500">
+                            {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                          </p>
+                        </div>
+                      </DropdownMenuItem>
+                    ))
+                  )}
                 </div>
                 <div className="p-3 border-t">
                   <Link to="/notifications">

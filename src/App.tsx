@@ -7,6 +7,7 @@ import { Provider } from 'react-redux';
 import { store } from './store';
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SocketProvider } from "@/contexts/SocketContext";
+import CallManager from "@/components/Calling/CallManager";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Messages from "./pages/Messages";
@@ -27,6 +28,7 @@ const App = () => (
           <TooltipProvider>
             <Toaster />
             <Sonner />
+            <CallManager />
             <BrowserRouter>
               <Routes>
                 <Route path="/" element={<Index />} />

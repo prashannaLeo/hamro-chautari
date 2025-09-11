@@ -8,24 +8,19 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useMessages } from '@/hooks/useMessages';
+import { useCalling } from '@/hooks/useCalling';
 import NewChatDialog from '@/components/Messages/NewChatDialog';
+import MessageAttachment from '@/components/Messages/MessageAttachment';
+import ChatOptionsMenu from '@/components/Messages/ChatOptionsMenu';
 import { 
   Search, 
-  MoreVertical, 
   Phone, 
   Video, 
   Send,
   Smile,
-  Paperclip,
   Plus,
   MessageCircle
 } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 
 // Removed mock data - using real data from useMessages hook
 
@@ -40,6 +35,7 @@ const Messages = () => {
     sendingMessage,
     refetchChats
   } = useMessages();
+  const { initiateCall } = useCalling();
   const [selectedChat, setSelectedChat] = useState<any>(null);
   const [newMessage, setNewMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -72,6 +68,47 @@ const Messages = () => {
   const handleSelectChat = (chat: any) => {
     setSelectedChat(chat);
     fetchMessages(chat.id);
+  };
+
+  const handleAttachmentSelect = (files: any[]) => {
+    // Here you would upload files to your storage service and then send message with attachment URLs
+    files.forEach(file => {
+      const attachmentMessage = `📎 ${file.file.name}`;
+      sendMessage(selectedChat.id, attachmentMessage, 'attachment');
+    });
+  };
+
+  const handleVoiceCall = () => {
+    if (selectedChat && user) {
+      const otherParticipant = selectedChat.chat_participants?.find((p: any) => p.user_id !== user.id);
+      if (otherParticipant) {
+        initiateCall(
+          otherParticipant.user_id,
+          otherParticipant.profiles?.display_name || otherParticipant.profiles?.username || 'Unknown',
+          'voice',
+          otherParticipant.profiles?.avatar_url
+        );
+      }
+    }
+  };
+
+  const handleVideoCall = () => {
+    if (selectedChat && user) {
+      const otherParticipant = selectedChat.chat_participants?.find((p: any) => p.user_id !== user.id);
+      if (otherParticipant) {
+        initiateCall(
+          otherParticipant.user_id,
+          otherParticipant.profiles?.display_name || otherParticipant.profiles?.username || 'Unknown',
+          'video',
+          otherParticipant.profiles?.avatar_url
+        );
+      }
+    }
+  };
+
+  const handleDeleteChat = (chatId: string) => {
+    // Implement chat deletion logic
+    console.log('Delete chat:', chatId);
   };
 
   const filteredChats = chats.filter(chat => {
@@ -210,24 +247,17 @@ const Messages = () => {
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" onClick={handleVoiceCall}>
                         <Phone className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" onClick={handleVideoCall}>
                         <Video className="w-4 h-4" />
                       </Button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreVertical className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>View profile</DropdownMenuItem>
-                          <DropdownMenuItem>Mute notifications</DropdownMenuItem>
-                          <DropdownMenuItem>Delete conversation</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <ChatOptionsMenu
+                        chatId={selectedChat.id}
+                        chatName={getChatName(selectedChat)}
+                        onDeleteChat={handleDeleteChat}
+                      />
                     </div>
                   </div>
                 </CardHeader>
@@ -273,9 +303,7 @@ const Messages = () => {
                 {/* Message Input */}
                 <div className="p-6 border-t border-gray-100">
                   <form onSubmit={handleSendMessage} className="flex items-center space-x-3">
-                    <Button type="button" variant="ghost" size="sm" className="p-3 rounded-xl hover:bg-blue-50">
-                      <Paperclip className="w-5 h-5 text-gray-600" />
-                    </Button>
+                    <MessageAttachment onAttachmentSelect={handleAttachmentSelect} />
                     <div className="flex-1 relative">
                       <Input
                         placeholder="Type a message..."

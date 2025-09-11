@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,6 +35,18 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({ open, onOpenChang
     mood: profile?.mood || 'neutral',
     avatar_url: profile?.avatar_url || ''
   });
+
+  // Update form data when profile changes
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        display_name: profile.display_name || '',
+        bio: profile.bio || '',
+        mood: profile.mood || 'neutral',
+        avatar_url: profile.avatar_url || ''
+      });
+    }
+  }, [profile]);
 
   const handleSave = async () => {
     setLoading(true);
