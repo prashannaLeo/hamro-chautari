@@ -38,8 +38,7 @@ const NewChatDialog: React.FC<NewChatDialogProps> = ({ open, onOpenChange }) => 
         toast.success(`Chat started with ${targetUserName}`);
         onOpenChange(false);
         setSearchQuery('');
-        // Navigate to messages to see the new chat
-        window.location.reload(); // Refresh to load new chat
+        // Chat will appear automatically due to real-time updates
       }
     } catch (error: any) {
       console.error('Failed to create chat:', error);

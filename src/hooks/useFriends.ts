@@ -104,7 +104,7 @@ export const useFriends = () => {
         .from('connections')
         .select('*')
         .or(`and(user_id.eq.${user.id},connected_user_id.eq.${targetUserId}),and(user_id.eq.${targetUserId},connected_user_id.eq.${user.id})`)
-        .single();
+        .maybeSingle();
 
       if (existing) {
         toast({

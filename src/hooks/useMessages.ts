@@ -76,47 +76,26 @@ export const useMessages = () => {
     try {
       setLoading(true);
       
-      // Get chats from Supabase
-      const { data: chatParticipants, error } = await supabase
-        .from('chat_participants')
+      // Get chats where user is a participant
+      const { data: chatsWithParticipants, error: chatsError } = await supabase
+        .from('chats')
         .select(`
-          chat_id,
-          chats!inner (
-            id,
-            type,
-            name,
-            created_at,
-            updated_at
+          *,
+          chat_participants!inner (
+            user_id,
+            role,
+            profiles (
+              username,
+              display_name,
+              avatar_url
+            )
           )
         `)
-        .eq('user_id', user.id);
+        .eq('chat_participants.user_id', user.id);
 
-      if (error) throw error;
+      if (chatsError) throw chatsError;
 
-      // Get chat details with participants
-      const chatIds = chatParticipants?.map(cp => cp.chat_id) || [];
-      
-      if (chatIds.length > 0) {
-        const { data: chatsWithParticipants, error: chatsError } = await supabase
-          .from('chats')
-          .select(`
-            *,
-            chat_participants!inner (
-              user_id,
-              role,
-              profiles!inner (
-                username,
-                display_name,
-                avatar_url
-              )
-            )
-          `)
-          .in('id', chatIds);
-
-        if (chatsError) throw chatsError;
-
-        setChats(chatsWithParticipants as Chat[] || []);
-      }
+      setChats(chatsWithParticipants as Chat[] || []);
     } catch (error: any) {
       console.error('Error fetching chats:', error);
       toast({
@@ -136,7 +115,7 @@ export const useMessages = () => {
         .from('messages')
         .select(`
           *,
-          profiles!inner (
+          profiles (
             username,
             display_name,
             avatar_url
@@ -179,7 +158,7 @@ export const useMessages = () => {
         })
         .select(`
           *,
-          profiles!inner (
+          profiles (
             username,
             display_name,
             avatar_url
