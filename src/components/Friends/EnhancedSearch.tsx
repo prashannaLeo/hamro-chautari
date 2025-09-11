@@ -221,7 +221,8 @@ const EnhancedSearch: React.FC<EnhancedSearchProps> = ({
                       size="sm"
                       variant="ghost"
                       className="ml-auto"
-                      onClick={(e) => { e.stopPropagation(); handleUserSelect(user); }}
+                      type="button"
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleUserSelect(user); }}
                       aria-label="Add friend"
                     >
                       <UserPlus className="w-4 h-4" />

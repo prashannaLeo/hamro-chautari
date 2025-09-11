@@ -208,16 +208,12 @@ const Friends = () => {
           </TabsList>
 
           <TabsContent value="friends" className="space-y-4">
-            {/* Friend Search */}
-            <div className="relative mb-8">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <Input
-                placeholder="Search your friends..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-12 h-12 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
-              />
-            </div>
+            {/* Friend Search (enhanced with suggestions) */}
+            <EnhancedSearch
+              placeholder="Search people and send friend requests..."
+              onUserSelect={handleUserSelect}
+              className="mb-8"
+            />
 
             {/* Friends Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
