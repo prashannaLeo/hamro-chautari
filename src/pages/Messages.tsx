@@ -145,229 +145,274 @@ const Messages = () => {
   };
 
   return (
-    <div className="min-h-screen-safe bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-background">
       <Navbar />
       
-      <main className="chat-mobile-layout container-mobile pb-safe-bottom pt-4">
+      <main className="h-[calc(100vh-4rem)] lg:h-[calc(100vh-5rem)] flex">
         {/* Chat List - Always visible on desktop, toggleable on mobile */}
-        <div className={`chat-list-mobile ${selectedChat ? 'hidden lg:block' : 'block'}`}>
-          <div className="card-mobile h-full flex flex-col">
-            <div className="card-content-mobile pb-3">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-mobile-h2">Messages</h2>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={() => setNewChatDialogOpen(true)}
-                  className="btn-ghost-mobile"
-                >
-                  <Plus className="w-5 h-5" />
-                </Button>
-              </div>
-              <div className="search-mobile">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 z-10" />
-                <Input
-                  placeholder="Search conversations..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="search-input-mobile"
-                />
-              </div>
+        <div className={`${selectedChat ? 'hidden lg:flex' : 'flex'} w-full lg:w-80 xl:w-96 flex-col border-r border-border bg-card`}>
+          {/* Messages Header */}
+          <div className="p-4 border-b border-border bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/60">
+            <div className="flex items-center justify-between mb-4">
+              <h1 className="text-2xl font-bold text-foreground">Messages</h1>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setNewChatDialogOpen(true)}
+                className="w-10 h-10 rounded-full hover:bg-muted transition-colors"
+              >
+                <Plus className="w-5 h-5" />
+              </Button>
             </div>
-            <div className="flex-1 overflow-y-auto">
-              <div className="space-y-1">
-                {filteredChats.length === 0 ? (
-                  <div className="p-4 text-center text-gray-500">
-                    {chats.length === 0 ? 'No conversations yet' : 'No conversations found'}
-                  </div>
-                ) : (
-                  filteredChats.map((chat) => {
-                    const chatName = getChatName(chat);
-                    const otherParticipant = chat.chat_participants?.find((p: any) => p.user_id !== user?.id);
-                    const avatarUrl = otherParticipant?.profiles?.avatar_url || '';
-                    const lastMessage = getLastMessage(chat);
-                    
-                    return (
-                      <div
-                        key={chat.id}
-                        onClick={() => handleSelectChat(chat)}
-                        className={`p-3 sm:p-4 hover:bg-gray-50 cursor-pointer border-b transition-colors press-effect ${
-                          selectedChat?.id === chat.id ? 'bg-primary/5' : ''
-                        }`}
-                      >
-                        <div className="flex items-center space-x-3">
-                          <div className="relative flex-shrink-0">
-                            <Avatar className="avatar-mobile-md">
-                              <AvatarImage src={avatarUrl} alt={chatName} />
-                              <AvatarFallback className="bg-primary text-primary-foreground">
-                                {chatName.charAt(0).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
+            
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Input
+                placeholder="Search conversations..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 bg-muted border-0 focus-visible:ring-1 focus-visible:ring-ring h-9 text-sm"
+              />
+            </div>
+          </div>
+          {/* Chat List */}
+          <div className="flex-1 overflow-y-auto">
+            {filteredChats.length === 0 ? (
+              <div className="p-6 text-center text-muted-foreground">
+                <MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p className="text-sm">
+                  {chats.length === 0 ? 'No conversations yet' : 'No conversations found'}
+                </p>
+              </div>
+            ) : (
+              <div className="divide-y divide-border/50">
+                {filteredChats.map((chat) => {
+                  const chatName = getChatName(chat);
+                  const otherParticipant = chat.chat_participants?.find((p: any) => p.user_id !== user?.id);
+                  const avatarUrl = otherParticipant?.profiles?.avatar_url || '';
+                  const lastMessage = getLastMessage(chat);
+                  
+                  return (
+                    <div
+                      key={chat.id}
+                      onClick={() => handleSelectChat(chat)}
+                      className={`p-4 hover:bg-muted/50 cursor-pointer transition-colors duration-200 ${
+                        selectedChat?.id === chat.id ? 'bg-primary/5 border-r-2 border-primary' : ''
+                      }`}
+                    >
+                      <div className="flex items-start space-x-3">
+                        <div className="relative flex-shrink-0">
+                          <Avatar className="w-12 h-12">
+                            <AvatarImage src={avatarUrl} alt={chatName} />
+                            <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
+                              {chatName.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between mb-1">
+                            <h3 className="font-semibold text-foreground truncate text-sm">
+                              {chatName}
+                            </h3>
+                            <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
+                              {chat.last_message ? 
+                                new Date(chat.last_message.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) :
+                                new Date(chat.updated_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                              }
+                            </span>
                           </div>
                           
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between mb-1">
-                              <h3 className="font-medium text-mobile-body truncate">{chatName}</h3>
-                              <span className="text-xs text-muted-foreground flex-shrink-0">
-                                {chat.last_message ? 
-                                  new Date(chat.last_message.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) :
-                                  new Date(chat.updated_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-                                }
-                              </span>
-                            </div>
-                            
-                            <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                              {lastMessage}
-                            </p>
-                          </div>
+                          <p className="text-sm text-muted-foreground truncate">
+                            {lastMessage}
+                          </p>
                         </div>
                       </div>
-                    );
-                  })
-                )}
+                    </div>
+                  );
+                })}
               </div>
-            </div>
+            )}
           </div>
         </div>
 
-        {/* Chat Content - Full screen on mobile, sidebar on desktop */}
-        <div className={`${selectedChat ? 'chat-content-fullscreen lg:chat-content-mobile' : 'chat-content-mobile'}`}>
-          <div className="card-mobile h-full flex flex-col">
-            {selectedChat ? (
-              <>
-                {/* Chat Header */}
-                <div className="card-content-mobile pb-3 border-b border-border">
-                  <div className="flex items-center justify-between">
-                    {/* Back Button for Mobile */}
+        {/* Chat Content - Full screen on mobile, main area on desktop */}
+        <div className={`${selectedChat ? 'fixed inset-0 z-50 bg-background lg:relative lg:z-auto lg:flex-1' : 'hidden lg:flex lg:flex-1'} flex flex-col`}>
+          {selectedChat ? (
+            <>
+              {/* Chat Header */}
+              <div className="p-4 border-b border-border bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/60">
+                <div className="flex items-center justify-between">
+                  {/* Back Button for Mobile & Chat Info */}
+                  <div className="flex items-center space-x-3 min-w-0 flex-1">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setSelectedChat(null)}
+                      className="w-10 h-10 rounded-full hover:bg-muted transition-colors lg:hidden"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </Button>
+                    
                     <div className="flex items-center space-x-3 min-w-0 flex-1">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => setSelectedChat(null)}
-                        className="btn-ghost-mobile lg:hidden"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
-                      </Button>
-                      <Avatar className="avatar-mobile-md flex-shrink-0">
-                        <AvatarFallback className="bg-primary text-primary-foreground">
-                          {(selectedChat.name || 'U').charAt(0)}
+                      <Avatar className="w-10 h-10 flex-shrink-0">
+                        <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
+                          {getChatName(selectedChat).charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div className="min-w-0 flex-1">
-                        <h3 className="font-medium text-mobile-body truncate">
-                          {selectedChat.name || 
-                            selectedChat.chat_participants
-                              ?.filter((p: any) => p.user_id !== user.id)
-                              ?.map((p: any) => p.profiles?.display_name || p.profiles?.username)
-                              ?.join(', ') || 'Unknown'}
+                        <h3 className="font-semibold text-foreground truncate">
+                          {getChatName(selectedChat)}
                         </h3>
-                        <p className="text-xs text-muted-foreground">
-                          {selectedChat.type === 'direct' ? 'Direct message' : 'Group chat'}
+                        <p className="text-sm text-muted-foreground">
+                          {selectedChat.type === 'direct' ? 'Active now' : `${selectedChat.chat_participants?.length || 0} members`}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-1 flex-shrink-0">
-                      <Button variant="ghost" size="sm" onClick={handleVoiceCall} className="btn-ghost-mobile">
-                        <Phone className="w-5 h-5" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={handleVideoCall} className="btn-ghost-mobile">
-                        <Video className="w-5 h-5" />
-                      </Button>
-                      <ChatOptionsMenu
-                        chatId={selectedChat.id}
-                        chatName={getChatName(selectedChat)}
-                        onDeleteChat={handleDeleteChat}
-                      />
-                    </div>
+                  </div>
+                  
+                  {/* Call Actions */}
+                  <div className="flex items-center space-x-2 flex-shrink-0">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={handleVoiceCall} 
+                      className="w-10 h-10 rounded-full hover:bg-muted transition-colors"
+                    >
+                      <Phone className="w-5 h-5" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={handleVideoCall} 
+                      className="w-10 h-10 rounded-full hover:bg-muted transition-colors"
+                    >
+                      <Video className="w-5 h-5" />
+                    </Button>
+                    <ChatOptionsMenu
+                      chatId={selectedChat.id}
+                      chatName={getChatName(selectedChat)}
+                      onDeleteChat={handleDeleteChat}
+                    />
                   </div>
                 </div>
+              </div>
 
-                {/* Messages */}
-                <div className="flex-1 p-3 sm:p-4 overflow-y-auto scroll-smooth">
-                  <div className="space-y-3 sm:space-y-4">
-                    {currentMessages.length === 0 ? (
-                      <div className="text-center text-gray-500 py-8">
-                        No messages yet. Start the conversation!
-                      </div>
-                    ) : (
-                      currentMessages.map((message) => (
+              {/* Messages Area */}
+              <div className="flex-1 overflow-y-auto p-4">
+                <div className="space-y-4 max-w-4xl mx-auto">
+                  {currentMessages.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-12">
+                      <MessageCircle className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                      <p className="text-lg font-medium mb-2">No messages yet</p>
+                      <p className="text-sm">Start the conversation with {getChatName(selectedChat)}</p>
+                    </div>
+                  ) : (
+                    currentMessages.map((message, index) => {
+                      const isOwnMessage = message.sender_id === user.id;
+                      const showAvatar = !isOwnMessage && (index === 0 || currentMessages[index - 1]?.sender_id !== message.sender_id);
+                      
+                      return (
                         <div
                           key={message.id}
-                          className={`flex ${message.sender_id === user.id ? 'justify-end' : 'justify-start'}`}
+                          className={`flex items-end space-x-2 ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
                         >
+                          {!isOwnMessage && (
+                            <div className="w-8 h-8 flex-shrink-0">
+                              {showAvatar && (
+                                <Avatar className="w-8 h-8">
+                                  <AvatarFallback className="bg-muted text-muted-foreground text-xs">
+                                    {getChatName(selectedChat).charAt(0).toUpperCase()}
+                                  </AvatarFallback>
+                                </Avatar>
+                              )}
+                            </div>
+                          )}
+                          
                           <div
-                            className={`${
-                              message.sender_id === user.id
-                                ? 'message-bubble-sent'
-                                : 'message-bubble-received'
+                            className={`max-w-xs lg:max-w-md xl:max-w-lg px-4 py-2 rounded-2xl ${
+                              isOwnMessage
+                                ? 'bg-primary text-primary-foreground rounded-br-md'
+                                : 'bg-muted text-foreground rounded-bl-md'
                             }`}
                           >
-                            <p className="break-words text-sm sm:text-base">{message.content}</p>
-                            <p className={`text-xs mt-1 opacity-70`}>
+                            <p className="break-words text-sm leading-relaxed">{message.content}</p>
+                            <p className={`text-xs mt-1 ${isOwnMessage ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
                               {new Date(message.created_at).toLocaleTimeString([], {
                                 hour: '2-digit',
                                 minute: '2-digit'
                               })}
                             </p>
                           </div>
+                          
+                          {isOwnMessage && <div className="w-8 h-8 flex-shrink-0" />}
                         </div>
-                      ))
-                    )}
-                  </div>
+                      );
+                    })
+                  )}
                 </div>
+              </div>
 
-                {/* Message Input */}
-                <div className="p-3 sm:p-4 border-t border-gray-100 safe-area-pb">
-                  <form onSubmit={handleSendMessage} className="flex items-center space-x-2 sm:space-x-3">
+              {/* Message Input */}
+              <div className="p-4 border-t border-border bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/60">
+                <div className="max-w-4xl mx-auto">
+                  <form onSubmit={handleSendMessage} className="flex items-end space-x-3">
                     <MessageAttachment onAttachmentSelect={handleAttachmentSelect} />
+                    
                     <div className="flex-1 relative">
                       <Input
                         placeholder="Type a message..."
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
-                        className="input-mobile pr-12 focus:ring-2 focus:ring-primary"
+                        className="min-h-[40px] bg-muted border-0 focus-visible:ring-1 focus-visible:ring-ring pr-12 resize-none"
                         disabled={sendingMessage}
                       />
                       <Button 
                         type="button" 
                         variant="ghost" 
                         size="sm" 
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 btn-ghost-mobile"
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 w-8 h-8 rounded-full hover:bg-muted-foreground/10"
                       >
-                        <Smile className="w-5 h-5 text-gray-600" />
+                        <Smile className="w-4 h-4 text-muted-foreground" />
                       </Button>
                     </div>
+                    
                     <Button 
                       type="submit" 
                       size="sm" 
                       disabled={!newMessage.trim() || sendingMessage}
-                      className="btn-primary"
+                      className="w-10 h-10 rounded-full"
                     >
                       {sendingMessage ? (
-                        <div className="w-5 h-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                        <div className="w-4 h-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                       ) : (
-                        <Send className="w-5 h-5" />
+                        <Send className="w-4 h-4" />
                       )}
                     </Button>
                   </form>
                 </div>
-              </>
-            ) : (
-              <div className="flex-1 flex items-center justify-center p-4">
-                <div className="text-center max-w-sm">
-                  <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                    <MessageCircle className="w-8 h-8 text-muted-foreground" />
-                  </div>
-                  <h3 className="font-medium mb-2 text-mobile-body">No conversation selected</h3>
-                  <p className="text-xs sm:text-sm text-muted-foreground">
-                    Choose a conversation from the list to start messaging
-                  </p>
-                </div>
               </div>
-            )}
-          </div>
+            </>
+          ) : (
+            /* No Chat Selected */
+            <div className="hidden lg:flex flex-1 items-center justify-center p-8">
+              <div className="text-center max-w-md">
+                <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
+                  <MessageCircle className="w-10 h-10 text-muted-foreground" />
+                </div>
+                <h3 className="text-xl font-semibold mb-3">Your messages</h3>
+                <p className="text-muted-foreground mb-6">
+                  Send private messages to friends, family, or colleagues
+                </p>
+                <Button onClick={() => setNewChatDialogOpen(true)}>
+                  Start new conversation
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </main>
 
