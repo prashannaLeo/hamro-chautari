@@ -48,7 +48,7 @@ const VideoCall: React.FC<VideoCallProps> = ({
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
-  const [isCallActive, setIsCallActive] = useState(!isIncoming);
+  const [isCallActive, setIsCallActive] = useState(!isIncoming || callStatus === 'answered');
   const [callStartTime, setCallStartTime] = useState<number | null>(null);
 
   useEffect(() => {
@@ -66,9 +66,8 @@ const VideoCall: React.FC<VideoCallProps> = ({
     return () => clearInterval(interval);
   }, [isCallActive, callStatus, callStartTime]);
 
-  // Attach provided streams
+  // Attach local stream immediately for caller preview
   useEffect(() => {
-    if (!isCallActive) return;
     if (localVideoRef.current && localStream) {
       localVideoRef.current.srcObject = localStream;
       localVideoRef.current
@@ -77,6 +76,10 @@ const VideoCall: React.FC<VideoCallProps> = ({
           // Autoplay might be blocked until user interaction
         });
     }
+  }, [localStream]);
+
+  // Attach remote stream when available
+  useEffect(() => {
     if (remoteVideoRef.current && remoteStream) {
       remoteVideoRef.current.srcObject = remoteStream;
       remoteVideoRef.current.muted = false;
@@ -86,7 +89,7 @@ const VideoCall: React.FC<VideoCallProps> = ({
           // Autoplay might be blocked until user interaction
         });
     }
-  }, [isCallActive, localStream, remoteStream]);
+  }, [remoteStream]);
 
   const toggleVideo = () => {
     const track = localStream?.getVideoTracks()[0];
@@ -219,7 +222,7 @@ const VideoCall: React.FC<VideoCallProps> = ({
       {/* Video container */}
       <div className="flex-1 relative">
         {/* Remote video or placeholder */}
-        {remoteStream && callStatus === 'answered' ? (
+        {remoteStream ? (
           <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover bg-gray-900" />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">

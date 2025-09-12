@@ -46,7 +46,7 @@ const VoiceCall: React.FC<VoiceCallProps> = ({
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isSpeakerEnabled, setIsSpeakerEnabled] = useState(true);
   const [callDuration, setCallDuration] = useState(0);
-  const [isCallActive, setIsCallActive] = useState(!isIncoming);
+  const [isCallActive, setIsCallActive] = useState(!isIncoming || callStatus === 'answered');
   const [callStartTime, setCallStartTime] = useState<number | null>(null);
 
   useEffect(() => {
