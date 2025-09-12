@@ -44,6 +44,11 @@ export class WebRTCService {
       }
     };
 
+    // Helpful negotiation logs
+    this.peerConnection.onnegotiationneeded = () => {
+      console.log('Negotiation needed. Signaling state:', this.peerConnection?.signalingState);
+    };
+
     // Handle remote stream
     this.peerConnection.ontrack = (event) => {
       console.log('Received remote track');
@@ -74,10 +79,16 @@ export class WebRTCService {
       const stream = await this.getUserMedia(includeVideo);
       this.localStream = stream;
 
-      // Add tracks to peer connection
+      // Add tracks to peer connection (avoid duplicates)
+      const senders = this.peerConnection.getSenders();
       stream.getTracks().forEach(track => {
         if (this.peerConnection) {
-          this.peerConnection.addTrack(track, stream);
+          const existing = senders.find((s) => s.track && s.track.kind === track.kind);
+          if (existing) {
+            existing.replaceTrack(track);
+          } else {
+            this.peerConnection.addTrack(track, stream);
+          }
         }
       });
 
@@ -101,14 +112,29 @@ export class WebRTCService {
     }
 
     try {
+      // Ensure we are in the correct state to answer
+      let attempts = 0;
+      while (this.peerConnection.signalingState !== 'have-remote-offer' && attempts < 10) {
+        await new Promise((r) => setTimeout(r, 50));
+        attempts++;
+      }
+      if (this.peerConnection.signalingState !== 'have-remote-offer') {
+        throw new Error(`createAnswer called in invalid state: ${this.peerConnection.signalingState}`);
+      }
+
       // Get user media
       const stream = await this.getUserMedia(includeVideo);
       this.localStream = stream;
 
-      // Add tracks to peer connection
-      stream.getTracks().forEach(track => {
-        if (this.peerConnection) {
-          this.peerConnection.addTrack(track, stream);
+      // Add tracks to peer connection (avoid duplicates)
+      const senders = this.peerConnection.getSenders();
+      stream.getTracks().forEach((track) => {
+        const kind = track.kind;
+        const existing = senders.find((s) => s.track && s.track.kind === kind);
+        if (existing) {
+          existing.replaceTrack(track);
+        } else {
+          this.peerConnection!.addTrack(track, stream);
         }
       });
 

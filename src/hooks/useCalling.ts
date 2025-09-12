@@ -105,6 +105,7 @@ export const useCalling = () => {
         if (
           callData.status === 'answered' &&
           callData.offer &&
+          (callData.offer as any).type === 'offer' &&
           (callData.offer as any).sdp &&
           lastProcessedOfferSdpRef.current !== (callData.offer as any).sdp &&
           lastLocalOfferSdpRef.current !== (callData.offer as any).sdp
@@ -233,6 +234,7 @@ export const useCalling = () => {
         if (
           callData.status === 'answered' &&
           (callData as any).offer &&
+          (callData as any).offer.type === 'offer' &&
           (callData as any).offer.sdp &&
           lastProcessedOfferSdpRef.current !== (callData as any).offer.sdp &&
           lastLocalOfferSdpRef.current !== (callData as any).offer.sdp
