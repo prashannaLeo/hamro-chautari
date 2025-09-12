@@ -25,6 +25,17 @@ export class WebRTCService {
     this.initializePeerConnection();
   }
 
+  private ensureTransceivers(includeVideo: boolean) {
+    if (!this.peerConnection) return;
+    const existingKinds = (this.peerConnection.getTransceivers?.() || []).map(t => t.receiver.track?.kind).filter(Boolean);
+    if (!existingKinds.includes('audio')) {
+      this.peerConnection.addTransceiver('audio', { direction: 'sendrecv' });
+    }
+    if (includeVideo && !existingKinds.includes('video')) {
+      this.peerConnection.addTransceiver('video', { direction: 'sendrecv' });
+    }
+  }
+
   private initializePeerConnection() {
     this.peerConnection = new RTCPeerConnection(this.configuration);
 
@@ -75,6 +86,8 @@ export class WebRTCService {
     }
 
     try {
+      // Prepare transceivers for recv
+      this.ensureTransceivers(includeVideo);
       // Get user media
       const stream = await this.getUserMedia(includeVideo);
       this.localStream = stream;
@@ -122,6 +135,8 @@ export class WebRTCService {
         throw new Error(`createAnswer called in invalid state: ${this.peerConnection.signalingState}`);
       }
 
+      // Prepare transceivers for recv
+      this.ensureTransceivers(includeVideo);
       // Get user media
       const stream = await this.getUserMedia(includeVideo);
       this.localStream = stream;
@@ -154,6 +169,21 @@ async setRemoteDescription(description: RTCSessionDescriptionInit | RTCSessionDe
   }
 
   try {
+    const current = this.peerConnection.remoteDescription;
+    const descType = (description as any)?.type;
+    const descSdp = (description as any)?.sdp;
+
+    // Avoid duplicate or invalid state sets (common during realtime flaps)
+    if (
+      current?.sdp && descSdp && current.sdp === descSdp
+    ) {
+      return;
+    }
+    if (descType === 'answer' && this.peerConnection.signalingState === 'stable') {
+      // Already in stable; don't apply another answer
+      return;
+    }
+
     await this.peerConnection.setRemoteDescription(description);
     // Drain any buffered ICE candidates now that remote description is set
     if (this.candidateBuffer.length > 0) {
@@ -179,6 +209,10 @@ async addIceCandidate(candidate: RTCIceCandidateInit) {
   }
 
   try {
+    // Ignore empty or malformed candidates
+    if (!candidate || !(candidate as any).candidate) {
+      return;
+    }
     // If remote description not yet set, buffer the candidate
     if (!this.peerConnection.remoteDescription || !this.peerConnection.remoteDescription.type) {
       this.candidateBuffer.push(candidate);
@@ -250,18 +284,26 @@ async addIceCandidate(candidate: RTCIceCandidateInit) {
       throw new Error('Peer connection not initialized');
     }
 
+    // Ensure we have proper transceivers for video
+    this.ensureTransceivers(true);
+
     // Ensure we have a local stream
     if (!this.localStream) {
       // Get both audio and video if no stream yet
       this.localStream = await this.getUserMedia(true);
-      this.localStream.getTracks().forEach(track => this.peerConnection!.addTrack(track, this.localStream!));
+      const senders = this.peerConnection.getSenders();
+      this.localStream.getTracks().forEach(track => {
+        const existing = senders.find(s => s.track && s.track.kind === track.kind);
+        if (existing) existing.replaceTrack(track); else this.peerConnection!.addTrack(track, this.localStream!);
+      });
     } else if (this.localStream.getVideoTracks().length === 0) {
       // Get only video and add it to existing stream
       const videoOnly = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } }, audio: false });
       const vTrack = videoOnly.getVideoTracks()[0];
       if (vTrack) {
         this.localStream.addTrack(vTrack);
-        this.peerConnection.addTrack(vTrack, this.localStream);
+        const videoSender = this.peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
+        if (videoSender) videoSender.replaceTrack(vTrack); else this.peerConnection.addTrack(vTrack, this.localStream);
       }
     }
 
