@@ -167,28 +167,27 @@ const VoiceCall: React.FC<VoiceCallProps> = ({
   }
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 z-50 flex flex-col">
-      {/* Call Interface */}
+    <div className="video-call-mobile">
       <div className="flex-1 flex flex-col items-center justify-center p-8">
         <div className="text-center mb-12">
           <div className="relative mb-8">
-            <Avatar className="w-40 h-40 mx-auto ring-4 ring-white/30 shadow-2xl">
+            <Avatar className="w-32 h-32 sm:w-40 sm:h-40 mx-auto ring-4 ring-white/30 shadow-2xl">
               <AvatarImage src={callerAvatar} alt={callerName} />
-              <AvatarFallback className="bg-primary/20 text-white text-3xl">
+              <AvatarFallback className="bg-primary/20 text-white text-2xl sm:text-3xl">
                 {callerName.split(' ').map((n) => n[0]).join('').toUpperCase()}
               </AvatarFallback>
             </Avatar>
             {callStatus === 'answered' && (
               <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2">
-                <div className="bg-green-500 w-8 h-8 rounded-full animate-pulse flex items-center justify-center">
-                  <div className="w-4 h-4 bg-white rounded-full"></div>
+                <div className="bg-green-500 w-6 h-6 sm:w-8 sm:h-8 rounded-full animate-pulse flex items-center justify-center">
+                  <div className="w-3 h-3 sm:w-4 sm:h-4 bg-white rounded-full"></div>
                 </div>
               </div>
             )}
           </div>
 
-          <h1 className="text-3xl font-bold text-white mb-2">{callerName}</h1>
-          <p className="text-white/70 text-xl">{getStatusText()}</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">{callerName}</h1>
+          <p className="text-white/70 text-lg sm:text-xl">{getStatusText()}</p>
         </div>
 
         {/* Remote Audio */}
@@ -196,19 +195,19 @@ const VoiceCall: React.FC<VoiceCallProps> = ({
       </div>
 
       {/* Controls */}
-      <div className="bg-black/30 backdrop-blur-sm p-8 flex justify-center items-center gap-6">
-        <Button onClick={toggleSpeaker} variant={isSpeakerEnabled ? 'secondary' : 'outline'} size="lg" className="rounded-full w-16 h-16 bg-white/10 hover:bg-white/20 border-white/30">
+      <div className="video-call-controls">
+        <Button onClick={toggleSpeaker} variant={isSpeakerEnabled ? 'secondary' : 'outline'} size="lg" className="btn-ghost-mobile rounded-full bg-white/10 hover:bg-white/20 border-white/30">
           {isSpeakerEnabled ? <Volume2 className="w-6 h-6 text-white" /> : <VolumeX className="w-6 h-6 text-white" />}
         </Button>
         {callStatus === 'answered' && onSwitchToVideo && (
-          <Button onClick={onSwitchToVideo} variant="secondary" size="lg" className="rounded-full w-16 h-16">
+          <Button onClick={onSwitchToVideo} variant="secondary" size="lg" className="btn-ghost-mobile rounded-full">
             <Video className="w-6 h-6" />
           </Button>
         )}
-        <Button onClick={toggleAudio} variant={isAudioEnabled ? 'secondary' : 'destructive'} size="lg" className="rounded-full w-16 h-16">
+        <Button onClick={toggleAudio} variant={isAudioEnabled ? 'secondary' : 'destructive'} size="lg" className="btn-ghost-mobile rounded-full">
           {isAudioEnabled ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
         </Button>
-        <Button onClick={handleEndCall} variant="destructive" size="lg" className="rounded-full w-16 h-16 bg-red-500 hover:bg-red-600">
+        <Button onClick={handleEndCall} variant="destructive" size="lg" className="btn-ghost-mobile rounded-full bg-red-500 hover:bg-red-600">
           <PhoneOff className="w-6 h-6" />
         </Button>
       </div>

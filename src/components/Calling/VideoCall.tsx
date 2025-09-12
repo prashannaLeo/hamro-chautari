@@ -254,16 +254,16 @@ const VideoCall: React.FC<VideoCallProps> = ({
   }
 
   return (
-    <div className="fixed inset-0 bg-black z-50 flex flex-col">
+    <div className="video-call-mobile">
       {/* Header */}
-      <div className="bg-black/50 backdrop-blur-sm p-4 flex justify-between items-center">
+      <div className="safe-area-pt bg-black/50 backdrop-blur-sm p-4 flex justify-between items-center">
         <div className="flex items-center gap-3">
           <Users className="w-5 h-5 text-white" />
-          <span className="text-white font-medium">{callerName}</span>
-          <span className="text-white/70 text-sm">{getCallStatusText()}</span>
+          <span className="text-white font-medium text-sm sm:text-base">{callerName}</span>
+          <span className="text-white/70 text-xs sm:text-sm">{getCallStatusText()}</span>
         </div>
-        <Button variant="ghost" size="sm" className="text-white hover:bg-white/10">
-          <Settings className="w-4 h-4" />
+        <Button variant="ghost" size="sm" className="text-white hover:bg-white/10 btn-ghost-mobile">
+          <Settings className="w-5 h-5" />
         </Button>
       </div>
 
@@ -275,21 +275,21 @@ const VideoCall: React.FC<VideoCallProps> = ({
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
             <div className="text-center">
-              <div className="w-32 h-32 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Video className="w-16 h-16 text-white/60" />
+              <div className="w-24 h-24 sm:w-32 sm:h-32 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Video className="w-12 h-12 sm:w-16 sm:h-16 text-white/60" />
               </div>
-              <h3 className="text-white text-xl font-medium mb-2">{callerName}</h3>
-              <p className="text-white/70">{getCallStatusText()}</p>
+              <h3 className="text-white text-lg sm:text-xl font-medium mb-2">{callerName}</h3>
+              <p className="text-white/70 text-sm sm:text-base">{getCallStatusText()}</p>
             </div>
           </div>
         )}
         
         {/* Local video */}
-        <div className="absolute top-4 right-4 w-48 h-36 bg-gray-800 rounded-lg overflow-hidden border-2 border-white/20">
+        <div className="absolute top-4 right-4 w-32 h-24 sm:w-48 sm:h-36 bg-gray-800 rounded-lg overflow-hidden border-2 border-white/20">
           <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
           {!isVideoEnabled && (
             <div className="absolute inset-0 bg-gray-800 flex items-center justify-center">
-              <VideoOff className="w-8 h-8 text-white/60" />
+              <VideoOff className="w-6 h-6 sm:w-8 sm:h-8 text-white/60" />
             </div>
           )}
         </div>
@@ -299,17 +299,17 @@ const VideoCall: React.FC<VideoCallProps> = ({
       <audio ref={remoteAudioRef} autoPlay className="hidden" />
 
       {/* Controls */}
-      <div className="bg-black/50 backdrop-blur-sm p-6 flex justify-center items-center gap-4">
-        <Button onClick={toggleAudio} variant={isAudioEnabled ? 'secondary' : 'destructive'} size="lg" className="rounded-full w-14 h-14">
+      <div className="video-call-controls">
+        <Button onClick={toggleAudio} variant={isAudioEnabled ? 'secondary' : 'destructive'} size="lg" className="btn-ghost-mobile rounded-full">
           {isAudioEnabled ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
         </Button>
-        <Button onClick={toggleVideo} variant={isVideoEnabled ? 'secondary' : 'destructive'} size="lg" className="rounded-full w-14 h-14">
+        <Button onClick={toggleVideo} variant={isVideoEnabled ? 'secondary' : 'destructive'} size="lg" className="btn-ghost-mobile rounded-full">
           {isVideoEnabled ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
         </Button>
-        <Button onClick={toggleScreenShare} variant={isScreenSharing ? 'default' : 'secondary'} size="lg" className="rounded-full w-14 h-14">
+        <Button onClick={toggleScreenShare} variant={isScreenSharing ? 'default' : 'secondary'} size="lg" className="btn-ghost-mobile rounded-full">
           {isScreenSharing ? <MonitorOff className="w-6 h-6" /> : <Monitor className="w-6 h-6" />}
         </Button>
-        <Button onClick={handleEndCall} variant="destructive" size="lg" className="rounded-full w-14 h-14 ml-4">
+        <Button onClick={handleEndCall} variant="destructive" size="lg" className="btn-ghost-mobile rounded-full ml-4 bg-red-500 hover:bg-red-600">
           <PhoneOff className="w-6 h-6" />
         </Button>
       </div>

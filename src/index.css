@@ -116,6 +116,22 @@
   body {
     @apply bg-background text-foreground font-inter;
     font-feature-settings: "rlig" 1, "calt" 1;
+    /* Prevent zoom on iOS when focusing inputs */
+    -webkit-text-size-adjust: 100%;
+    /* Improve mobile scrolling */
+    -webkit-overflow-scrolling: touch;
+  }
+
+  html {
+    /* Prevent horizontal scrolling */
+    overflow-x: hidden;
+  }
+
+  /* iOS safe area support */
+  @supports (padding: max(0px)) {
+    body {
+      padding-bottom: max(0px, env(safe-area-inset-bottom));
+    }
   }
 
   /* Custom scrollbar */
@@ -147,22 +163,126 @@
   }
 }
 
-/* Professional Button Styles with proper contrast */
+/* Mobile-First Responsive Component System */
 @layer components {
+  /* Mobile Container System - Facebook-like */
+  .container-mobile {
+    @apply w-full px-4 mx-auto;
+    @apply sm:px-6;
+    @apply lg:px-8;
+    @apply xl:max-w-6xl;
+  }
+
+  .container-full {
+    @apply w-full h-full;
+  }
+
+  /* Facebook-style Layout Grid */
+  .fb-layout-grid {
+    @apply grid grid-cols-1;
+    @apply lg:grid-cols-12;
+    @apply gap-4 lg:gap-6;
+  }
+
+  .fb-main-content {
+    @apply lg:col-span-8;
+    @apply xl:col-span-6;
+    @apply xl:col-start-4;
+  }
+
+  .fb-sidebar-left {
+    @apply hidden;
+    @apply lg:block lg:col-span-3;
+    @apply xl:col-span-3 xl:col-start-1;
+  }
+
+  .fb-sidebar-right {
+    @apply hidden;
+    @apply lg:block lg:col-span-1;
+    @apply xl:col-span-3 xl:col-start-10;
+  }
+
+  /* Mobile Chat Layout */
+  .chat-mobile-layout {
+    @apply flex flex-col h-screen;
+    @apply lg:grid lg:grid-cols-3 lg:h-auto;
+  }
+
+  .chat-list-mobile {
+    @apply flex-1 min-h-0;
+    @apply lg:col-span-1;
+  }
+
+  .chat-content-mobile {
+    @apply hidden;
+    @apply lg:block lg:col-span-2;
+  }
+
+  .chat-content-fullscreen {
+    @apply fixed inset-0 z-50 bg-white;
+    @apply lg:relative lg:z-auto;
+  }
+
+  /* Professional Button Styles */
   .btn-primary {
-    @apply bg-primary text-primary-foreground px-6 py-3 rounded-lg font-medium shadow-md hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+    @apply bg-primary text-primary-foreground px-4 py-2 sm:px-6 sm:py-3 rounded-lg font-medium shadow-md hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+    @apply active:scale-95; /* Mobile press feedback */
   }
 
   .btn-secondary {
-    @apply border-2 border-primary text-primary bg-background px-6 py-3 rounded-lg font-medium hover:bg-primary hover:text-primary-foreground transform hover:scale-[1.02] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+    @apply border-2 border-primary text-primary bg-background px-4 py-2 sm:px-6 sm:py-3 rounded-lg font-medium hover:bg-primary hover:text-primary-foreground transform hover:scale-[1.02] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+    @apply active:scale-95;
   }
 
-  .btn-success {
-    @apply bg-secondary text-secondary-foreground px-6 py-3 rounded-lg font-medium shadow-md hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2;
+  .btn-ghost-mobile {
+    @apply flex items-center justify-center p-3 rounded-xl transition-all duration-200;
+    @apply hover:bg-muted active:bg-muted/70;
+    @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+    min-height: 44px; /* iOS minimum tap target */
+    min-width: 44px;
   }
 
-  .btn-danger {
-    @apply bg-destructive text-destructive-foreground px-6 py-3 rounded-lg font-medium shadow-md hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-destructive focus:ring-offset-2;
+  /* Mobile Navigation */
+  .mobile-nav {
+    @apply fixed bottom-0 left-0 right-0 z-50;
+    @apply bg-white/95 backdrop-blur-md border-t border-gray-200;
+    @apply lg:hidden;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .mobile-nav-item {
+    @apply flex flex-col items-center justify-center py-2 px-2;
+    @apply text-gray-600 hover:text-primary transition-colors;
+    @apply active:scale-95 transform transition-transform duration-100;
+    min-height: 56px; /* Larger tap target for bottom nav */
+  }
+
+  .mobile-nav-item.active {
+    @apply text-primary bg-primary/10 rounded-lg;
+  }
+
+  /* Desktop Header */
+  .desktop-header {
+    @apply sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-gray-200;
+  }
+
+  /* Mobile Header */
+  .mobile-header {
+    @apply sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-200;
+    @apply lg:hidden;
+  }
+
+  /* Card System - Mobile First */
+  .card-mobile {
+    @apply bg-white rounded-lg border border-gray-200 shadow-sm;
+    @apply sm:rounded-xl sm:shadow-md;
+    @apply lg:shadow-lg;
+  }
+
+  .card-content-mobile {
+    @apply p-3;
+    @apply sm:p-4;
+    @apply lg:p-6;
   }
 
   /* Glass morphism cards */
@@ -196,6 +316,14 @@
     @apply scale-x-100 origin-bottom-left;
   }
 
+  /* Input System - Mobile First */
+  .input-mobile {
+    @apply bg-background border border-input text-foreground placeholder:text-muted-foreground;
+    @apply focus:border-ring focus:ring-2 focus:ring-ring/20 transition-colors;
+    @apply h-12 px-4 text-base rounded-lg; /* Prevent zoom on iOS */
+    @apply sm:h-10 sm:text-sm; /* Smaller on desktop */
+  }
+
   /* Better input styles with proper contrast */
   .input-field {
     @apply bg-background border border-input text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20 transition-colors;
@@ -206,12 +334,14 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
 
+  .safe-area-pt {
+    padding-top: env(safe-area-inset-top);
+  }
+
   /* Touch-friendly tap targets */
-  @media (max-width: 640px) {
-    button, .btn, [role="button"] {
-      min-height: 44px;
-      min-width: 44px;
-    }
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
   }
 
   /* Improved mobile scrolling */
@@ -220,18 +350,99 @@
     scroll-behavior: smooth;
   }
 
-  /* Mobile input improvements */
-  @media (max-width: 640px) {
-    input, textarea, select {
-      font-size: 16px; /* Prevents zoom on iOS */
-    }
+  /* Mobile Messaging Interface */
+  .message-bubble-sent {
+    @apply bg-primary text-primary-foreground ml-auto rounded-2xl rounded-br-md px-4 py-2 max-w-[80%];
+    @apply sm:max-w-[70%];
   }
 
-  /* Better focus states for mobile */
-  @media (max-width: 640px) {
-    *:focus {
-      outline: 2px solid hsl(var(--ring));
-      outline-offset: 2px;
-    }
+  .message-bubble-received {
+    @apply bg-muted text-muted-foreground mr-auto rounded-2xl rounded-bl-md px-4 py-2 max-w-[80%];
+    @apply sm:max-w-[70%];
+  }
+
+  /* Mobile Video Call Interface */
+  .video-call-mobile {
+    @apply fixed inset-0 z-50 bg-black flex flex-col;
+  }
+
+  .video-call-controls {
+    @apply bg-black/50 backdrop-blur-sm p-4 flex justify-center items-center gap-4;
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+  }
+
+  /* Mobile Feed Layout */
+  .feed-mobile {
+    @apply space-y-4;
+    @apply sm:space-y-6;
+  }
+
+  .post-card-mobile {
+    @apply bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden;
+    @apply sm:rounded-xl sm:shadow-md;
+  }
+
+  /* Responsive Typography */
+  .text-mobile-h1 {
+    @apply text-2xl font-bold;
+    @apply sm:text-3xl;
+    @apply lg:text-4xl;
+  }
+
+  .text-mobile-h2 {
+    @apply text-xl font-semibold;
+    @apply sm:text-2xl;
+    @apply lg:text-3xl;
+  }
+
+  .text-mobile-body {
+    @apply text-base;
+    @apply sm:text-sm;
+  }
+
+  /* Loading States */
+  .skeleton-mobile {
+    @apply animate-pulse bg-muted rounded-lg;
+    @apply h-4 sm:h-3;
+  }
+
+  /* Mobile Search */
+  .search-mobile {
+    @apply flex-1 relative;
+  }
+
+  .search-input-mobile {
+    @apply w-full h-12 pl-12 pr-4 bg-gray-50 border-0 rounded-xl;
+    @apply focus:ring-2 focus:ring-primary focus:bg-white transition-all;
+    @apply text-base; /* Prevent zoom on iOS */
+    @apply sm:h-10 sm:text-sm;
+  }
+
+  /* Mobile Modal */
+  .modal-mobile {
+    @apply fixed inset-0 z-50 bg-black/50 flex items-end justify-center;
+    @apply sm:items-center;
+  }
+
+  .modal-content-mobile {
+    @apply bg-white rounded-t-2xl w-full max-h-[90vh] overflow-hidden;
+    @apply sm:rounded-2xl sm:w-auto sm:min-w-[400px] sm:max-w-[90vw];
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Mobile Avatar Sizes */
+  .avatar-mobile-sm {
+    @apply w-8 h-8;
+    @apply sm:w-6 sm:h-6;
+  }
+
+  .avatar-mobile-md {
+    @apply w-12 h-12;
+    @apply sm:w-10 sm:h-10;
+  }
+
+  .avatar-mobile-lg {
+    @apply w-16 h-16;
+    @apply sm:w-14 sm:h-14;
   }
 }

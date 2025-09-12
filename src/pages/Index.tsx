@@ -81,15 +81,15 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
       <Navbar />
       
-      <main className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-8 pb-20 sm:pb-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
-          {/* Main Feed - Takes 3 columns on large screens */}
-          <div className="lg:col-span-3 space-y-4 sm:space-y-6">
+      <main className="container-mobile pb-20 sm:pb-8 pt-4 sm:pt-8">
+        <div className="fb-layout-grid">
+          {/* Main Feed - Facebook-style layout */}
+          <div className="fb-main-content space-y-4 sm:space-y-6">
             <div className="animate-fade-in">
               <CreatePost />
             </div>
             
-            <div className="space-y-4 sm:space-y-6">
+            <div className="feed-mobile">
               {postsLoading ? (
                 <div className="flex items-center justify-center py-12">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -135,8 +135,8 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Sidebar - Takes 1 column on large screens, hidden on mobile, shown as bottom section */}
-          <div className="lg:col-span-1 space-y-4 sm:space-y-6 order-first lg:order-last">
+          {/* Right Sidebar - Hidden on mobile, shown on desktop */}
+          <div className="fb-sidebar-right space-y-4 sm:space-y-6">
             <div className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
               <PostSuggestions />
             </div>
@@ -163,7 +163,7 @@ const Index = () => {
 
       {/* Delete Post Confirmation */}
       <AlertDialog open={!!deletingPostId} onOpenChange={(open) => !open && setDeletingPostId(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="modal-content-mobile">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Post</AlertDialogTitle>
             <AlertDialogDescription>

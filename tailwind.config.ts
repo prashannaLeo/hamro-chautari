@@ -22,6 +22,10 @@ export default {
 				'inter': ['Inter', 'system-ui', 'sans-serif'],
 				'poppins': ['Poppins', 'system-ui', 'sans-serif'],
 			},
+			screens: {
+				'xs': '475px',
+				'3xl': '1600px',
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
@@ -71,6 +75,19 @@ export default {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
+			},
+			spacing: {
+				'safe-bottom': 'env(safe-area-inset-bottom)',
+				'safe-top': 'env(safe-area-inset-top)',
+				'safe-left': 'env(safe-area-inset-left)',
+				'safe-right': 'env(safe-area-inset-right)',
+			},
+			minHeight: {
+				'screen-safe': 'calc(100vh - env(safe-area-inset-bottom))',
+			},
+			height: {
+				'screen-safe': 'calc(100vh - env(safe-area-inset-bottom))',
+				'dvh': '100dvh', /* Dynamic viewport height for mobile */
 			},
 			keyframes: {
 				'accordion-down': {
@@ -132,6 +149,22 @@ export default {
 					'0%': { transform: 'translateX(0)' },
 					'100%': { transform: 'translateX(100%)' }
 				},
+				'slide-in-left': {
+					'0%': { transform: 'translateX(-100%)' },
+					'100%': { transform: 'translateX(0)' }
+				},
+				'slide-out-left': {
+					'0%': { transform: 'translateX(0)' },
+					'100%': { transform: 'translateX(-100%)' }
+				},
+				'slide-in-up': {
+					'0%': { transform: 'translateY(100%)' },
+					'100%': { transform: 'translateY(0)' }
+				},
+				'slide-out-down': {
+					'0%': { transform: 'translateY(0)' },
+					'100%': { transform: 'translateY(100%)' }
+				},
 				'bounce-gentle': {
 					'0%, 100%': { transform: 'translateY(0)' },
 					'50%': { transform: 'translateY(-5px)' }
@@ -143,6 +176,10 @@ export default {
 				'shimmer': {
 					'0%': { backgroundPosition: '-200% 0' },
 					'100%': { backgroundPosition: '200% 0' }
+				},
+				'wiggle': {
+					'0%, 100%': { transform: 'rotate(-3deg)' },
+					'50%': { transform: 'rotate(3deg)' }
 				}
 			},
 			animation: {
@@ -154,9 +191,14 @@ export default {
 				'scale-out': 'scale-out 0.2s ease-out',
 				'slide-in-right': 'slide-in-right 0.3s ease-out',
 				'slide-out-right': 'slide-out-right 0.3s ease-out',
+				'slide-in-left': 'slide-in-left 0.3s ease-out',
+				'slide-out-left': 'slide-out-left 0.3s ease-out',
+				'slide-in-up': 'slide-in-up 0.3s ease-out',
+				'slide-out-down': 'slide-out-down 0.3s ease-out',
 				'bounce-gentle': 'bounce-gentle 2s ease-in-out infinite',
 				'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
-				'shimmer': 'shimmer 2s linear infinite'
+				'shimmer': 'shimmer 2s linear infinite',
+				'wiggle': 'wiggle 1s ease-in-out infinite'
 			},
 			boxShadow: {
 				'soft': 'var(--shadow-soft)',
