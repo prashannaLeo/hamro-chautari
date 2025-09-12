@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
-import { useCalling } from '@/hooks/useCalling';
+import { useCallingContext } from '@/contexts/CallingContext';
 import VideoCall from './VideoCall';
 import VoiceCall from './VoiceCall';
 
 const CallManager: React.FC = () => {
-  const { currentCall, incomingCall, answerCall, declineCall, endCall, switchToVideo, localStream, remoteStream } = useCalling();
+  const { currentCall, incomingCall, answerCall, declineCall, endCall, switchToVideo, localStream, remoteStream } = useCallingContext();
 
   // Set up media streams for video elements
   useEffect(() => {

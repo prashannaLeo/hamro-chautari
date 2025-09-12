@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useFriends } from '@/hooks/useFriends';
-import { useCalling } from '@/hooks/useCalling';
+import { useCallingContext } from '@/contexts/CallingContext';
 import { 
   UserPlus, 
   UserMinus, 
@@ -28,7 +28,7 @@ const FriendsList: React.FC = () => {
     removeFriend
   } = useFriends();
   
-  const { initiateCall } = useCalling();
+  const { initiateCall } = useCallingContext();
 
   const handleVideoCall = (friend: any) => {
     initiateCall(

@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useFriends } from '@/hooks/useFriends';
 import { useMessages } from '@/hooks/useMessages';
-import { useCalling } from '@/hooks/useCalling';
+import { useCallingContext } from '@/contexts/CallingContext';
 import { useUserSearch } from '@/hooks/useUserSearch';
 import EnhancedSearch from '@/components/Friends/EnhancedSearch';
 import { toast } from 'sonner';
@@ -71,7 +71,7 @@ const Friends = () => {
   } = useFriends();
   
   const { createChat } = useMessages();
-  const { initiateCall } = useCalling();
+  const { initiateCall } = useCallingContext();
   const { searchResults, loading: searchLoading, searchUsers } = useUserSearch();
 
   if (loading || friendsLoading) {

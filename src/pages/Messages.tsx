@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useMessages } from '@/hooks/useMessages';
-import { useCalling } from '@/hooks/useCalling';
+import { useCallingContext } from '@/contexts/CallingContext';
 import NewChatDialog from '@/components/Messages/NewChatDialog';
 import MessageAttachment from '@/components/Messages/MessageAttachment';
 import ChatOptionsMenu from '@/components/Messages/ChatOptionsMenu';
@@ -35,7 +35,7 @@ const Messages = () => {
     sendingMessage,
     refetchChats
   } = useMessages();
-  const { initiateCall } = useCalling();
+  const { initiateCall } = useCallingContext();
   const [selectedChat, setSelectedChat] = useState<any>(null);
   const [newMessage, setNewMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');

@@ -8,6 +8,7 @@ import { store } from './store';
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SocketProvider } from "@/contexts/SocketContext";
 import CallManager from "@/components/Calling/CallManager";
+import { CallingProvider } from "@/contexts/CallingContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Messages from "./pages/Messages";
@@ -25,11 +26,12 @@ const App = () => (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <SocketProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <CallManager />
-            <BrowserRouter
+          <CallingProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <CallManager />
+              <BrowserRouter
               future={{
                 v7_startTransition: true,
                 v7_relativeSplatPath: true,
@@ -48,7 +50,8 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
-          </TooltipProvider>
+            </TooltipProvider>
+          </CallingProvider>
         </SocketProvider>
       </AuthProvider>
     </QueryClientProvider>
