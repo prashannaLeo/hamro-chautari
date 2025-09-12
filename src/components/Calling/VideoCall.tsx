@@ -254,17 +254,27 @@ const VideoCall: React.FC<VideoCallProps> = ({
   }
 
   return (
-    <div className="video-call-mobile">
-      {/* Header */}
-      <div className="safe-area-pt bg-black/50 backdrop-blur-sm p-4 flex justify-between items-center">
+    <div className="fixed inset-0 bg-black z-[60] flex flex-col">
+      {/* Custom Header for Call */}
+      <div className="absolute top-0 left-0 right-0 z-[70] bg-black/50 backdrop-blur-sm p-4 flex justify-between items-center safe-area-pt">
         <div className="flex items-center gap-3">
           <Users className="w-5 h-5 text-white" />
           <span className="text-white font-medium text-sm sm:text-base">{callerName}</span>
           <span className="text-white/70 text-xs sm:text-sm">{getCallStatusText()}</span>
         </div>
-        <Button variant="ghost" size="sm" className="text-white hover:bg-white/10 btn-ghost-mobile">
-          <Settings className="w-5 h-5" />
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-white hover:bg-white/10 btn-ghost-mobile"
+            onClick={() => {
+              // Navigate to profile
+              window.location.href = '/profile';
+            }}
+          >
+            <Settings className="w-5 h-5" />
+          </Button>
+        </div>
       </div>
 
       {/* Video container */}
@@ -298,20 +308,42 @@ const VideoCall: React.FC<VideoCallProps> = ({
       {/* Hidden remote audio to ensure audio playback */}
       <audio ref={remoteAudioRef} autoPlay className="hidden" />
 
-      {/* Controls */}
-      <div className="video-call-controls">
-        <Button onClick={toggleAudio} variant={isAudioEnabled ? 'secondary' : 'destructive'} size="lg" className="btn-ghost-mobile rounded-full">
-          {isAudioEnabled ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
-        </Button>
-        <Button onClick={toggleVideo} variant={isVideoEnabled ? 'secondary' : 'destructive'} size="lg" className="btn-ghost-mobile rounded-full">
-          {isVideoEnabled ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
-        </Button>
-        <Button onClick={toggleScreenShare} variant={isScreenSharing ? 'default' : 'secondary'} size="lg" className="btn-ghost-mobile rounded-full">
-          {isScreenSharing ? <MonitorOff className="w-6 h-6" /> : <Monitor className="w-6 h-6" />}
-        </Button>
-        <Button onClick={handleEndCall} variant="destructive" size="lg" className="btn-ghost-mobile rounded-full ml-4 bg-red-500 hover:bg-red-600">
-          <PhoneOff className="w-6 h-6" />
-        </Button>
+      {/* Controls - Fixed at bottom with proper z-index */}
+      <div className="absolute bottom-0 left-0 right-0 z-[70] bg-black/50 backdrop-blur-sm p-4 safe-area-pb">
+        <div className="flex items-center justify-center gap-4">
+          <Button 
+            onClick={toggleAudio} 
+            variant={isAudioEnabled ? 'secondary' : 'destructive'} 
+            size="lg" 
+            className="rounded-full w-14 h-14 bg-white/10 hover:bg-white/20 border-0"
+          >
+            {isAudioEnabled ? <Mic className="w-6 h-6 text-white" /> : <MicOff className="w-6 h-6 text-white" />}
+          </Button>
+          <Button 
+            onClick={toggleVideo} 
+            variant={isVideoEnabled ? 'secondary' : 'destructive'} 
+            size="lg" 
+            className="rounded-full w-14 h-14 bg-white/10 hover:bg-white/20 border-0"
+          >
+            {isVideoEnabled ? <Video className="w-6 h-6 text-white" /> : <VideoOff className="w-6 h-6 text-white" />}
+          </Button>
+          <Button 
+            onClick={toggleScreenShare} 
+            variant={isScreenSharing ? 'default' : 'secondary'} 
+            size="lg" 
+            className="rounded-full w-14 h-14 bg-white/10 hover:bg-white/20 border-0"
+          >
+            {isScreenSharing ? <MonitorOff className="w-6 h-6 text-white" /> : <Monitor className="w-6 h-6 text-white" />}
+          </Button>
+          <Button 
+            onClick={handleEndCall} 
+            variant="destructive" 
+            size="lg" 
+            className="rounded-full w-14 h-14 bg-red-500 hover:bg-red-600 border-0 ml-4"
+          >
+            <PhoneOff className="w-6 h-6 text-white" />
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -361,14 +361,25 @@
     @apply sm:max-w-[70%];
   }
 
-  /* Mobile Video Call Interface */
+  /* Call Interface Styles - Higher z-index than navbar */
   .video-call-mobile {
-    @apply fixed inset-0 z-50 bg-black flex flex-col;
+    @apply fixed inset-0 z-[60] bg-black flex flex-col;
   }
 
-  .video-call-controls {
-    @apply bg-black/50 backdrop-blur-sm p-4 flex justify-center items-center gap-4;
+  .call-header {
+    @apply absolute top-0 left-0 right-0 z-[70] bg-black/50 backdrop-blur-sm p-4 flex justify-between items-center;
+    padding-top: calc(1rem + env(safe-area-inset-top));
+  }
+
+  .call-controls {
+    @apply absolute bottom-0 left-0 right-0 z-[70] bg-black/50 backdrop-blur-sm p-4;
+    @apply flex items-center justify-center gap-4;
     padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+  }
+
+  /* Profile button in call */
+  .call-profile-btn {
+    @apply text-white hover:bg-white/10 rounded-full p-2 transition-colors;
   }
 
   /* Mobile Feed Layout */
