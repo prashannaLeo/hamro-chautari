@@ -1,8 +1,12 @@
 const express = require('express');
+const { sanitizeInput, searchRateLimit } = require('../middleware/validation');
 const router = express.Router();
 
+// Apply input sanitization to all routes
+router.use(sanitizeInput);
+
 // Mock AI suggestions endpoint
-router.get('/suggestions', async (req, res) => {
+router.get('/suggestions', searchRateLimit, async (req, res) => {
   try {
     const { type, context } = req.query;
     
@@ -62,7 +66,7 @@ router.get('/suggestions', async (req, res) => {
 });
 
 // Smart reply suggestions for messages
-router.post('/smart-reply', async (req, res) => {
+router.post('/smart-reply', searchRateLimit, async (req, res) => {
   try {
     const { message, conversationHistory } = req.body;
     

@@ -1,9 +1,20 @@
 const express = require('express');
 const Post = require('../models/Post');
+const { 
+  sanitizeInput, 
+  validatePost, 
+  validateUserId, 
+  validatePagination, 
+  strictRateLimit, 
+  searchRateLimit 
+} = require('../middleware/validation');
 const router = express.Router();
 
+// Apply input sanitization to all routes
+router.use(sanitizeInput);
+
 // Get all posts with pagination
-router.get('/', async (req, res) => {
+router.get('/', validatePagination, async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
@@ -31,7 +42,7 @@ router.get('/', async (req, res) => {
 });
 
 // Get posts by user
-router.get('/user/:userId', async (req, res) => {
+router.get('/user/:userId', validateUserId, validatePagination, async (req, res) => {
   try {
     const { userId } = req.params;
     const page = parseInt(req.query.page) || 1;
@@ -50,7 +61,7 @@ router.get('/user/:userId', async (req, res) => {
 });
 
 // Create a new post
-router.post('/', async (req, res) => {
+router.post('/', strictRateLimit, validatePost, async (req, res) => {
   try {
     const postData = {
       ...req.body,
@@ -67,7 +78,7 @@ router.post('/', async (req, res) => {
 });
 
 // Like/Unlike a post
-router.post('/:postId/like', async (req, res) => {
+router.post('/:postId/like', strictRateLimit, validateUserId, async (req, res) => {
   try {
     const { postId } = req.params;
     const { userId } = req.body;
@@ -95,7 +106,7 @@ router.post('/:postId/like', async (req, res) => {
 });
 
 // Add comment to post
-router.post('/:postId/comment', async (req, res) => {
+router.post('/:postId/comment', strictRateLimit, validateUserId, async (req, res) => {
   try {
     const { postId } = req.params;
     const { userId, content } = req.body;
@@ -118,7 +129,7 @@ router.post('/:postId/comment', async (req, res) => {
 });
 
 // Search posts
-router.get('/search', async (req, res) => {
+router.get('/search', searchRateLimit, async (req, res) => {
   try {
     const { q, tags, location } = req.query;
     const query = { visibility: 'public' };

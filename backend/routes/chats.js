@@ -1,9 +1,20 @@
 const express = require('express');
 const Message = require('../models/Message');
+const { 
+  sanitizeInput, 
+  validateMessage, 
+  validateUserId, 
+  validatePagination, 
+  messageRateLimit, 
+  searchRateLimit 
+} = require('../middleware/validation');
 const router = express.Router();
 
+// Apply input sanitization to all routes
+router.use(sanitizeInput);
+
 // Get chat messages with pagination
-router.get('/:chatId/messages', async (req, res) => {
+router.get('/:chatId/messages', validatePagination, async (req, res) => {
   try {
     const { chatId } = req.params;
     const page = parseInt(req.query.page) || 1;
@@ -23,7 +34,7 @@ router.get('/:chatId/messages', async (req, res) => {
 });
 
 // Send a message
-router.post('/:chatId/messages', async (req, res) => {
+router.post('/:chatId/messages', messageRateLimit, validateMessage, async (req, res) => {
   try {
     const { chatId } = req.params;
     const messageData = {
@@ -47,7 +58,7 @@ router.post('/:chatId/messages', async (req, res) => {
 });
 
 // Mark message as read
-router.patch('/:chatId/messages/:messageId/read', async (req, res) => {
+router.patch('/:chatId/messages/:messageId/read', validateUserId, async (req, res) => {
   try {
     const { messageId } = req.params;
     const { userId } = req.body;
@@ -71,7 +82,7 @@ router.patch('/:chatId/messages/:messageId/read', async (req, res) => {
 });
 
 // Add reaction to message
-router.post('/:chatId/messages/:messageId/react', async (req, res) => {
+router.post('/:chatId/messages/:messageId/react', validateUserId, async (req, res) => {
   try {
     const { messageId } = req.params;
     const { userId, emoji } = req.body;
@@ -97,7 +108,7 @@ router.post('/:chatId/messages/:messageId/react', async (req, res) => {
 });
 
 // Search messages in a chat
-router.get('/:chatId/search', async (req, res) => {
+router.get('/:chatId/search', searchRateLimit, async (req, res) => {
   try {
     const { chatId } = req.params;
     const { q } = req.query;
