@@ -540,7 +540,6 @@ export const useCalling = () => {
     }
   }, []);
 
-
   // Cleanup on unmount
   useEffect(() => {
     return () => {
