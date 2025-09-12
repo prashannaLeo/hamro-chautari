@@ -35,6 +35,7 @@ export const useCalling = () => {
   const processedCandidatesRef = useRef<Set<string>>(new Set());
   const lastProcessedOfferSdpRef = useRef<string | null>(null);
   const lastLocalOfferSdpRef = useRef<string | null>(null);
+  const lastProcessedAnswerSdpRef = useRef<string | null>(null);
 
   // Initialize realtime subscription for calls
   useEffect(() => {
@@ -65,20 +66,31 @@ export const useCalling = () => {
         if (callData.receiver_id !== user.id && callData.caller_id !== user.id) return;
 
         console.log('Call UPDATE received:', callData.status);
-        if (callData.status === 'answered' && callData.answer) {
+        // If a fresh remote offer exists, handle renegotiation below and skip processing the old answer
+        const hasFreshRemoteOffer = !!(callData.offer && (callData.offer as any).sdp &&
+          lastProcessedOfferSdpRef.current !== (callData.offer as any).sdp &&
+          lastLocalOfferSdpRef.current !== (callData.offer as any).sdp);
+
+        if (!hasFreshRemoteOffer && callData.status === 'answered' && callData.answer) {
           if (callData.caller_id === user.id) {
-            try {
-              await webrtcService.setRemoteDescription(callData.answer as RTCSessionDescriptionInit);
-              setCurrentCall({
-                ...callData,
-                type: callData.type as 'video' | 'voice',
-                status: callData.status as 'initiating' | 'ringing' | 'answered' | 'ended' | 'declined'
-              } as CallData);
-              setIncomingCall(null);
-              setLocalStream(webrtcService.getLocalStream());
-              stopRingtone();
-            } catch (error) {
-              console.error('Error setting remote description:', error);
+            const answerSdp = (callData.answer as any)?.sdp;
+            if (answerSdp && lastProcessedAnswerSdpRef.current === answerSdp) {
+              // already applied
+            } else {
+              try {
+                await webrtcService.setRemoteDescription(callData.answer as RTCSessionDescriptionInit);
+                lastProcessedAnswerSdpRef.current = answerSdp || null;
+                setCurrentCall({
+                  ...callData,
+                  type: callData.type as 'video' | 'voice',
+                  status: callData.status as 'initiating' | 'ringing' | 'answered' | 'ended' | 'declined'
+                } as CallData);
+                setIncomingCall(null);
+                setLocalStream(webrtcService.getLocalStream());
+                stopRingtone();
+              } catch (error) {
+                console.error('Error setting remote description:', error);
+              }
             }
           }
         } else if (callData.status === 'declined' || callData.status === 'ended') {
@@ -182,20 +194,30 @@ export const useCalling = () => {
         if (!callData) return;
 
         // Process status changes
-        if (callData.status === 'answered' && callData.answer) {
+        const hasFreshRemoteOffer = !!((callData as any).offer && (callData as any).offer.sdp &&
+          lastProcessedOfferSdpRef.current !== (callData as any).offer.sdp &&
+          lastLocalOfferSdpRef.current !== (callData as any).offer.sdp);
+
+        if (!hasFreshRemoteOffer && callData.status === 'answered' && callData.answer) {
           if (callData.caller_id === user.id) {
-            try {
-              await webrtcService.setRemoteDescription(callData.answer as RTCSessionDescriptionInit);
-              setCurrentCall({
-                ...callData,
-                type: callData.type as 'video' | 'voice',
-                status: callData.status as 'initiating' | 'ringing' | 'answered' | 'ended' | 'declined'
-              } as CallData);
-              setIncomingCall(null);
-              setLocalStream(webrtcService.getLocalStream());
-              stopRingtone();
-            } catch (err) {
-              console.error('Polling: setRemoteDescription failed', err);
+            const answerSdp = (callData.answer as any)?.sdp;
+            if (answerSdp && lastProcessedAnswerSdpRef.current === answerSdp) {
+              // already applied
+            } else {
+              try {
+                await webrtcService.setRemoteDescription(callData.answer as RTCSessionDescriptionInit);
+                lastProcessedAnswerSdpRef.current = answerSdp || null;
+                setCurrentCall({
+                  ...callData,
+                  type: callData.type as 'video' | 'voice',
+                  status: callData.status as 'initiating' | 'ringing' | 'answered' | 'ended' | 'declined'
+                } as CallData);
+                setIncomingCall(null);
+                setLocalStream(webrtcService.getLocalStream());
+                stopRingtone();
+              } catch (err) {
+                console.error('Polling: setRemoteDescription failed', err);
+              }
             }
           }
         } else if (callData.status === 'declined' || callData.status === 'ended') {
@@ -363,6 +385,7 @@ export const useCalling = () => {
       // Reset candidate/process state for new call
       processedCandidatesRef.current.clear();
       lastProcessedOfferSdpRef.current = null;
+      lastProcessedAnswerSdpRef.current = null;
       lastLocalOfferSdpRef.current = (offer as any).sdp || null;
       // Capture local stream for UI
       setLocalStream(webrtcService.getLocalStream());
@@ -431,6 +454,7 @@ export const useCalling = () => {
       // Set remote description and create answer
       await webrtcService.setRemoteDescription(callData.offer as RTCSessionDescription);
       lastProcessedOfferSdpRef.current = (callData.offer as any)?.sdp || null;
+      lastProcessedAnswerSdpRef.current = null;
       const answer = await webrtcService.createAnswer(callData.type === 'video');
       // Capture local stream for UI
       setLocalStream(webrtcService.getLocalStream());
@@ -531,12 +555,13 @@ export const useCalling = () => {
       lastLocalOfferSdpRef.current = (offer as any)?.sdp || null;
       setLocalStream(webrtcService.getLocalStream());
 
-      // Update call row with new type and new offer; keep status as answered
+      // Update call row with new type and new offer; reset answer to trigger proper renegotiation
       await supabase
         .from('calls')
         .update({
           type: 'video',
           offer: JSON.parse(JSON.stringify(offer)),
+          answer: null,
           updated_at: new Date().toISOString()
         })
         .eq('id', activeCall.id);
