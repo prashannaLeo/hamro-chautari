@@ -32,6 +32,7 @@ export const useCalling = () => {
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const callTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const channelRef = useRef<any>(null);
+  const processedCandidatesRef = useRef<Set<string>>(new Set());
 
   // Initialize realtime subscription for calls
   useEffect(() => {
@@ -39,7 +40,7 @@ export const useCalling = () => {
 
     console.info('Setting up realtime subscription for calls...');
 
-    const processedCandidatesRef = { current: new Set<string>() } as const;
+    // using processedCandidatesRef from hook scope
 
     const channel = supabase
       .channel('calls_channel')
@@ -136,6 +137,69 @@ export const useCalling = () => {
       stopRingtone();
     };
   }, [user, webrtcService, incomingCall]);
+
+  // Fallback polling for active call updates (answer and ICE) in case realtime not available
+  useEffect(() => {
+    const activeId = currentCall?.id || incomingCall?.id;
+    if (!user || !activeId) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const { data } = await supabase
+          .from('calls')
+          .select('*')
+          .eq('id', activeId)
+          .single();
+
+        const callData = data as unknown as CallData | null;
+        if (!callData) return;
+
+        // Process status changes
+        if (callData.status === 'answered' && callData.answer) {
+          if (callData.caller_id === user.id) {
+            try {
+              await webrtcService.setRemoteDescription(callData.answer as RTCSessionDescriptionInit);
+              setCurrentCall({
+                ...callData,
+                type: callData.type as 'video' | 'voice',
+                status: callData.status as 'initiating' | 'ringing' | 'answered' | 'ended' | 'declined'
+              } as CallData);
+              setIncomingCall(null);
+              setLocalStream(webrtcService.getLocalStream());
+              stopRingtone();
+            } catch (err) {
+              console.error('Polling: setRemoteDescription failed', err);
+            }
+          }
+        } else if (callData.status === 'declined' || callData.status === 'ended') {
+          setCurrentCall(null);
+          setIncomingCall(null);
+          stopRingtone();
+          webrtcService.closeConnection();
+          setLocalStream(null);
+          setRemoteStream(null);
+        }
+
+        // Process ICE candidates with dedupe
+        const candidates = (callData.ice_candidates as any[]) || [];
+        for (const candidate of candidates) {
+          const key = JSON.stringify(candidate);
+          if (!processedCandidatesRef.current.has(key)) {
+            processedCandidatesRef.current.add(key);
+            try {
+              await webrtcService.addIceCandidate(candidate);
+            } catch (err) {
+              console.error('Polling: addIceCandidate failed', err);
+            }
+          }
+        }
+      } catch (e) {
+        // silent
+      }
+    }, 1200);
+
+    return () => clearInterval(interval);
+  }, [currentCall, incomingCall, user, webrtcService]);
 
   // WebRTC event handlers
   useEffect(() => {
