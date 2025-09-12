@@ -33,6 +33,8 @@ export const useCalling = () => {
   const callTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const channelRef = useRef<any>(null);
   const processedCandidatesRef = useRef<Set<string>>(new Set());
+  const lastProcessedOfferSdpRef = useRef<string | null>(null);
+  const lastLocalOfferSdpRef = useRef<string | null>(null);
 
   // Initialize realtime subscription for calls
   useEffect(() => {
@@ -85,6 +87,31 @@ export const useCalling = () => {
           setIncomingCall(null);
           stopRingtone();
           webrtcService.closeConnection();
+        }
+
+        // Renegotiation: if already answered and a new offer arrives from the other side
+        if (
+          callData.status === 'answered' &&
+          callData.caller_id !== user.id &&
+          callData.offer &&
+          (callData.offer as any).sdp &&
+          lastProcessedOfferSdpRef.current !== (callData.offer as any).sdp
+        ) {
+          try {
+            await webrtcService.setRemoteDescription(callData.offer as RTCSessionDescriptionInit);
+            const answer = await webrtcService.createAnswer(callData.type === 'video');
+            setLocalStream(webrtcService.getLocalStream());
+            lastProcessedOfferSdpRef.current = (callData.offer as any).sdp;
+            await supabase
+              .from('calls')
+              .update({
+                answer: JSON.parse(JSON.stringify(answer)),
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', callData.id);
+          } catch (err) {
+            console.error('Renegotiation failed:', err);
+          }
         }
 
         // Handle ICE candidates (dedupe)
@@ -215,8 +242,9 @@ export const useCalling = () => {
           .single();
         const latest: any[] = (callRow?.ice_candidates as any[]) || [];
         const set = new Set(latest.map((c) => JSON.stringify(c)));
-        const key = JSON.stringify(candidate);
-        if (!set.has(key)) latest.push(candidate);
+        const candidatePayload: any = (candidate as any)?.toJSON ? (candidate as any).toJSON() : candidate;
+        const key = JSON.stringify(candidatePayload);
+        if (!set.has(key)) latest.push(candidatePayload);
 
         await supabase
           .from('calls')
@@ -307,6 +335,10 @@ export const useCalling = () => {
     try {
       // Create WebRTC offer
       const offer = await webrtcService.createOffer(callType === 'video');
+      // Reset candidate/process state for new call
+      processedCandidatesRef.current.clear();
+      lastProcessedOfferSdpRef.current = null;
+      lastLocalOfferSdpRef.current = (offer as any).sdp || null;
       // Capture local stream for UI
       setLocalStream(webrtcService.getLocalStream());
 

@@ -4,6 +4,7 @@ export class WebRTCService {
   private peerConnection: RTCPeerConnection | null = null;
   private localStream: MediaStream | null = null;
   private remoteStream: MediaStream | null = null;
+  private candidateBuffer: RTCIceCandidateInit[] = [];
 
   // Event handlers
   public onIceCandidate: ((candidate: RTCIceCandidate) => void) | null = null;
@@ -118,31 +119,48 @@ export class WebRTCService {
     }
   }
 
-  async setRemoteDescription(description: RTCSessionDescriptionInit | RTCSessionDescription) {
-    if (!this.peerConnection) {
-      throw new Error('Peer connection not initialized');
-    }
-
-    try {
-      await this.peerConnection.setRemoteDescription(description);
-    } catch (error) {
-      console.error('Error setting remote description:', error);
-      throw error;
-    }
+async setRemoteDescription(description: RTCSessionDescriptionInit | RTCSessionDescription) {
+  if (!this.peerConnection) {
+    throw new Error('Peer connection not initialized');
   }
 
-  async addIceCandidate(candidate: RTCIceCandidate) {
-    if (!this.peerConnection) {
-      throw new Error('Peer connection not initialized');
+  try {
+    await this.peerConnection.setRemoteDescription(description);
+    // Drain any buffered ICE candidates now that remote description is set
+    if (this.candidateBuffer.length > 0) {
+      console.log(`Draining ${this.candidateBuffer.length} buffered ICE candidates`);
+      for (const cand of this.candidateBuffer) {
+        try {
+          await this.peerConnection.addIceCandidate(cand);
+        } catch (e) {
+          console.error('Error adding buffered ICE candidate:', e);
+        }
+      }
+      this.candidateBuffer = [];
     }
-
-    try {
-      await this.peerConnection.addIceCandidate(candidate);
-    } catch (error) {
-      console.error('Error adding ICE candidate:', error);
-      throw error;
-    }
+  } catch (error) {
+    console.error('Error setting remote description:', error);
+    throw error;
   }
+}
+
+async addIceCandidate(candidate: RTCIceCandidateInit) {
+  if (!this.peerConnection) {
+    throw new Error('Peer connection not initialized');
+  }
+
+  try {
+    // If remote description not yet set, buffer the candidate
+    if (!this.peerConnection.remoteDescription || !this.peerConnection.remoteDescription.type) {
+      this.candidateBuffer.push(candidate);
+      return;
+    }
+    await this.peerConnection.addIceCandidate(candidate);
+  } catch (error) {
+    console.error('Error adding ICE candidate:', error);
+    throw error;
+  }
+}
 
   private async getUserMedia(includeVideo: boolean): Promise<MediaStream> {
     try {
@@ -195,6 +213,33 @@ export class WebRTCService {
       }
     }
     return false;
+  }
+
+  // Upgrade an existing voice call to video without duplicating audio tracks
+  async upgradeToVideoAndCreateOffer(): Promise<RTCSessionDescriptionInit> {
+    if (!this.peerConnection) {
+      throw new Error('Peer connection not initialized');
+    }
+
+    // Ensure we have a local stream
+    if (!this.localStream) {
+      // Get both audio and video if no stream yet
+      this.localStream = await this.getUserMedia(true);
+      this.localStream.getTracks().forEach(track => this.peerConnection!.addTrack(track, this.localStream!));
+    } else if (this.localStream.getVideoTracks().length === 0) {
+      // Get only video and add it to existing stream
+      const videoOnly = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } }, audio: false });
+      const vTrack = videoOnly.getVideoTracks()[0];
+      if (vTrack) {
+        this.localStream.addTrack(vTrack);
+        this.peerConnection.addTrack(vTrack, this.localStream);
+      }
+    }
+
+    // Create a renegotiation offer requesting video
+    const offer = await this.peerConnection.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
+    await this.peerConnection.setLocalDescription(offer);
+    return offer;
   }
 
   closeConnection() {
