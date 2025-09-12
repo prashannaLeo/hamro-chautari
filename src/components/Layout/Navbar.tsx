@@ -236,6 +236,19 @@ const Navbar = () => {
                       <DropdownMenuItem 
                         key={notification.id}
                         className="p-3 hover:bg-blue-50 flex items-start space-x-2 border-b cursor-pointer"
+                        onClick={() => {
+                          if (!notification.is_read) {
+                            markAsRead(notification.id);
+                          }
+                          // Navigate based on notification type
+                          if (notification.type === 'comment' && notification.data?.post_id) {
+                            window.location.href = `/?post=${notification.data.post_id}`;
+                          } else if (notification.type === 'like' && notification.data?.post_id) {
+                            window.location.href = `/?post=${notification.data.post_id}`;
+                          } else if (notification.type === 'friend_request') {
+                            window.location.href = '/friends';
+                          }
+                        }}
                       >
                         <div className={`w-2 h-2 rounded-full mt-1 flex-shrink-0 ${
                           notification.is_read ? 'bg-gray-300' : 'bg-blue-500'
@@ -250,6 +263,52 @@ const Navbar = () => {
                     ))
                   )}
                 </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Mobile Menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="btn-ghost-mobile">
+                  <Menu className="w-5 h-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 bg-white border shadow-xl z-50">
+                <div className="p-3 border-b">
+                  <div className="flex items-center space-x-3">
+                    <Avatar className="w-10 h-10">
+                      <AvatarImage src="" alt="User" />
+                      <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
+                        {user?.email?.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">{user?.email}</p>
+                      <p className="text-xs text-muted-foreground">View profile</p>
+                    </div>
+                  </div>
+                </div>
+                <DropdownMenuItem asChild>
+                  <Link to="/profile" className="flex items-center p-3">
+                    <Avatar className="h-5 w-5 mr-3">
+                      <AvatarImage src="" alt="User" />
+                      <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                        {user?.email?.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm font-medium">Profile</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/settings" className="flex items-center p-3">
+                    <Settings className="w-5 h-5 mr-3" />
+                    <span className="text-sm font-medium">Settings</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={signOut} className="flex items-center p-3 text-destructive focus:text-destructive">
+                  <LogOut className="w-5 h-5 mr-3" />
+                  <span className="text-sm font-medium">Sign out</span>
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
