@@ -377,6 +377,68 @@ async addIceCandidate(candidate: RTCIceCandidateInit) {
     this.initializePeerConnection();
   }
 
+  async startScreenShare(): Promise<MediaStream> {
+    try {
+      const screenStream = await navigator.mediaDevices.getDisplayMedia({ 
+        video: true,
+        audio: true 
+      });
+      
+      // Replace video track in peer connection
+      if (this.peerConnection) {
+        const videoSender = this.peerConnection.getSenders().find(
+          sender => sender.track && sender.track.kind === 'video'
+        );
+        
+        if (videoSender && screenStream.getVideoTracks()[0]) {
+          await videoSender.replaceTrack(screenStream.getVideoTracks()[0]);
+          console.log('Screen share track replaced in peer connection');
+        }
+      }
+      
+      return screenStream;
+    } catch (error) {
+      console.error('Error starting screen share:', error);
+      throw new Error('Failed to start screen sharing');
+    }
+  }
+
+  async stopScreenShare(): Promise<void> {
+    try {
+      // Get camera stream back
+      const cameraStream = await this.getUserMedia(true);
+      
+      // Replace screen share track with camera track
+      if (this.peerConnection) {
+        const videoSender = this.peerConnection.getSenders().find(
+          sender => sender.track && sender.track.kind === 'video'
+        );
+        
+        if (videoSender && cameraStream.getVideoTracks()[0]) {
+          await videoSender.replaceTrack(cameraStream.getVideoTracks()[0]);
+          console.log('Camera track restored in peer connection');
+        }
+      }
+      
+      // Update local stream
+      if (this.localStream) {
+        // Replace video track in local stream
+        const oldVideoTrack = this.localStream.getVideoTracks()[0];
+        if (oldVideoTrack) {
+          this.localStream.removeTrack(oldVideoTrack);
+          oldVideoTrack.stop();
+        }
+        
+        const newVideoTrack = cameraStream.getVideoTracks()[0];
+        if (newVideoTrack) {
+          this.localStream.addTrack(newVideoTrack);
+        }
+      }
+    } catch (error) {
+      console.error('Error stopping screen share:', error);
+      throw new Error('Failed to stop screen sharing');
+    }
+  }
   // Get connection statistics
   async getStats(): Promise<RTCStatsReport | null> {
     if (this.peerConnection) {

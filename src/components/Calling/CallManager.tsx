@@ -4,7 +4,18 @@ import VideoCall from './VideoCall';
 import VoiceCall from './VoiceCall';
 
 const CallManager: React.FC = () => {
-  const { currentCall, incomingCall, answerCall, declineCall, endCall, switchToVideo, localStream, remoteStream } = useCallingContext();
+  const { 
+    currentCall, 
+    incomingCall, 
+    answerCall, 
+    declineCall, 
+    endCall, 
+    switchToVideo, 
+    startScreenShare, 
+    stopScreenShare,
+    localStream, 
+    remoteStream 
+  } = useCallingContext();
 
   // Set up media streams for video elements
   useEffect(() => {
@@ -29,6 +40,8 @@ const CallManager: React.FC = () => {
           onEndCall={endCall}
           onAcceptCall={() => answerCall(incomingCall)}
           onDeclineCall={() => declineCall(incomingCall)}
+          onStartScreenShare={startScreenShare}
+          onStopScreenShare={stopScreenShare}
           localStream={localStream || undefined}
           remoteStream={remoteStream || undefined}
         />
@@ -66,6 +79,8 @@ const CallManager: React.FC = () => {
           isOutgoing={isOutgoing}
           callStatus={currentCall.status}
           onEndCall={endCall}
+          onStartScreenShare={startScreenShare}
+          onStopScreenShare={stopScreenShare}
           localStream={localStream || undefined}
           remoteStream={remoteStream || undefined}
         />

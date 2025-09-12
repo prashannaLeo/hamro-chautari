@@ -25,6 +25,8 @@ interface VideoCallProps {
   onEndCall: () => void;
   onAcceptCall?: () => void;
   onDeclineCall?: () => void;
+  onStartScreenShare?: () => Promise<MediaStream | null>;
+  onStopScreenShare?: () => Promise<void>;
   localStream?: MediaStream;
   remoteStream?: MediaStream;
 }
@@ -39,6 +41,8 @@ const VideoCall: React.FC<VideoCallProps> = ({
   onEndCall,
   onAcceptCall,
   onDeclineCall,
+  onStartScreenShare,
+  onStopScreenShare,
   localStream,
   remoteStream,
 }) => {
@@ -127,26 +131,57 @@ const VideoCall: React.FC<VideoCallProps> = ({
   const toggleScreenShare = async () => {
     try {
       if (!isScreenSharing) {
-        const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = screenStream;
-        }
-        setIsScreenSharing(true);
-        screenStream.getVideoTracks()[0].onended = () => {
-          setIsScreenSharing(false);
-          if (localVideoRef.current && localStream) {
-            localVideoRef.current.srcObject = localStream;
+        if (onStartScreenShare) {
+          const screenStream = await onStartScreenShare();
+          if (screenStream) {
+            // Update local video to show screen share
+            if (localVideoRef.current) {
+              localVideoRef.current.srcObject = screenStream;
+            }
+            setIsScreenSharing(true);
+            
+            // Handle when screen sharing ends from browser UI
+            const videoTrack = screenStream.getVideoTracks()[0];
+            if (videoTrack) {
+              videoTrack.onended = () => {
+                handleScreenShareEnd();
+              };
+            }
+            
+            toast({
+              title: 'Screen Sharing',
+              description: 'Your screen is now being shared',
+            });
           }
-        };
-      } else {
-        if (localVideoRef.current && localStream) {
-          localVideoRef.current.srcObject = localStream;
         }
-        setIsScreenSharing(false);
+      } else {
+        await handleScreenShareEnd();
       }
     } catch (error) {
-      toast({ title: 'Screen Share Error', description: 'Failed to start screen sharing', variant: 'destructive' });
+      console.error('Screen share error:', error);
+      toast({ 
+        title: 'Screen Share Error', 
+        description: 'Failed to toggle screen sharing', 
+        variant: 'destructive' 
+      });
     }
+  };
+
+  const handleScreenShareEnd = async () => {
+    if (onStopScreenShare) {
+      await onStopScreenShare();
+    }
+    
+    // Restore camera feed
+    if (localVideoRef.current && localStream) {
+      localVideoRef.current.srcObject = localStream;
+    }
+    
+    setIsScreenSharing(false);
+    toast({
+      title: 'Screen Sharing',
+      description: 'Screen sharing has ended',
+    });
   };
 
   const handleAcceptCall = () => {

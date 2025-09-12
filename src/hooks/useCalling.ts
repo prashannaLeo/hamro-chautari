@@ -609,6 +609,57 @@ export const useCalling = () => {
     }
   }, [currentCall, incomingCall, webrtcService]);
 
+  const startScreenShare = useCallback(async () => {
+    const activeCall = currentCall || incomingCall;
+    if (!activeCall) return null;
+
+    try {
+      const screenStream = await webrtcService.startScreenShare();
+      
+      // Update local stream state
+      setLocalStream(webrtcService.getLocalStream());
+      
+      toast({
+        title: 'Screen Sharing',
+        description: 'Started sharing your screen'
+      });
+      
+      return screenStream;
+    } catch (error) {
+      console.error('Error starting screen share:', error);
+      toast({
+        title: 'Screen Share Error',
+        description: 'Failed to start screen sharing',
+        variant: 'destructive'
+      });
+      return null;
+    }
+  }, [currentCall, incomingCall, webrtcService]);
+
+  const stopScreenShare = useCallback(async () => {
+    const activeCall = currentCall || incomingCall;
+    if (!activeCall) return;
+
+    try {
+      await webrtcService.stopScreenShare();
+      
+      // Update local stream state
+      setLocalStream(webrtcService.getLocalStream());
+      
+      toast({
+        title: 'Screen Sharing',
+        description: 'Stopped sharing your screen'
+      });
+    } catch (error) {
+      console.error('Error stopping screen share:', error);
+      toast({
+        title: 'Screen Share Error',
+        description: 'Failed to stop screen sharing',
+        variant: 'destructive'
+      });
+    }
+  }, [currentCall, incomingCall, webrtcService]);
+
   return {
     currentCall,
     incomingCall,
@@ -619,6 +670,8 @@ export const useCalling = () => {
     declineCall,
     endCall,
     switchToVideo,
+    startScreenShare,
+    stopScreenShare,
     getLocalStream,
     getRemoteStream,
     toggleMicrophone,
