@@ -46,8 +46,11 @@ export class WebRTCService {
 
     // Handle remote stream
     this.peerConnection.ontrack = (event) => {
-      console.log('Received remote stream');
-      this.remoteStream = event.streams[0];
+      console.log('Received remote track');
+      if (!this.remoteStream) {
+        this.remoteStream = new MediaStream();
+      }
+      this.remoteStream.addTrack(event.track);
       if (this.onRemoteStream) {
         this.onRemoteStream(this.remoteStream);
       }

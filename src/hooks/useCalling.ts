@@ -89,13 +89,13 @@ export const useCalling = () => {
           webrtcService.closeConnection();
         }
 
-        // Renegotiation: if already answered and a new offer arrives from the other side
+        // Renegotiation: if already answered and a new offer arrives (from either side)
         if (
           callData.status === 'answered' &&
-          callData.caller_id !== user.id &&
           callData.offer &&
           (callData.offer as any).sdp &&
-          lastProcessedOfferSdpRef.current !== (callData.offer as any).sdp
+          lastProcessedOfferSdpRef.current !== (callData.offer as any).sdp &&
+          lastLocalOfferSdpRef.current !== (callData.offer as any).sdp
         ) {
           try {
             await webrtcService.setRemoteDescription(callData.offer as RTCSessionDescriptionInit);
@@ -205,6 +205,31 @@ export const useCalling = () => {
           webrtcService.closeConnection();
           setLocalStream(null);
           setRemoteStream(null);
+        }
+
+        // Renegotiation (polling): detect a new remote offer
+        if (
+          callData.status === 'answered' &&
+          (callData as any).offer &&
+          (callData as any).offer.sdp &&
+          lastProcessedOfferSdpRef.current !== (callData as any).offer.sdp &&
+          lastLocalOfferSdpRef.current !== (callData as any).offer.sdp
+        ) {
+          try {
+            await webrtcService.setRemoteDescription((callData as any).offer as RTCSessionDescriptionInit);
+            const answer = await webrtcService.createAnswer(callData.type === 'video');
+            setLocalStream(webrtcService.getLocalStream());
+            lastProcessedOfferSdpRef.current = (callData as any).offer.sdp;
+            await supabase
+              .from('calls')
+              .update({
+                answer: JSON.parse(JSON.stringify(answer)),
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', callData.id);
+          } catch (err) {
+            console.error('Polling renegotiation failed', err);
+          }
         }
 
         // Process ICE candidates with dedupe
@@ -405,6 +430,7 @@ export const useCalling = () => {
     try {
       // Set remote description and create answer
       await webrtcService.setRemoteDescription(callData.offer as RTCSessionDescription);
+      lastProcessedOfferSdpRef.current = (callData.offer as any)?.sdp || null;
       const answer = await webrtcService.createAnswer(callData.type === 'video');
       // Capture local stream for UI
       setLocalStream(webrtcService.getLocalStream());
@@ -499,30 +525,35 @@ export const useCalling = () => {
     if (!activeCall || activeCall.type !== 'voice') return;
 
     try {
-      // Update call type in database
+      // Upgrade local media and create a renegotiation offer that includes video
+      const offer = await webrtcService.upgradeToVideoAndCreateOffer();
+      processedCandidatesRef.current.clear();
+      lastLocalOfferSdpRef.current = (offer as any)?.sdp || null;
+      setLocalStream(webrtcService.getLocalStream());
+
+      // Update call row with new type and new offer; keep status as answered
       await supabase
         .from('calls')
         .update({
           type: 'video',
+          offer: JSON.parse(JSON.stringify(offer)),
           updated_at: new Date().toISOString()
         })
         .eq('id', activeCall.id);
 
       // Update local state
-      if (currentCall) {
-        setCurrentCall({ ...currentCall, type: 'video' });
-      }
+      if (currentCall) setCurrentCall({ ...currentCall, type: 'video' });
 
       toast({
-        title: "Switched to Video",
-        description: "Call upgraded to video call"
+        title: 'Switched to Video',
+        description: 'Negotiating video upgrade...'
       });
     } catch (error) {
       console.error('Error switching to video:', error);
       toast({
-        title: "Error",
-        description: "Failed to switch to video call",
-        variant: "destructive"
+        title: 'Error',
+        description: 'Failed to switch to video call',
+        variant: 'destructive'
       });
     }
   }, [currentCall, incomingCall, webrtcService]);
