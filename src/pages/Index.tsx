@@ -6,7 +6,7 @@ import CreatePost from '@/components/Feed/CreatePost';
 import PostCard from '@/components/Feed/PostCard';
 import PostSuggestions from '@/components/AI/PostSuggestions';
 import MoodMatcher from '@/components/MoodMatching/MoodMatcher';
-import CallManager from '@/components/Calling/CallManager';
+// import CallManager from '@/components/Calling/CallManager';
 import EditPostDialog from '@/components/Feed/EditPostDialog';
 import { useToast } from '@/hooks/use-toast';
 import { usePosts } from '@/hooks/usePosts';
@@ -80,7 +80,6 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
       <Navbar />
-      <CallManager />
       
       <main className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-8 pb-20 sm:pb-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">

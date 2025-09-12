@@ -44,6 +44,7 @@ const VideoCall: React.FC<VideoCallProps> = ({
 }) => {
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
+  const remoteAudioRef = useRef<HTMLAudioElement>(null);
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
@@ -84,6 +85,18 @@ const VideoCall: React.FC<VideoCallProps> = ({
       remoteVideoRef.current.srcObject = remoteStream;
       remoteVideoRef.current.muted = false;
       remoteVideoRef.current
+        .play()
+        .catch(() => {
+          // Autoplay might be blocked until user interaction
+        });
+    }
+  }, [remoteStream]);
+
+  // Also attach remote audio to ensure audio plays even if video autoplay is blocked
+  useEffect(() => {
+    if (remoteAudioRef.current && remoteStream) {
+      remoteAudioRef.current.srcObject = remoteStream;
+      remoteAudioRef.current
         .play()
         .catch(() => {
           // Autoplay might be blocked until user interaction
@@ -246,6 +259,9 @@ const VideoCall: React.FC<VideoCallProps> = ({
           )}
         </div>
       </div>
+
+      {/* Hidden remote audio to ensure audio playback */}
+      <audio ref={remoteAudioRef} autoPlay className="hidden" />
 
       {/* Controls */}
       <div className="bg-black/50 backdrop-blur-sm p-6 flex justify-center items-center gap-4">
