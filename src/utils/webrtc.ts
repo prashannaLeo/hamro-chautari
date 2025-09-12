@@ -232,8 +232,17 @@ async addIceCandidate(candidate: RTCIceCandidateInit) {
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
-          autoGainControl: true
-        },
+          autoGainControl: true,
+          sampleRate: 48000,
+          sampleSize: 16,
+          channelCount: 1,
+          latency: 0.01, // 10ms latency for real-time communication
+          googEchoCancellation: true,
+          googAutoGainControl: true,
+          googNoiseSuppression: true,
+          googHighpassFilter: true,
+          googTypingNoiseDetection: true
+        } as any,
         video: includeVideo ? {
           width: { ideal: 1280 },
           height: { ideal: 720 },
