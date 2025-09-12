@@ -49,6 +49,7 @@ const VoiceCall: React.FC<VoiceCallProps> = ({
   const [callDuration, setCallDuration] = useState(0);
   const [isCallActive, setIsCallActive] = useState(!isIncoming || callStatus === 'answered');
   const [callStartTime, setCallStartTime] = useState<number | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -65,16 +66,35 @@ const VoiceCall: React.FC<VoiceCallProps> = ({
     return () => clearInterval(interval);
   }, [isCallActive, callStatus, callStartTime]);
 
-  // Attach remote audio
+  // Attach remote audio with autoplay handling and WebAudio fallback
   useEffect(() => {
-    if (audioRef.current && remoteStream) {
-      audioRef.current.srcObject = remoteStream;
-      audioRef.current
-        .play()
-        .catch(() => {
-          // Autoplay might be blocked until user interaction
-        });
-    }
+    if (!remoteStream) return;
+    const el = audioRef.current;
+    if (!el) return;
+
+    el.srcObject = remoteStream;
+    const tryPlay = async () => {
+      try {
+        await el.play();
+      } catch (err) {
+        // Autoplay blocked on some mobile browsers; use WebAudio fallback within user gesture
+        try {
+          if (!audioCtxRef.current) {
+            const Ctx = (window.AudioContext || (window as any).webkitAudioContext);
+            audioCtxRef.current = new Ctx();
+          }
+          const ctx = audioCtxRef.current!;
+          if (ctx.state === 'suspended') await ctx.resume();
+          const source = ctx.createMediaStreamSource(remoteStream);
+          source.connect(ctx.destination);
+        } catch {}
+      }
+    };
+
+    // Attempt immediately and again after a short delay (some devices need it)
+    tryPlay();
+    const t = setTimeout(tryPlay, 500);
+    return () => clearTimeout(t);
   }, [remoteStream]);
 
 
@@ -99,6 +119,8 @@ const VoiceCall: React.FC<VoiceCallProps> = ({
   const handleAcceptCall = () => {
     setIsCallActive(true);
     try { audioRef.current?.play(); } catch {}
+    // Resume WebAudio if present
+    try { if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') audioCtxRef.current.resume(); } catch {}
     onAcceptCall?.();
   };
 
@@ -108,9 +130,9 @@ const VoiceCall: React.FC<VoiceCallProps> = ({
 
   const handleEndCall = () => {
     setIsCallActive(false);
+    try { audioCtxRef.current?.close(); } catch {}
     onEndCall();
   };
-
   const formatDuration = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -213,7 +235,7 @@ const VoiceCall: React.FC<VoiceCallProps> = ({
         </div>
 
         {/* Remote Audio */}
-        <audio ref={audioRef} autoPlay />
+        <audio ref={audioRef} autoPlay playsInline />
       </div>
 
       {/* Controls - Fixed at bottom with proper z-index */}

@@ -55,6 +55,14 @@ const VideoCall: React.FC<VideoCallProps> = ({
   const [callDuration, setCallDuration] = useState(0);
   const [isCallActive, setIsCallActive] = useState(!isIncoming || callStatus === 'answered');
   const [callStartTime, setCallStartTime] = useState<number | null>(null);
+  const canScreenShare = (() => {
+    const hasAPI = !!(navigator.mediaDevices as any)?.getDisplayMedia;
+    let inIframe = false;
+    try { inIframe = window.self !== window.top; } catch { inIframe = true; }
+    const isIOS = /iPad|iPhone|iPod/i.test(navigator.userAgent);
+    // iOS Safari often blocks screen share inside iframes
+    return hasAPI && !(isIOS && inIframe);
+  })();
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -328,10 +336,21 @@ const VideoCall: React.FC<VideoCallProps> = ({
             {isVideoEnabled ? <Video className="w-6 h-6 text-white" /> : <VideoOff className="w-6 h-6 text-white" />}
           </Button>
           <Button 
-            onClick={toggleScreenShare} 
+            onClick={async () => {
+              if (!canScreenShare) {
+                toast({
+                  title: 'Screen share not available',
+                  description: 'Mobile browsers (especially iOS) often block screen sharing inside iframes. Try from desktop or open in a standalone app.',
+                  variant: 'destructive'
+                });
+                return;
+              }
+              await toggleScreenShare();
+            }} 
             variant={isScreenSharing ? 'default' : 'secondary'} 
             size="lg" 
             className="rounded-full w-14 h-14 bg-white/10 hover:bg-white/20 border-0"
+            disabled={!canScreenShare}
           >
             {isScreenSharing ? <MonitorOff className="w-6 h-6 text-white" /> : <Monitor className="w-6 h-6 text-white" />}
           </Button>
