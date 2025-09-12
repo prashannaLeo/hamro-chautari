@@ -80,7 +80,7 @@ export class WebRTCService {
     };
   }
 
-  async createOffer(includeVideo: boolean = false): Promise<RTCSessionDescriptionInit> {
+  async createOffer(includeVideo: boolean = false, opts?: { iceRestart?: boolean }): Promise<RTCSessionDescriptionInit> {
     if (!this.peerConnection) {
       throw new Error('Peer connection not initialized');
     }
@@ -108,7 +108,8 @@ export class WebRTCService {
       // Create offer
       const offer = await this.peerConnection.createOffer({
         offerToReceiveAudio: true,
-        offerToReceiveVideo: includeVideo
+        offerToReceiveVideo: includeVideo,
+        iceRestart: opts?.iceRestart === true
       });
 
       await this.peerConnection.setLocalDescription(offer);

@@ -36,6 +36,7 @@ export const useCalling = () => {
   const lastProcessedOfferSdpRef = useRef<string | null>(null);
   const lastLocalOfferSdpRef = useRef<string | null>(null);
   const lastProcessedAnswerSdpRef = useRef<string | null>(null);
+  const iceRestartedRef = useRef<boolean>(false);
 
   // Initialize realtime subscription for calls
   useEffect(() => {
@@ -307,10 +308,30 @@ export const useCalling = () => {
       }
     };
 
-    webrtcService.onConnectionStateChange = (state) => {
+    webrtcService.onConnectionStateChange = async (state) => {
       console.log('WebRTC connection state:', state);
-      if (state === 'failed') {
-        // Fallback local cleanup if connection fails
+      const active = currentCall || incomingCall;
+      if ((state === 'failed' || state === 'disconnected') && active) {
+        if (!iceRestartedRef.current) {
+          try {
+            iceRestartedRef.current = true;
+            const offer = await webrtcService.createOffer(active.type === 'video', { iceRestart: true });
+            lastLocalOfferSdpRef.current = (offer as any)?.sdp || null;
+            await supabase
+              .from('calls')
+              .update({
+                offer: JSON.parse(JSON.stringify(offer)),
+                answer: null,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', active.id);
+            console.log('ICE restart offer sent');
+            return; // Do not tear down yet; wait for answer
+          } catch (e) {
+            console.warn('ICE restart failed, cleaning up...', e);
+          }
+        }
+        // Fallback local cleanup if restart already attempted or failed
         setCurrentCall(null);
         setIncomingCall(null);
         stopRingtone();
@@ -344,6 +365,7 @@ export const useCalling = () => {
       webrtcService.closeConnection();
       setLocalStream(null);
       setRemoteStream(null);
+      iceRestartedRef.current = false;
 
       if (callTimeoutRef.current) {
         clearTimeout(callTimeoutRef.current);
@@ -420,6 +442,7 @@ export const useCalling = () => {
       }
 
       setCurrentCall(callData as CallData);
+      iceRestartedRef.current = false;
 
       // Set timeout for call (30 seconds)
       callTimeoutRef.current = setTimeout(() => {
@@ -478,6 +501,7 @@ export const useCalling = () => {
 
       setIncomingCall(null);
       setCurrentCall({ ...callData, status: 'answered', answer: JSON.parse(JSON.stringify(answer)) } as CallData);
+      iceRestartedRef.current = false;
       stopRingtone();
 
       toast({
