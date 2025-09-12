@@ -88,20 +88,30 @@ export class WebRTCService {
     try {
       // Prepare transceivers for recv
       this.ensureTransceivers(includeVideo);
-      // Get user media
-      const stream = await this.getUserMedia(includeVideo);
-      this.localStream = stream;
+      
+      // Get user media - reuse existing stream if compatible
+      if (!this.localStream || 
+          (includeVideo && this.localStream.getVideoTracks().length === 0) ||
+          (!includeVideo && this.localStream.getVideoTracks().length > 0)) {
+        // Stop existing tracks to prevent conflicts
+        if (this.localStream) {
+          this.localStream.getTracks().forEach(track => track.stop());
+        }
+        this.localStream = await this.getUserMedia(includeVideo);
+      }
 
-      // Add tracks to peer connection (avoid duplicates)
+      // Clear existing senders to prevent duplicates
       const senders = this.peerConnection.getSenders();
-      stream.getTracks().forEach(track => {
+      for (const sender of senders) {
+        if (sender.track) {
+          this.peerConnection.removeTrack(sender);
+        }
+      }
+
+      // Add fresh tracks
+      this.localStream.getTracks().forEach(track => {
         if (this.peerConnection) {
-          const existing = senders.find((s) => s.track && s.track.kind === track.kind);
-          if (existing) {
-            existing.replaceTrack(track);
-          } else {
-            this.peerConnection.addTrack(track, stream);
-          }
+          this.peerConnection.addTrack(track, this.localStream!);
         }
       });
 
@@ -138,19 +148,30 @@ export class WebRTCService {
 
       // Prepare transceivers for recv
       this.ensureTransceivers(includeVideo);
-      // Get user media
-      const stream = await this.getUserMedia(includeVideo);
-      this.localStream = stream;
+      
+      // Get user media - reuse existing stream if compatible
+      if (!this.localStream || 
+          (includeVideo && this.localStream.getVideoTracks().length === 0) ||
+          (!includeVideo && this.localStream.getVideoTracks().length > 0)) {
+        // Stop existing tracks to prevent conflicts
+        if (this.localStream) {
+          this.localStream.getTracks().forEach(track => track.stop());
+        }
+        this.localStream = await this.getUserMedia(includeVideo);
+      }
 
-      // Add tracks to peer connection (avoid duplicates)
+      // Clear existing senders to prevent duplicates
       const senders = this.peerConnection.getSenders();
-      stream.getTracks().forEach((track) => {
-        const kind = track.kind;
-        const existing = senders.find((s) => s.track && s.track.kind === kind);
-        if (existing) {
-          existing.replaceTrack(track);
-        } else {
-          this.peerConnection!.addTrack(track, stream);
+      for (const sender of senders) {
+        if (sender.track) {
+          this.peerConnection.removeTrack(sender);
+        }
+      }
+
+      // Add fresh tracks
+      this.localStream.getTracks().forEach((track) => {
+        if (this.peerConnection) {
+          this.peerConnection.addTrack(track, this.localStream!);
         }
       });
 
@@ -228,21 +249,13 @@ async addIceCandidate(candidate: RTCIceCandidateInit) {
 
   private async getUserMedia(includeVideo: boolean): Promise<MediaStream> {
     try {
+      // Start with simpler audio constraints to avoid feedback
       const constraints: MediaStreamConstraints = {
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
-          autoGainControl: true,
-          sampleRate: 48000,
-          sampleSize: 16,
-          channelCount: 1,
-          latency: 0.01, // 10ms latency for real-time communication
-          googEchoCancellation: true,
-          googAutoGainControl: true,
-          googNoiseSuppression: true,
-          googHighpassFilter: true,
-          googTypingNoiseDetection: true
-        } as any,
+          autoGainControl: true
+        },
         video: includeVideo ? {
           width: { ideal: 1280 },
           height: { ideal: 720 },
@@ -251,6 +264,15 @@ async addIceCandidate(candidate: RTCIceCandidateInit) {
       };
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      
+      // Apply additional audio processing after stream creation
+      const audioTracks = stream.getAudioTracks();
+      if (audioTracks.length > 0) {
+        const audioTrack = audioTracks[0];
+        const settings = audioTrack.getSettings();
+        console.log('Audio track settings:', settings);
+      }
+      
       return stream;
     } catch (error) {
       console.error('Error accessing media devices:', error);
@@ -334,14 +356,22 @@ async addIceCandidate(candidate: RTCIceCandidateInit) {
       this.localStream = null;
     }
 
+    // Stop remote stream  
+    if (this.remoteStream) {
+      this.remoteStream.getTracks().forEach(track => {
+        track.stop();
+      });
+      this.remoteStream = null;
+    }
+
     // Close peer connection
     if (this.peerConnection) {
       this.peerConnection.close();
       this.peerConnection = null;
     }
 
-    // Reset remote stream
-    this.remoteStream = null;
+    // Clear candidate buffer
+    this.candidateBuffer = [];
 
     // Re-initialize for next call
     this.initializePeerConnection();
