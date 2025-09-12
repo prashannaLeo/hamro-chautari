@@ -639,6 +639,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_search_rate_limit: {
+        Args: { search_user_id: string }
+        Returns: boolean
+      }
       cleanup_expired_stories: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -699,6 +703,16 @@ export type Database = {
       is_chat_participant: {
         Args: { chat_id_param: string; user_id_param: string }
         Returns: boolean
+      }
+      search_public_profiles: {
+        Args: { search_limit?: number; search_term: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          is_verified: boolean
+          user_id: string
+          username: string
+        }[]
       }
     }
     Enums: {
